@@ -11,3 +11,5 @@ setwd()
 getwd()
 
 setwd("/Users/luowenqi/desktop")
+
+a=b+c
