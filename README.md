@@ -17,11 +17,14 @@ summary(mod_)
 # the combined data 
 head(com.neon.dob)
 # get the root data,11 tables in total
+library(neon)
+
+library(neonUtilities)
 
 root.data <- loadByProduct(dpID="DP1.10067.001")
 root.data[[1]]
 
-root.data[[2]]# data contains root mass and root chemical traits?(what id somDryMass)
+root.data[[2]]# data contains root mass and root chemical traits?(what is id somDryMass)
 
 root.data[[3]]# about sampling location and time
 
@@ -81,3 +84,40 @@ mod=lm(ranz30~ soilInCaClpH+ nitrogenPercent.x+ organicCPercent+ soilMoisture+ m
 step(mod)
  summary(lm(ranz30 ~ soilInCaClpH + soilMoisture + mat_celsius + 
    temp_seasonality + d13C, data = neon.root))# best model for the NEON sites
+
+
+## for the megapit data
+root.mega.data <- loadByProduct(dpID="DP1.10066.001")
+
+root.mega.data[[1]]
+root.mega.data[[2]]
+root.mega.data[[3]]
+root.mega.data[[4]]   
+root.mega.data=root.mega.data[[5]] # total root biomass along the profile
+root.mega.data[[6]]   
+root.mega.data[[7]]   
+root.mega.data[[8]]   
+
+ abby=subset(root.mega.data,siteID=="ABBY")[,c(12,14:19)]
+subset(abby,pitProfileID=="ABBY.1"&sizeCategory=="<=4mm") # the first profile was sampled to a maximum depth of 180 mm  
+root.mega.data.full <- loadByProduct(dpID="DP1.10066.001")
+y   
+root.mega.data.full[[1]]
+
+root.mega.data.full[[2]]#issues and corrections
+class(root.mega.data.full[[2]])   
+ mega.root.dep= root.mega.data.full[[3]] 
+colnames(root.mega.data.full[[3]] )# more detail classification of root traits data
+ mega.root.dep= root.mega.data.full[[3]] [,c("siteID" ,"plotID" ,"collectDate" , "cnSampleID" , "cnSampleCode"  , "sampleType" , "d15N",   "d13C" ,  "nitrogenPercent" ,   
+"carbonPercent"    ,   "CNratio")]
+head(mega.root.dep)# each site has only one megapit with three profiles   
+   subset()
+ mega.root.dep=k
+ 
+ #selecting the living roots 
+ d=subset(mega.root.dep,live=="LIVE"&siteID=="BART"&file==1&thick=="<2MM")
+ 
+ dep=c("0","10","20","30","40","50","60","70","80","90","100","110","120","130","140","150","160","170","180","190","200")
+ # check the megapit data for each site
+ 
+ 
