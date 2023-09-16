@@ -115,5 +115,43 @@ head(mega.root.dep)# each site has only one megapit with three profiles
  
  dep=c("0","10","20","30","40","50","60","70","80","90","100","110","120","130","140","150","160","170","180","190","200")
  # check the megapit data for each site
+
+ # aridity-new
+# go to the website to download an image of global aridity index of your interest
+https://soton.eead.csic.es/spei/database.html
+setwd("../../DATA")#setting the work directory and save the image in this directory
+# read in the coordinates of the sites from where you want to extract the aridity index
+sites=read.csv("sites.csv")
+#it is VERY VERY important to name the table in the order of "site","longitude","latitude", otherwise you will get NAS
+
+#packages required
+install.packages("devtools")
+require(devtools)
+devtools::install_github('seschaub/getSpei')
+require(getSpei)
+require(ncdf4)
+require(chron)
+# a case study to look at the relationship between z and the aridity index
+load("9.1SAR.RData")
+sites=sample_data(neon_dob)
+sites=sites[,c("Site","lon","lat")]
+sites=data.frame(sites)
+rownames(sites)=NULL
+sites=unique(sites)
+sites=subset(sites,lon!="NA")
+sites=subset(sites,lat!="NA")
+names(sites)=c("site","longitude", "latitude")# three columns with colnames being "site","longitude", "latitude"
+
+site_spei <- spec_spei(spei_files = c("spei01"), start_y = 2000, end_y = 2005, #"spei01" defines the image downloaded
+                       locations = sites)# 
+
+aridity.mean=aggregate(spei01~location_id,FUN=mean,data=site_spei)
+
+names(aridity.mean)[1]="site"
+# look at the relationship between aridity and the z values
+a=merge(com.neon.dob,aridity.mean,by="site")
+write.csv(a,"zv.aridity.csv")
+cor(a[,2:11])
+
  
  
