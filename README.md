@@ -152,6 +152,6 @@ names(aridity.mean)[1]="site"
 a=merge(com.neon.dob,aridity.mean,by="site")
 write.csv(a,"zv.aridity.csv")
 cor(a[,2:11])
-
+#look at the soil microbial biomass data
  
  
