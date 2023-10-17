@@ -86,3 +86,4 @@ rare_neon_c_mean=data.frame(rare_neon_c["a1"],rare_neon_c_mean)
 plot_level_zc=cbind(rare_neon_z_mean,rare_neon_c_mean)
 
 write.csv(plot_level_zc,"plot_level_zc_rare.csv")
+## new
