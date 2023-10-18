@@ -75,4 +75,8 @@ p=merge(p,core_mass_type_mean,by="plotID")# merge the root mass data but many pl
 
 =======
 write.csv(root.chemi.mean,"root.chemi.mean.csv")
+<<<<<<< HEAD
 
+=======
+>>>>>>> 1a23d10ac4996767fe9f15ba4fc1bc4cea32d3a1
+>>>>>>> ca7084c5d4e46235f076c5482d31dc7a63f806c5
