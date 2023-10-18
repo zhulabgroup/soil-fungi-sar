@@ -8,6 +8,7 @@ head(root.chemi)
 table(root.chemi$plotID)
 root.chemi.mean=aggregate(root.chemi[,3:7], by=list(root.chemi$plotID), mean)
 names(root.chemi.mean)[1]="plotID"
+<<<<<<< HEAD
 write.csv(root.chemi.mean,"root.chemi.mean.csv")
 
 ## get the simulated values for each as the response variable
@@ -72,3 +73,6 @@ core_mass_type_mean=aggregate(core_mass_type[,2:3],by=list(core_mass_type$plotID
 names(core_mass_type_mean)[1]="plotID"
 p=merge(p,core_mass_type_mean,by="plotID")# merge the root mass data but many plots do not have root mass data
 
+=======
+write.csv(root.chemi.mean,"root.chemi.mean.csv")
+>>>>>>> 1a23d10ac4996767fe9f15ba4fc1bc4cea32d3a1
