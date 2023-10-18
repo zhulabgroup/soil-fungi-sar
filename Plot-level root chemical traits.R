@@ -8,6 +8,7 @@ head(root.chemi)
 table(root.chemi$plotID)
 root.chemi.mean=aggregate(root.chemi[,3:7], by=list(root.chemi$plotID), mean)
 names(root.chemi.mean)[1]="plotID"
+<<<<<<< HEAD
 write.csv(root.chemi.mean,"root.chemi.mean.csv")
 
 ## get the simulated values for each as the response variable
@@ -71,4 +72,7 @@ p=merge(plot_simu_z,neon_climate_aridity,by="plotID",all.x = TRUE)# merge z with
 core_mass_type_mean=aggregate(core_mass_type[,2:3],by=list(core_mass_type$plotID),mean)
 names(core_mass_type_mean)[1]="plotID"
 p=merge(p,core_mass_type_mean,by="plotID")# merge the root mass data but many plots do not have root mass data
+
+=======
+write.csv(root.chemi.mean,"root.chemi.mean.csv")
 
