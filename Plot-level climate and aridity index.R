@@ -36,6 +36,7 @@ head(plot_loca)
 plot_loca=data.frame(plot_loca)
 plot_loca=cbind(plotID,plot_loca)
 plot_loca=unique(plot_loca)
+<<<<<<< HEAD
 
 ##get the 18 climate variables
 r <- getData("worldclim",var="bio",res=10)
@@ -43,6 +44,15 @@ points <- SpatialPoints(plot_loca[,2:3], proj4string = r@crs)
 values <- extract(r,points)
 df <- cbind.data.frame(coordinates(points),values)
 # select the seven climate variables that do not show colinearity
+=======
+##
+r <- getData("worldclim",var="bio",res=10)
+
+points <- SpatialPoints(plot_loca[,2:3], proj4string = r@crs)
+values <- extract(r,points)
+df <- cbind.data.frame(coordinates(points),values)
+# select the seven climate variables
+>>>>>>> 2784f74aac55a6a895ef631fb6f08dc56f3eb5b0
 neon_climate=df[,c("bio2","bio8","bio18","bio4","bio12","bio15","bio1")] 
 # get the land aridity index
 names(plot_loca)=c(site","longitude","latitude"")
