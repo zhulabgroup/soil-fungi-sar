@@ -12,6 +12,8 @@ neon <- subset_taxa(neon, taxa_sums(neon) > 0)
 neon <- subset_samples(neon, sample_sums(neon) > 0)# both soil horizons were included 
 #rm(neon_dob)
 
+dob <- subset_samples(neon_dob, get_variable(neon_dob, "Project")=="DoB")
+
 # neon dataset
 d <- sample_data(neon) # sample data data frame
 d=data.frame(d)
