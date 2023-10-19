@@ -5,19 +5,14 @@ plant.data <- loadByProduct(dpID="DP1.10058.001")
 # get the plant diversity and cover of the plot
 
 plant.coar=plant.data[[4]]
-<<<<<<< HEAD
+
 plant.fine=plant.data[[5]]
-=======
->>>>>>> 76ccbee829b8ca4e0526a3d4e6cd3967b7815d3c
 plotID=substr(plant.fine$namedLocation,1,8)
 vegetation_type=data.frame(cbind(plotID,plant.fine$nlcdClass))# 11 types of vegetation
 # at the 20*20 m plot, species were recorded with abundance?
 # why thoses recorded in the 10 m2 plot still be recored in the 100 m2
 # just focused on the plotID and all species recorded in the plot are included for richness
-<<<<<<< HEAD
-=======
 
->>>>>>> 76ccbee829b8ca4e0526a3d4e6cd3967b7815d3c
 plant.rich.fine=plant.fine[,c("plotID","scientificName","subplotID")]# 1m2 scale data
 plant.rich.coar=plant.coar[,c("plotID","scientificName","subplotID")]# 10m2 and 100m2 scale data
 plant.rich=rbind(plant.rich.fine,plant.rich.coar)
