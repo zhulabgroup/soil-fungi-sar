@@ -50,7 +50,7 @@ df <- cbind.data.frame(coordinates(points),values)
 # select the seven climate variables
 neon_climate=df[,c("bio2","bio8","bio18","bio4","bio12","bio15","bio1")] 
 # get the land aridity index
-names(plot_loca)=c(site","longitude","latitude"")
+names(plot_loca)=c("site","longitude","latitude")
 site_spei <- spec_spei(spei_files = c("spei01"), start_y = 2010, end_y = 2018,locations=plot_loca)
 aridity.mean=aggregate(spei01~location_id,FUN=mean,data=site_spei) 
 neon_climate=cbind(neon_climate,plot_loca)
