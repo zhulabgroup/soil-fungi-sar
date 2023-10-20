@@ -27,5 +27,5 @@ for (i in 1:length(plot_id)){
 
 plot_plant_rich=data.frame(cbind(plot_id,rich))
 
-write.csv(plot_plant_rich,"plot_plant_rich.csv")
+write.csv(plot_plant_rich,"plot_plant_rich.csv")#rename
 
