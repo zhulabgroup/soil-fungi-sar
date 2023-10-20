@@ -56,12 +56,19 @@ write.csv(model_data,"model_data.csv")
 model_data=model_data[,-5]
 model_data$rich=as.numeric(model_data$rich)
 
+<<<<<<< HEAD
 write.csv(model_data,"model_data.csv")
 
 # climate and soil model:both dob and neon sites were included, here only the plotID was treated as a random effect
 mode.data1=model_data[,c(1:17,19,27)]# GUAN don't have soil variables and will be excluded(possibly this site is out of place)
 mode.data1=subset(mode.data1,siteIDD!="GUAN"&z<10)
 # check co linearity among variables
+=======
+# climate and soil model:both dob and neon sites were included, here only the plotID was treated as a random effect
+mode.data1=model_data[,c(1:17,19,27)]# GUAN don't have soil variables and will be excluded(possibly this site is out of place)
+mode.data1=subset(mode.data1,siteIDD!="GUAN"&z<10)
+# check colinearity among variables
+>>>>>>> 978743adf156c3e843f56c1077244410f57ab5b0
 cor(mode.data1[,3:19])
 
 # mapping the correlation
