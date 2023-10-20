@@ -154,5 +154,5 @@ step(mod)
 #best model
 mod=lmer(z ~ c + rich + sand + bio8 + bio15 + funrich + rootc + (1 | plotID),data=mode.data3)
 #
-
+#
 
