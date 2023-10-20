@@ -88,7 +88,7 @@ id=data.frame(c(iddob,idneon))
 plot_loca_all_soil_climate=cbind(id,plot_loca_all_soil_climate)
 names(plot_loca_all_soil_climate)[1]="plotIDM"# the plot id used to get the mean values of the variales
 
-plot_loca_all_soil_climate_mean=aggregate(plot_loca_all_soil_climate[,c(9:21)],by=list(plot_loca_all_soil_climate$plotIDM),mean,sort=FALSE)
+plot_loca_all_soil_climate_mean=aggregate(plot_loca_all_soil_climate[,c(9:22)],by=list(plot_loca_all_soil_climate$plotIDM),mean,sort=FALSE)
 names(plot_loca_all_soil_climate_mean)[1]="plotID"
 write.csv(plot_loca_all_soil_climate_mean,"plot_loca_all_soil_climate_mean.csv")
 ## get the land aridity index
