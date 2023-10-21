@@ -2,6 +2,7 @@
 neon_dob <- readRDS("/.../.../phylo_V3.1.RDS")
 neon_dob <- subset_samples(neon_dob, get_variable(neon_dob, "horizon")!="AH")
 neon_dob <- subset_samples(neon_dob, get_variable(neon_dob, "horizon")!="OH")# the data only include the O and M soil horizon
+
 neon_dob <- subset_samples(neon_dob, !is.na(lon) & !is.na(lat))
 neon_dob<- subset_taxa(neon_dob, taxa_sums(neon_dob) > 0)
 neon_dob<- subset_samples(neon_dob, sample_sums(neon_dob) > 0)
