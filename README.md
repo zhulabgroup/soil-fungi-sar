@@ -1,1 +1,2 @@
-
+this repository is about the calculation of plot-levl species area relationship.
+we have included multile variables such as plant richness, root traits, root mass, and climate variables. Within a 40 by 40 m plot, only at the 20 by 20 m scale is plant richness data available. the root traits measurement is based on varied number of cores within the 40 by 40 m plot. when core cordinates are available, the plot-level measurements are based on all these cores distributed within the 40 by 40 m plot.
