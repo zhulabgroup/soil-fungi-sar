@@ -45,7 +45,7 @@ cbind(guild,c)# look at the number of taxa for each guild and how many cores the
 
 1.# for the "soil_saprotroph"
 m=subset_taxa(rare_all,ta2=="soil_saprotroph")# select a guild
-m<- subset_samples(rare_all, !is.na(lon) & !is.na(lat))
+m<- subset_samples(m, !is.na(lon) & !is.na(lat))
 m<- subset_taxa(m, taxa_sums(m) > 0)
 m<- subset_samples(m, sample_sums(m) > 0)
 
@@ -124,7 +124,7 @@ write.csv(all_c,"soilsap_c.ranall.csv")
 
 #### for the "soil_saprotroph"
 m=subset_taxa(rare_all,ta2=="plant_pathogen" )# select a guild
-m<- subset_samples(rare_all, !is.na(lon) & !is.na(lat))
+m<- subset_samples(m, !is.na(lon) & !is.na(lat))
 m<- subset_taxa(m, taxa_sums(m) > 0)
 m<- subset_samples(m, sample_sums(m) > 0)
 
