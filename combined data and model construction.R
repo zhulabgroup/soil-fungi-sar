@@ -1,4 +1,7 @@
 # combing data for modeling
+library(ggcorrplot)
+library(lme4)
+library(lmerTest)
 plot_plant_rich#plant data#p
 core_mass_type#root mass data
 root.chemi.mean#root trait data
@@ -57,19 +60,17 @@ model_data$rich=as.numeric(model_data$rich)
 
 write.csv(model_data,"model_data.csv")
 
-# climate and soil model:both dob and neon sites were included, here only the plotID was treated as a random effect
-mode.data1=model_data[,c(1:17,19,27)]# GUAN don't have soil variables and will be excluded(possibly this site is out of place)
+
+1.# climate and soil model:both dob and neon sites were included, here only the plotID was treated as a random effect
+mode.data1=model_data[,c(2:18,20,28)]# GUAN don't have soil variables and will be excluded(possibly this site is out of place)
 mode.data1=subset(mode.data1,siteIDD!="GUAN"&z<10)
 # check co linearity among variables
-# climate and soil model:both dob and neon sites were included, here only the plotID was treated as a random effect
-mode.data1=model_data[,c(1:17,19,27)]# GUAN don't have soil variables and will be excluded(possibly this site is out of place)
-mode.data1=subset(mode.data1,siteIDD!="GUAN"&z<10)
-# check colinearity among variables
 
-cor(mode.data1[,3:19])
+
+cor(mode.data1[,4:19])
 
 # mapping the correlation
-ggcorrplot(cor(mode.data1[,3:19]), hc.order = TRUE, type = "lower", lab = TRUE)#
+ggcorrplot(cor(mode.data1[,4:19]), hc.order = TRUE, type = "lower", lab = TRUE)#
 #bold was related with soil C, and MAT;cec was related with soil C; I decided to exclude cec and bold
 # build model with plot included as the random effect
 # standardized the data.
@@ -90,11 +91,16 @@ mod=lmer(z ~ c + nitrogen + sand + bio2 + bio12 + bio15 + funrich + (1 | siteIDD
 summary(mod)
 
 
-# plotid as the only random effect
+# plotid as the only random effect (483 plots)
 mod=lmer(z ~ c+organicCPercent  + ph+ nitrogen+   sand +bio2 +bio8+ bio18+  bio4 +bio12+ bio15  +    spei+ funrich +bio1+ (1 |plotID),data=mode.data1)
-step(mod)
+effect_all_clima_soil=summary(mod)
+effect_all_clima_soil=effect_all_clima_soil$coefficients
+effect_all_clima_soil=data.frame(effect_all_clima_soil)
 #best model
 mod=lmer(z ~  c + sand + bio2 + bio4 + bio12 + bio15 + funrich + (1 | plotID),data=mode.data1)
+summary(mod)
+# what if c is not included in the model?
+mod=lmer(z ~ organicCPercent  + ph+ nitrogen+   sand +bio2 +bio8+ bio18+  bio4 +bio12+ bio15  +    spei+ funrich +bio1+ (1 |plotID),data=mode.data1)
 summary(mod)
 # site as the only random effect
 
@@ -105,18 +111,30 @@ mod=lmer(z ~ c + organicCPercent + nitrogen + sand + bio18 + bio4 + bio12 + bio1
 summary(mod)
 
 
-## climate, plant diversity and soil model: only neon sites were included, dob sites do not have plant data
-mode.data2=model_data[,c(1:19,27)]# GUAN don't have soil variables and will be excluded(possibly this site is out of place)
+## climate, plant diversity and soil model: only neon sites were included, dob sites do not have plant data(396 plots)
+mode.data2=model_data[,c(2:20,28)]# GUAN don't have soil variables and will be excluded(possibly this site is out of place)
 mode.data2=subset(mode.data2,siteIDD!="GUAN"&z<10&rich>0)# some sites do have plant data
 # check colinearity among variables
 cor(mode.data2[,3:20])
 ggcorrplot(cor(mode.data2[,3:20]), hc.order = TRUE, type = "lower", lab = TRUE)#
 mode.data2[,3:20]=apply(mode.data2[,3:20], 2, range01)%>%data.frame
 
-# site and plot are nested,  c was included
-
+# when site and plot are nested,  c was included, only bio12 and soil C was significant, and c and funrich still affect the z values
 mod=lmer(z ~ organicCPercent + c+ ph+ nitrogen+ rich+  sand +bio2 +bio8+ bio18+  bio4 +bio12+ bio15  +    spei+ funrich +bio1+ (1 |siteIDD/plotID),data=mode.data2)
-step(mod)
+#extract the fixed effect
+effect_neon_clima_soil=summary(mod)
+effect_neon_clima_soil=effect_neon_clima_soil$coefficients
+effect_neon_clima_soil=data.frame(effect_neon_clima_soil)
+
+# adding the code, substr the plotID will generate the same results
+mod=lmer(z ~ organicCPercent + c+ ph+ nitrogen+ rich+  sand +bio2 +bio8+ bio18+  bio4 +bio12+ bio15  +    spei+ funrich +bio1+ (1 |siteIDD/code),data=mode.data2)
+
+# if we included only the plotID as the random effect, soil N(-),sand (-),bio8(-),bio4(+),bio12(+),bio15(+),bio1(-)
+mod=lmer(z ~ organicCPercent + c+ ph+ nitrogen+ rich+  sand +bio2 +bio8+ bio18+  bio4 +bio12+ bio15  +    spei+ funrich +bio1+ (1 |plotID),data=mode.data2)
+# if we included only the site as the random effect, soil N(-),rich (+),sand (-),bio8(+),bio18(-),bio4(+),bio12(+),funrich(+)
+
+mod=lmer(z ~ organicCPercent + c+ ph+ nitrogen+ rich+  sand +bio2 +bio8+ bio18+  bio4 +bio12+ bio15  +    spei+ funrich +bio1+ (1 |siteIDD),data=mode.data2)
+
 #best model
 mod=lmer(z ~ organicCPercent + c + sand + bio12 + bio15 + funrich + bio1 + (1 | siteIDD/plotID),data=mode.data2)
 ## only site as random
@@ -126,9 +144,9 @@ step(mod)
 # only plot as random
 mod=lmer(z ~ organicCPercent + c+ ph+ nitrogen+ rich+  sand +bio2 +bio8+ bio18+  bio4 +bio12+ bio15  +    spei+ funrich +bio1+ (1 |plotID),data=mode.data2)
 
-# climate, soil, plant and root model# will have 104 plots
+# climate, soil, plant and root model# (104 plots for the NEON sites)
 
-mode.data3=model_data[,c(1:27)]# GUAN don't have soil variables and will be excluded(possibly this site is out of place)
+mode.data3=model_data[,c(2:28)]# GUAN don't have soil variables and will be excluded(possibly this site is out of place)
 mode.data3=subset(mode.data3,siteIDD!="GUAN"&z<10&rich>0&fine>0&rootc>0)# some sites do have plant data
 # check colinearity among variables
 cor(mode.data3[,3:27])
@@ -136,9 +154,14 @@ cor(mode.data3[,3:27])
 # i therefor excluded coarse, bio4,bold,cec and root n
 ggcorrplot(cor(mode.data3[,3:27]), hc.order = TRUE, type = "lower", lab = TRUE)#
 mode.data3[,3:27]=apply(mode.data3[,3:27], 2, range01)%>%data.frame
-#site and plot are nested
+
+#site and plot are nested, only funrich showed a significant effect with plant rich showing a marginal effect
 mod=lmer(z ~ organicCPercent + c+ ph+ nitrogen+ rich+  sand +bio2 +bio8+ bio18+  +bio12+ bio15  +    spei+ funrich +bio1+fine+d13C+rootc  +  rootcn + (1 |siteIDD/plotID),data=mode.data3)
-step(mod)
+
+effect_neon_clima_soil_root=summary(mod)
+effect_neon_clima_soil_root=effect_neon_clima_soil_root$coefficients
+effect_neon_clima_soil_root=data.frame(effect_neon_clima_soil_root)
+
 # best model
 mode=lmer(z ~ c + rich + funrich + bio1 + (1 | siteIDD/plotID),data=mode.data3)
 # site as the only random effect
@@ -155,4 +178,4 @@ step(mod)
 mod=lmer(z ~ c + rich + sand + bio8 + bio15 + funrich + rootc + (1 | plotID),data=mode.data3)
 #
 #
-
+## for different guilds
