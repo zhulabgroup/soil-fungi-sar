@@ -1,4 +1,8 @@
 # estimate the z values based on functional guilds
+library(phyloseq)
+library(tidyverse)
+library(doParallel)
+library(permute)
 ft=read.csv("FungalTraits_1.2_ver_16Dec_2020.csv",sep=",",header=T)
 ft=ft[,c("GENUS","primary_lifestyle")]
 # get the genus name of all the taxa in the full dataset
