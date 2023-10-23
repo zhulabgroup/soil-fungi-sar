@@ -187,21 +187,21 @@ for (i in 1:length(a1))
   }
 }
 
-plantpat_z=matrix(nrow=length(a1),ncol=30)# get the 30 simulated z values for all the plots
+plapat_z=matrix(nrow=length(a1),ncol=30)# get the 30 simulated z values for all the plots
 for(i in 1:length(a1)){
-  plantpat_z[i,]=power.z[[i]][1,]
+  plapat_z[i,]=power.z[[i]][1,]
 }
 
-plantpat_z=data.frame(a1,plantpat_z)
-write.csv(plantpat_z,"plantpat_z.ranall.csv")
+plapat_z=data.frame(a1,plapat_z)
+write.csv(plapat_z,"plapat_z.ranall.csv")
 
-plantpat_c=matrix(nrow=length(a1),ncol=30)# get the 30 simulated c values for the neon site
+plapat_c=matrix(nrow=length(a1),ncol=30)# get the 30 simulated c values for the neon site
 for(i in 1:length(a1)){
-  plantpat_c[i,]=power.z[[i]][2,]
+  plapat_c[i,]=power.z[[i]][2,]
 }
 
-plantpat_c=data.frame(a1,plantpat_c)
-write.csv(all_c,"plantpat_c.ranall.csv")
+plapat_c=data.frame(a1,plapat_c)
+write.csv(plapat_c,"plapat_c.ranall.csv")
 
 3.# for the ECM guild
 
