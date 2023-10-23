@@ -165,6 +165,8 @@ guild=rep(c("acm","ecm","litsap","para","soilsap","woosap","epiphy","plapat"),ti
 com_guild=cbind(com_guild,guild)
 com_guild=subset(com_guild,z<10)# exclude the plots with <3 core
 
+write.csv(com_guild,"com_guild.csv")# the data
+
 leveneTest(z~guild,data=com_guild)#testing variance homogenety, unblanced
 
 oneway.test(z~guild,data=com_guild,na.action=na.omit, var.equal=FALSE)
