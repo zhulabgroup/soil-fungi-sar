@@ -1,6 +1,6 @@
 # for specific functional guilds
 # for the ACM functional guild
-# get the explainatory variables from the full data based on the plotID
+# get the explanatory variables from the full data based on the plotID
 head(model_data)
 model_var=model_data[,c(2,3,6:28)]
 model_var=unique(model_var)
