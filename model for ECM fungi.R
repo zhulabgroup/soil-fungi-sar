@@ -40,5 +40,5 @@ ggcorrplot(cor(ecm_model1[,c(2,3,5:27)]), hc.order = TRUE, type = "lower", lab =
 3
 # build a model for the ecm guild,with 104 plots included, soil pH and fundiversity
 
-mod=lmer(z ~ logc+organicCPercent + ph+ nitrogen+ sand +bio2 +bio8+ bio18 +bio12+ bio15  +spei+ funrich +bio1 +rich+fine+ d15N +d13C +rootn +   rootc +rootcn +(1 |siteIDD/plotID),data=ecm_model1)
+mod=lmer(z ~ logc+organicCPercent + ph+ nitrogen+ sand +bio2 +bio8+ bio18 +bio12+ bio15  +spei+ rich+funrich +bio1 +fine+ d15N +d13C +  rootc +rootcn +(1 |siteIDD/plotID),data=ecm_model1)
 ##
