@@ -8,7 +8,7 @@ head(root.chemi)
 table(root.chemi$plotID)
 root.chemi.mean=aggregate(root.chemi[,3:7], by=list(root.chemi$plotID), mean)
 names(root.chemi.mean)[1]="plotID"
-<<<<<<< HEAD
+
 write.csv(root.chemi.mean,"root.chemi.mean.csv")
 
 ## get the simulated values for each as the response variable
