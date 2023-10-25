@@ -7,52 +7,55 @@ core_mass_type#root mass data
 root.chemi.mean#root trait data
 rich_plot#fungal richness
 plot_loca_all_soil_climate_mean#soil variables
-# mergeing these datasets generates an obhect of 'd5'
+# merging these data sets generates an object of 'd5'
 #computing the z and the log(c) value 
 a=list()
-for (i in 1:dim(all_z)[1])
+for (i in 1:dim(all_z_ranall)[1])# here all_z was saved as "all_z.ranll"
   {
-  a[[i]]=t(all_z[i,2:31])
+  a[[i]]=t(all_z_ranall[i,3:32])
 }
 
 b=a[[1]]
-for(i in 2:dim(all_z)[1])
+for(i in 2:dim(all_z_ranall)[1])#here all_z was saved as "all_z.ranll"
   {
   b=rbind(b,a[[i]])
 }
 
-plotID=rep(all_z$a1,each=30)
+plotID=rep(all_z_ranall$a1,each=30)
 
 all_z_30=cbind(plotID,b)# for each plot,with 30 estimated z values
 all_z_30=data.frame(all_z_30)
-all_z_30$X1=as.numeric(all_z_30$X1)
+all_z_30$V2=as.numeric(all_z_30$V2)
 # for the c values
 
 a=list()
-for (i in 1:dim(all_c)[1])
+for (i in 1:dim(all_c_ranall)[1])
 {
-  a[[i]]=t(all_c[i,2:31])
+  a[[i]]=t(all_c_ranall[i,3:32])
 }
 
 b=a[[1]]
-for(i in 2:dim(all_c)[1])
+for(i in 2:dim(all_c_ranall)[1])
 {
   b=rbind(b,a[[i]])
 }
 
-plotID=rep(all_c$a1,each=30)
+plotID=rep(all_c_ranall$a1,each=30)
 all_c_30=cbind(plotID,b)# for each plot,with 30 estimated c values, which can be used to estimated species per unit sample(estimated=log(c))
 
 all_c_30=data.frame(all_c_30)
-all_c_30$X1=as.numeric(all_c_30$X1)
+all_c_30$V2=as.numeric(all_c_30$V2)
 # combind the z and c
 com_z_c=cbind(all_z_30,all_c_30[,2])
+com_z_c=subset(com_z_c,V2<10)## need to remove the plots with <2 cores
 names(com_z_c)=c("plotID","z","log(c)")
 com_z_c=cbind(com_z_c,c=2.71828^com_z_c$`log(c)`)# the estimated c and z are negatively correlated
 model_data=merge(com_z_c[,c(1,2,4)],d5,by="plotID",all.x = TRUE)
+
 # adding the site 
 siteIDD=substr(model_data$plotID,1,4)
 model_data=cbind(siteIDD,model_data)
+model_data=subset(model_data,z<10)# some sites have explanatory variables but none z,
 
 write.csv(model_data,"model_data.csv")
 model_data=model_data[,-5]
@@ -83,22 +86,31 @@ range01=function(x)## to
 mode.data1[,4:19]=apply(mode.data1[,4:19], 2, range01)%>%data.frame
 
 # site and plot are nested
-mod=lmer(z ~ c+organicCPercent  + ph+ nitrogen+   sand +bio2 +bio8+ bio18+  bio4 +bio12+ bio15  +    spei+ funrich +bio1+ (1 |siteIDD/plotID),data=mode.data1)
+mod=lmer(z ~ c+organicCPercent  + ph+ nitrogen+   sand +bio2 +bio8+ bio18+  bio4 +bio12+ bio15  + spei+ funrich +bio1+ (1 |siteIDD/plotID),data=mode.data1)
 
-step(mod)
-#best model
-mod=lmer(z ~ c + nitrogen + sand + bio2 + bio12 + bio15 + funrich + (1 | siteIDD/plotID),data=mode.data1)
-summary(mod)
+# plotID as the only random effect (483 plots)
 
+mod=lmer(z ~ c+organicCPercent  + ph+ nitrogen+   sand +bio2 +bio8+ bio18+  bio4 +bio12+ bio15  + spei+ funrich +bio1+ (1 |plotID),data=mode.data1)
 
-# plotid as the only random effect (483 plots)
-mod=lmer(z ~ c+organicCPercent  + ph+ nitrogen+   sand +bio2 +bio8+ bio18+  bio4 +bio12+ bio15  +    spei+ funrich +bio1+ (1 |plotID),data=mode.data1)
 effect_all_clima_soil=summary(mod)
 effect_all_clima_soil=effect_all_clima_soil$coefficients
 effect_all_clima_soil=data.frame(effect_all_clima_soil)
-#best model
-mod=lmer(z ~  c + sand + bio2 + bio4 + bio12 + bio15 + funrich + (1 | plotID),data=mode.data1)
-summary(mod)
+sig=effect_all_clima_soil$Pr...t..
+sig=round(sig,3)
+sig[sig>0.05]="no"
+sig[sig<0.05]="sig"
+effect_all_clima_soil=cbind(effect_all_clima_soil,sig)
+
+
+
+modinter=lmer(z ~ c+organicCPercent  + ph+ nitrogen+   sand +bio2 +bio8+ bio18+  bio4 +bio12+ bio15  + spei+ funrich +bio1+ (c+organicCPercent  + ph+ nitrogen+   sand +bio2 +bio8+ bio18+  bio4 +bio12+ bio15  +    spei+ funrich +bio1|plotID),data=mode.data1)
+
+
+
+# the random slope model seems better
+ranslope=lmer(z ~ c+organicCPercent  + ph+ nitrogen+   sand +bio2 +bio8+ bio18+  bio4 +bio12+ bio15  +    spei+ funrich +bio1+ (0+c+organicCPercent  + ph+ nitrogen+   sand +bio2 +bio8+ bio18+  bio4 +bio12+ bio15  +    spei+ funrich +bio1|plotID),data=mode.data1)
+
+
 # what if c is not included in the model?
 mod=lmer(z ~ organicCPercent  + ph+ nitrogen+   sand +bio2 +bio8+ bio18+  bio4 +bio12+ bio15  +    spei+ funrich +bio1+ (1 |plotID),data=mode.data1)
 summary(mod)
@@ -111,7 +123,7 @@ mod=lmer(z ~ c + organicCPercent + nitrogen + sand + bio18 + bio4 + bio12 + bio1
 summary(mod)
 
 
-## climate, plant diversity and soil model: only neon sites were included, dob sites do not have plant data(396 plots)
+## climate, plant diversity and soil model: only neon sites were included, dob sites do not have plant data (396 plots)
 mode.data2=model_data[,c(2:20,28)]# GUAN don't have soil variables and will be excluded(possibly this site is out of place)
 mode.data2=subset(mode.data2,siteIDD!="GUAN"&z<10&rich>0)# some sites do have plant data
 # check colinearity among variables
@@ -120,13 +132,24 @@ ggcorrplot(cor(mode.data2[,3:20]), hc.order = TRUE, type = "lower", lab = TRUE)#
 mode.data2[,3:20]=apply(mode.data2[,3:20], 2, range01)%>%data.frame
 
 # when site and plot are nested,  c was included, only bio12 and soil C was significant, and c and funrich still affect the z values
-mod=lmer(z ~ organicCPercent + c+ ph+ nitrogen+ rich+  sand +bio2 +bio8+ bio18+  bio4 +bio12+ bio15  +    spei+ funrich +bio1+ (1 |siteIDD/plotID),data=mode.data2)
+mod=lmer(z ~ organicCPercent + c+ph+ nitrogen+ rich+  sand +bio2 +bio8+ bio18+bio12+ bio15 +bio4 +  spei+ funrich +bio1+ (1 |siteIDD/plotID),data=mode.data2)
 #extract the fixed effect
 effect_neon_clima_soil=summary(mod)
 effect_neon_clima_soil=effect_neon_clima_soil$coefficients
 effect_neon_clima_soil=data.frame(effect_neon_clima_soil)
+sig=effect_neon_clima_soil$Pr...t..
+sig=round(sig,3)
+sig[sig>0.05]="no"
+sig[sig<0.05]="sig"
+effect_neon_clima_soil=cbind(effect_neon_clima_soil,sig)
 
-# adding the code, substr the plotID will generate the same results
+
+
+# random slope model for the neon data?
+
+model_neon_slope=lmer(z ~ organicCPercent + c+ ph+ nitrogen+ rich+  sand +bio2 +bio8+ bio18+  bio4 +bio12+ bio15  + spei+ funrich +bio1+ (0+organicCPercent + c+ ph+ nitrogen+ rich+  sand +bio2 +bio8+ bio18+  bio4 +bio12+ bio15  +  spei+ funrich +bio1|siteIDD/plotID),data=mode.data2)
+
+# adding the code, substr the plotID generates the same results
 mod=lmer(z ~ organicCPercent + c+ ph+ nitrogen+ rich+  sand +bio2 +bio8+ bio18+  bio4 +bio12+ bio15  +    spei+ funrich +bio1+ (1 |siteIDD/code),data=mode.data2)
 
 # if we included only the plotID as the random effect, soil N(-),sand (-),bio8(-),bio4(+),bio12(+),bio15(+),bio1(-)
@@ -140,7 +163,6 @@ mod=lmer(z ~ organicCPercent + c + sand + bio12 + bio15 + funrich + bio1 + (1 | 
 ## only site as random
 mod=lmer(z ~ organicCPercent + c+ ph+ nitrogen+ rich+  sand +bio2 +bio8+ bio18+  bio4 +bio12+ bio15  +    spei+ funrich +bio1+ (1 |siteIDD),data=mode.data2)
 
-step(mod)
 # only plot as random
 mod=lmer(z ~ organicCPercent + c+ ph+ nitrogen+ rich+  sand +bio2 +bio8+ bio18+  bio4 +bio12+ bio15  +    spei+ funrich +bio1+ (1 |plotID),data=mode.data2)
 
@@ -154,16 +176,30 @@ cor(mode.data3[,3:27])
 # i therefor excluded coarse, bio4,bold,cec and root n
 ggcorrplot(cor(mode.data3[,3:27]), hc.order = TRUE, type = "lower", lab = TRUE)#
 mode.data3[,3:27]=apply(mode.data3[,3:27], 2, range01)%>%data.frame
-
+#bold-bio1 related with r>0/75
+#bio1-bio4
+#bold-soil oc
+#coarse-fine
+#cec-bold
+#root n-root cn
 #site and plot are nested, only funrich showed a significant effect with plant rich showing a marginal effect
 mod=lmer(z ~ organicCPercent + c+ ph+ nitrogen+ rich+  sand +bio2 +bio8+ bio18+  +bio12+ bio15  +    spei+ funrich +bio1+fine+d13C+rootc  +  rootcn + (1 |siteIDD/plotID),data=mode.data3)
 
 effect_neon_clima_soil_root=summary(mod)
 effect_neon_clima_soil_root=effect_neon_clima_soil_root$coefficients
 effect_neon_clima_soil_root=data.frame(effect_neon_clima_soil_root)
+sig=effect_neon_clima_soil_root$Pr...t..
+sig=round(sig,3)
+sig[sig>0.05]="no"
+sig[sig<0.05]="sig"
+effect_neon_clima_soil_root=cbind(effect_neon_clima_soil_root,sig)
 
-# best model
-mode=lmer(z ~ c + rich + funrich + bio1 + (1 | siteIDD/plotID),data=mode.data3)
+
+# random slope model
+
+rand_slop_root=lmer(z ~ organicCPercent + c+ ph+ nitrogen+ rich+  sand +bio2 +bio8+ bio18+  +bio12+ bio15  +spei+ funrich +bio1+fine+d13C+rootc +rootcn + (1 |siteIDD/plotID),data=mode.data3)
+
+
 # site as the only random effect
 mod=lmer(z ~ organicCPercent + c+ ph+ nitrogen+ rich+  sand +bio2 +bio8+ bio18+  +bio12+ bio15  +    spei+ funrich +bio1+fine+d13C+rootc  +  rootcn + (1 |siteIDD),data=mode.data3)
 step(mod)

@@ -43,7 +43,7 @@ a=ggboxplot(comp_vege,x="type",y="z",fill = "type",outlier.shape = NA)+
   xlab("")+
   theme(legend.position = "bottom", legend.text = element_text(size=14), text = element_text(size=15), axis.text.x = element_blank(),axis.title.y = element_text(face= "italic",size=20),axis.title.x = element_text(size=20),axis.ticks.x = element_blank())+
   ylab("z")+
-  theme(legend.position = c(0.45,0.7858), legend.text = element_text(size=14), text = element_text(size=15), axis.text.x = element_blank(),axis.title.y = element_text(face= "italic",size=20),axis.title.x = element_text(size=20),axis.ticks.x = element_blank())+
+  theme(legend.position = c(0.45,0.8058), legend.text = element_text(size=14), text = element_text(size=15), axis.text.x = element_blank(),axis.title.y = element_text(face= "italic",size=20),axis.title.x = element_text(size=20),axis.ticks.x = element_blank())+
   guides(fill=guide_legend(nrow=7, byrow=TRUE))+# make four rows for the legend
   geom_hline(yintercept =0.7559199,linetype="dashed",color="red" )+
   scale_fill_manual("",breaks=od$type,values=c("chocolate1","gray","cadetblue1","lavender","greenyellow","mediumseagreen","cornsilk","tan","wheat","gold","mediumpurple"),labels=c("dwarfScrub(N=3)" , "emergentHerbaceous\nWetlands(N=4)", "grassland\nHerbaceous(N=64)" , "pastureHay(N=17)", "shrubScrub(N=51)" , "evergreenForest(N=93)","woodyWetlands(N=29)","deciduousForest(N=96)",  "cultivatedCrops(N=22)"  ,  "mixedForest(N=20)" , "sedgeHerbaceous(N=4)"   ))+
