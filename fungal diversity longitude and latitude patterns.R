@@ -1,5 +1,5 @@
 # look at the relationship between fungal diversity and environmental variables
-setwd(/.../)
+
 
 d=sample_data(rare_all)
 table(d$Project)# the first 908 rows are dob sites with the remaining 5470 being NEON sites
@@ -22,7 +22,7 @@ a1=unique(a1$plotIDM)
 
 rich=numeric()
 for (i in 1:length(a1)){
-  cat('\r',paste(paste0(rep("*", round(i/ 1, 0)), collapse = ''), i, collapse = ''))# informs the processing
+  #cat('\r',paste(paste0(rep("*", round(i/ 1, 0)), collapse = ''), i, collapse = ''))# informs the processing
   neon_sub <- subset_samples(rare_all, plotIDM==a1[i])
   
   otu=otu_table(neon_sub)
