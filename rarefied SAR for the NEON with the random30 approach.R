@@ -9,13 +9,10 @@ neon <- subset_taxa(neon, taxa_sums(neon) > 0)
 neon <- subset_samples(neon, sample_sums(neon) > 0)# both soil horizons were included 
 #rm(neon_dob)
 # suggestions for the sampling depth for rarefy. I choose 1000 reads, which will lead to the reoval of 10% samples
-https://forum.qiime2.org/t/how-to-select-a-sampling-depth/4265/5
-https://forum.qiime2.org/t/what-is-the-threshold-above-that-i-select-from-the-sequence-count-for-diversity-analysis-in-qiime-2/6897
-
-
+#https://forum.qiime2.org/t/how-to-select-a-sampling-depth/4265/5
+#https://forum.qiime2.org/t/what-is-the-threshold-above-that-i-select-from-the-sequence-count-for-diversity-analysis-in-qiime-2/6897
 #dim(subset(k,k<3000))[1]/6222
 rare_neon=rarefy_even_depth(neon, rngseed=10,sample.size = 3000, replace = F)#749 samples were removed
-
 d <- sample_data(neon_rare) # sample data data frame
 d=data.frame(d)
 plotID=substr(d$geneticSampleID,1,8)# get the id for each plot so that we can estimate the SAR based on the plot
@@ -23,15 +20,11 @@ d <- sample_data(neon_rare)
 plotID=data.frame(plotID)
 row.names(plotID)=row.names(d)
 plotID=sample_data(plotID)
-
 d<- merge_phyloseq(neon_rare, plotID) # adding the plotID to the sample data
-
 a1= sample_data(d)# the unique of the plotID, we have 476 plots
 a1=unique(a1$plotID)
-
 times=30
 power.z <- vector("list", length(a1))
-
 for (i in 1:length(a1))
 {
   cat('\r',paste(paste0(rep("*", round(i/ 1, 0)), collapse = ''), i, collapse = ''))# informs the processing
@@ -57,7 +50,6 @@ for (i in 1:length(a1))
     }
     stopCluster(cl)
   }
-  
   else
   {
     power.z[[i]]=matrix(10,nrow=2,ncol = dim1[1])###the 10 is randomly selected, to creat a matrix for the sites with less 3 cores to avoid NULL output
@@ -68,22 +60,15 @@ rare_neon_z=matrix(nrow=length(a1),ncol=30)# get the 30 simulated z values for t
 for(i in 1:length(a1)){
   rare_neon_z[i,]=power.z[[i]][1,]
 }
-
 rare_neon_z=data.frame(a1,rare_neon_z)
-
 rare_neon_c=matrix(nrow=length(a1),ncol=30)# get the 30 simulated c values for the rare_neon site
 for(i in 1:length(a1)){
   rare_neon_c[i,]=power.z[[i]][2,]
 }
-
 rare_neon_c=data.frame(a1,rare_neon_c)
 rare_neon_z_mean=apply(rare_neon_z[,2:31],1,mean)# get the mean value of the estimated z and c
 rare_neon_c_mean=apply(rare_neon_c[,2:31],1,mean)# get the mean value of the estimated z and c
-
 rare_neon_z_mean=data.frame(rare_neon_z["a1"],rare_neon_z_mean)
 rare_neon_c_mean=data.frame(rare_neon_c["a1"],rare_neon_c_mean)
-
 plot_level_zc=cbind(rare_neon_z_mean,rare_neon_c_mean)
-
 write.csv(plot_level_zc,"plot_level_zc_rare.csv")
-## new
