@@ -9,7 +9,7 @@ require(getSpei)
 require(ncdf4)
 require(chron)
 # read in the data
-neon_dob <- readRDS("/Users/luowenqi/Desktop/sar/phylo_V3.1.RDS")
+neon_dob <- readRDS("/.../phylo_V3.1.RDS")
 neon <- subset_samples(neon_dob, get_variable(neon_dob, "Project") == "NEON")
 rm(neon_dob)
 # neon <- subset_samples(neon, horizon == "O")
