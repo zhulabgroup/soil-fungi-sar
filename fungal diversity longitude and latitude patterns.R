@@ -30,6 +30,10 @@ for (i in 1:length(a1)){
   
 }
 
+
+
+
+
 rich_plot=data.frame(a1,rich)
 siteid=substr(rich_plot$a1,1,4)
 
