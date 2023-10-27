@@ -1,4 +1,4 @@
-# get the plot level plant diversity
+# step 3 is to get the plot-level plant diversity within the 20 by 20 core plot in the 40 by 40 plot. The resulting output was saved locally.
 library(neonUtilities)
 
 plant.data <- loadByProduct(dpID = "DP1.10058.001")
