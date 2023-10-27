@@ -1,4 +1,4 @@
-# step 2 extracts the plot-level soil variables, climate variables and SPEI. The resluting outputs were saved locally.
+# step 2 extracts the plot-level soil variables, climate variables. The resluting outputs were saved locally.
 
 neon_dob <- readRDS("/Users/luowenqi/Desktop/sar/phylo_V3.1.RDS")
 neon_dob <- subset_samples(neon_dob, get_variable(neon_dob, "horizon") != "AH")
@@ -91,16 +91,3 @@ names(plot_loca_all_soil_climate)[1] <- "plotIDM" # the plot id used to get the 
 plot_loca_all_soil_climate_mean <- aggregate(plot_loca_all_soil_climate[, c(9:22)], by = list(plot_loca_all_soil_climate$plotIDM), mean, sort = FALSE)
 names(plot_loca_all_soil_climate_mean)[1] <- "plotID"
 write.csv(plot_loca_all_soil_climate_mean, "plot_loca_all_soil_climate_mean.csv")
-## get the land aridity index
-
-devtools::install_github("seschaub/getSpei")
-require(getSpei)
-require(ncdf4)
-require(chron)
-
-plot_spei <- plot_loca_all[, 1:3]
-names(plot_spei) <- c("site", "longitude", "latitude")
-
-site_spei <- spec_spei(spei_files = c("spei01"), start_y = 2010, end_y = 2018, locations = plot_spei)
-
-## need to get the mean values of the variables
