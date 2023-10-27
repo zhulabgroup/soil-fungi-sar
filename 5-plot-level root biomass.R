@@ -1,4 +1,4 @@
-# root-biomass
+# step 5 is to determine the plot-level root biomass based on neon products. The values was based on the mean values of multiple cores
 # data describtion
 # https://data.neonscience.org/data-products/DP1.10067.001
 
