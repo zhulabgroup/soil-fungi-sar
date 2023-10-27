@@ -1,4 +1,4 @@
-# compare the mean of the z values among guilds
+# step 11 compare the mean of the z values among guilds, which will be based on the data generated in step 10
 # look at how many observations for each guild
 library(car)
 source("http://aoki2.si.gunma-u.ac.jp/R/src/tukey.R", encoding = "euc-jp")
