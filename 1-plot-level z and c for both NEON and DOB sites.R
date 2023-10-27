@@ -1,15 +1,16 @@
 # step 1 calculates the z and c values for both the neon and dob sites and the resulting outputs were saved locally
+# this step firstly involves the rarefation of the data, which will be used in the downstream analyses when necessary.
 
 rarefy all the data
 neon_dob <- readRDS("/.../.../phylo_V3.1.RDS")
 neon_dob <- subset_samples(neon_dob, get_variable(neon_dob, "horizon")!="AH")
 neon_dob <- subset_samples(neon_dob, get_variable(neon_dob, "horizon")!="OH")# the data only include the O and M soil horizon
-
 neon_dob <- subset_samples(neon_dob, !is.na(lon) & !is.na(lat))
 neon_dob<- subset_taxa(neon_dob, taxa_sums(neon_dob) > 0)
 neon_dob<- subset_samples(neon_dob, sample_sums(neon_dob) > 0)
 # choose a 3000 reads as the fixed sampling depth
 rare_all=rarefy_even_depth(neon_dob, rngseed=10,sample.size = 3000, replace = F)#764 samples were removed
+
 save(rare_all,file="rare_all.Rdata")# save the rarefied data
 
 d=sample_data(rare_all)
