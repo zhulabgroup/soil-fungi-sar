@@ -1,4 +1,4 @@
-# extract plot-level soil variables, climate variables and SPEI
+# step 2 extracts the plot-level soil variables, climate variables and SPEI. The resluting outputs were saved locally.
 
 neon_dob <- readRDS("/Users/luowenqi/Desktop/sar/phylo_V3.1.RDS")
 neon_dob <- subset_samples(neon_dob, get_variable(neon_dob, "horizon") != "AH")
