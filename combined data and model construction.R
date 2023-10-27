@@ -2,21 +2,24 @@
 library(ggcorrplot)
 library(lme4)
 library(lmerTest)
-plot_plant_rich # plant data#p
-core_mass_type # root mass data
-root.chemi.mean # root trait data
-rich_plot # fungal richness
-plot_loca_all_soil_climate_mean # soil variables
-# merging these data sets generates an object of 'd5'
+
+plot_loca_all_soil_climate_mean # soil variables# based on step 2 and 7#
+plot_plant_rich # plant data# based on step 3#
+rich_plot # fungal richness# based on step 4#
+core_mass_type # root mass data#based on step 5#
+root.chemi.mean # root trait data# based on step 6#
+
+# merging these data sets generates an object of 'd5' that will be used at line 56.
 # computing the z and the log(c) value
+# this is based on the calculation in step 1#
 a <- list()
-for (i in 1:dim(all_z_ranall)[1]) # here all_z was saved as "all_z.ranll"
+for (i in 1:dim(all_z_ranall)[1]) # here the initial all_z was saved as "all_z.ranll"
 {
   a[[i]] <- t(all_z_ranall[i, 3:32])
 }
 
 b <- a[[1]]
-for (i in 2:dim(all_z_ranall)[1]) # here all_z was saved as "all_z.ranll"
+for (i in 2:dim(all_z_ranall)[1]) # here the initial "all_z" was saved as "all_z.ranll"
 {
   b <- rbind(b, a[[i]])
 }
@@ -50,7 +53,7 @@ com_z_c <- cbind(all_z_30, all_c_30[, 2])
 com_z_c <- subset(com_z_c, V2 < 10) ## need to remove the plots with <2 cores
 names(com_z_c) <- c("plotID", "z", "log(c)")
 com_z_c <- cbind(com_z_c, c = 2.71828^com_z_c$`log(c)`) # the estimated c and z are negatively correlated
-model_data <- merge(com_z_c[, c(1, 2, 4)], d5, by = "plotID", all.x = TRUE)
+model_data <- merge(com_z_c[, c(1, 2, 4)], d5, by = "plotID", all.x = TRUE)#
 
 # adding the site
 siteIDD <- substr(model_data$plotID, 1, 4)
@@ -60,7 +63,6 @@ model_data <- subset(model_data, z < 10) # some sites have explanatory variables
 write.csv(model_data, "model_data.csv")
 model_data <- model_data[, -5]
 model_data$rich <- as.numeric(model_data$rich)
-
 write.csv(model_data, "model_data.csv")
 
 
