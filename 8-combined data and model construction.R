@@ -1,4 +1,6 @@
 # step 8 is about model build but before doing this we need to combine different datasets for modeling
+# the resulting data that included z, c and other variables will be used for the construction of guild-based model
+# for this data, if we select a plot, there are 30 rows corredponding to the 30 simulated values
 library(ggcorrplot)
 library(lme4)
 library(lmerTest)
@@ -62,7 +64,8 @@ model_data <- subset(model_data, z < 10) # some sites have explanatory variables
 write.csv(model_data, "model_data.csv")
 model_data <- model_data[, -5]
 model_data$rich <- as.numeric(model_data$rich)
-write.csv(model_data, "model_data.csv")
+
+write.csv(model_data, "model_data.csv")# this is a key dataset i saved for the downstream analyses.
 
 
 1. # climate and soil model:both dob and neon sites were included, here only the plotID was treated as a random effect
