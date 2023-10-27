@@ -1,4 +1,6 @@
-# rarefy all the data
+# step 1 calculates the z and c values for both the neon and dob sites and the resulting outputs were saved locally
+
+rarefy all the data
 neon_dob <- readRDS("/.../.../phylo_V3.1.RDS")
 neon_dob <- subset_samples(neon_dob, get_variable(neon_dob, "horizon")!="AH")
 neon_dob <- subset_samples(neon_dob, get_variable(neon_dob, "horizon")!="OH")# the data only include the O and M soil horizon
