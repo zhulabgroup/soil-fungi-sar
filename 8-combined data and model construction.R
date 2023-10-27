@@ -1,15 +1,14 @@
-# combing data for modeling
+# step 8 is about model build but before doing this we need to combine different datasets for modeling
 library(ggcorrplot)
 library(lme4)
 library(lmerTest)
-
 plot_loca_all_soil_climate_mean # soil variables# based on step 2 and 7#
 plot_plant_rich # plant data# based on step 3#
 rich_plot # fungal richness# based on step 4#
 core_mass_type # root mass data#based on step 5#
 root.chemi.mean # root trait data# based on step 6#
 
-# merging these data sets generates an object of 'd5' that will be used at line 56.
+# merging these data sets generates an object of 'd5' that will be used at line 56(or around).
 # computing the z and the log(c) value
 # this is based on the calculation in step 1#
 a <- list()
