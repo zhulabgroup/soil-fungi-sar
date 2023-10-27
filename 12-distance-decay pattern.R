@@ -1,4 +1,4 @@
-## the distance-decay pattern
+## the distance-decay pattern will use the full data generated in step 1
 head(sample_data(rare_all))
 
 d <- sample_data(rare_all)
@@ -21,7 +21,6 @@ rare_all <- d
 
 # for the neon data
 sub_neon <- subset_samples(rare_all, get_variable(rare_all, "Project") == "NEON")
-
 sub_neon <- subset_samples(sub_neon, get_variable(sub_neon, "horizon") != "AH")
 sub_neon <- subset_samples(sub_neon, get_variable(sub_neon, "horizon") != "OH")
 
@@ -47,8 +46,6 @@ sub_neon <- merge_phyloseq(sub_neon, a) # adding the location data to the full d
 
 a1 <- sample_data(sub_neon) # the unique plotID, we have 476 plots
 a1 <- unique(a1$plotIDM) # 472 plotID
-
-
 pair <- list()
 for (i in 1:length(a1)) {
   cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
