@@ -1,4 +1,4 @@
-# Estimate the observed fungal richness for each plot
+# step 4 is to estimate the observed fungal richness for each plot. The resulting output was saved locally.
 
 neon_dob <- readRDS("/.../.../phylo_V3.1.RDS")
 neon_dob <- subset_samples(neon_dob, get_variable(neon_dob, "horizon") != "AH")
