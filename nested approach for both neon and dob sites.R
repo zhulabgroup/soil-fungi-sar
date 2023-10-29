@@ -1,18 +1,14 @@
-# load the rarefied data first
 library(doParallel)
 library(permute)
-
-# rarefy all the data
+# rarefy all the full data
 neon_dob <- readRDS("/.../.../phylo_V3.1.RDS")
 neon_dob <- subset_samples(neon_dob, get_variable(neon_dob, "horizon")!="AH")
 neon_dob <- subset_samples(neon_dob, get_variable(neon_dob, "horizon")!="OH")# the data only include the O and M soil horizon
-
 neon_dob <- subset_samples(neon_dob, !is.na(lon) & !is.na(lat))
 neon_dob<- subset_taxa(neon_dob, taxa_sums(neon_dob) > 0)
 neon_dob<- subset_samples(neon_dob, sample_sums(neon_dob) > 0)
 # choose a 3000 reads as the fixed sampling depth
 rare_all=rarefy_even_depth(neon_dob, rngseed=10,sample.size = 3000, replace = F)#764 samples were removed
-
 # 
 d=sample_data(rare_all)
 table(d$Project)# the first 908 rows are dob sites with the remaining 5470 being NEON sites
@@ -27,7 +23,7 @@ row.names(plotIDM)=row.names(d)
 plotIDM=sample_data(plotIDM)
 d<- merge_phyloseq(rare_all, plotIDM)# merge the new plotid with the initial data 
 # select an unique plot and build a SAR within the plot
-a1= sample_data(d)# the unique plotID, we have 476 plots
+a1= sample_data(d)# the unique plotID, we have 515 plots
 a1=unique(a1$plotIDM)
 
 ###
@@ -39,7 +35,7 @@ for (i in 1:length(a1))
   cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
   neon_sub <- subset_samples(d, plotIDM == a1[i])
   dim1 <- dim(otu_table(neon_sub)) # the number of samples in one site
-  if (dim1[1] >= 3) # we can construct a linear regression with at least three sites
+  if (dim1[1] >= 3) # to construct a linear regression, at least three cores are required
   {
     cl <- makeCluster(3)
     registerDoParallel(cl)
@@ -49,9 +45,9 @@ for (i in 1:length(a1))
       {
         sample_seq <- shuffle(c(1:dim1[1]))
         
-        # take out otu_tab for each site
+        # otu table for each site
         otu_tab <- otu_table(neon_sub)
-        otu_tab <- matrix(otu_tab, nrow = dim1[1], ncol = 67769, byrow = FALSE) #
+        otu_tab <- matrix(otu_tab, nrow = dim1[1], ncol = 67769, byrow = FALSE) #67769 taxa
         
         species[1] <- sum(otu_tab[sample_seq[1], ] > 0)
         
@@ -77,10 +73,21 @@ for (i in 1:length(a1))
 
 
 
-neon_z <- matrix(nrow = length(a1), ncol = 30) # get the 30 simulated z values for the neon site
-for (i in 1:length(a1)) {
-  neon_z[i, ] <- power.z[[i]][1, ]
+all_z=matrix(nrow=length(a1),ncol=30)# get the 30 simulated z values for all the plots
+for(i in 1:length(a1)){
+  all_z[i,]=power.z[[i]][1,]
 }
-# 1:12，12#
+
+all_z=data.frame(a1,all_z)
+write.csv(all_z,"all_z.nestall.csv")
+
+all_c=matrix(nrow=length(a1),ncol=30)# get the 30 simulated c values for the neon site
+for(i in 1:length(a1)){
+  all_c[i,]=power.z[[i]][2,]
+}
+
+all_c=data.frame(a1,all_c)
+write.csv(all_c,"all_c.nestall.csv")
+
 
 
