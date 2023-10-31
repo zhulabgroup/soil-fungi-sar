@@ -1,4 +1,5 @@
-## the tif-formated file shoul be read in
+# step 7 is to extract the spei value for each plot
+# the tif-formated file shoul be stored in the work space
 devtools::install_github("seschaub/getSpei")
 require(getSpei)
 require(ncdf4)

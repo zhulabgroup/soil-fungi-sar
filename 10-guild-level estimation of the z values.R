@@ -1,4 +1,5 @@
-# estimate the z values based on functional guilds
+# step 9 estimate the z values based on different functional guilds
+# this step will use the data generated in step 1, the rarefied data
 library(phyloseq)
 library(tidyverse)
 library(doParallel)
@@ -19,7 +20,6 @@ row.names(d) <- row.names(tax_table(rare_all))
 rare_all <- merge_phyloseq(rare_all, d)
 
 ### choose a specific functional guild and to see how many plots it occurs
-
 
 guild <- tax_table(rare_all)
 guild <- data.frame(guild)

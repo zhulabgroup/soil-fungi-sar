@@ -1,5 +1,6 @@
-# comparing the z values among different land cover types
-# the land cover is plot-based
+# step 9 is to compare the z values among different land cover types
+# this analysis requies the data generated in step 1
+# the land cover type is plot-based
 
 library(neonUtilities)
 library(ggplot2)
@@ -17,21 +18,15 @@ comp_vege <- merge(all_z_30, vegetation_type, by = "plotID") # the former data s
 names(comp_vege) <- c("plotID", "z", "type")
 comp_vege <- subset(comp_vege, z < 10)
 
-write.csv(comp_vege, "comp_vege.csv") # for some reasons, there are NA for two plots as to their land cover
+write.csv(comp_vege, "comp_vege.csv") # for some reasons, there are NA for two plots with their land cover
 
 comp_vege <- subset(comp_vege, plotID != "UNDE_044")
-
 comp_vege <- subset(comp_vege, plotID != "CPER_048")
 
 # test the hormogenety of the variance
-
-
 leveneTest(z ~ type, data = comp_vege)
-
 oneway.test(z ~ type, data = comp_vege, na.action = na.omit, var.equal = FALSE)
-
 tukey(comp_vege$z, comp_vege$type, method = "G")
-
 source("http://aoki2.si.gunma-u.ac.jp/R/src/tukey.R", encoding = "euc-jp")
 
 # create the plots

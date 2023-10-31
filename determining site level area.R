@@ -1,3 +1,5 @@
+# these codes determine the species richness at the site level
+#note, the data was unrarefied. For rarefied data, please see the "1-..." file
 setwd("/Users/luowenqi/Desktop/sar")
 neon_dob <- readRDS("/Users/luowenqi/Desktop/sar/phylo_V3.1.RDS")
 neon <- subset_samples(neon_dob, get_variable(neon_dob, "Project") == "NEON")

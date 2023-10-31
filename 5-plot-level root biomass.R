@@ -1,7 +1,6 @@
-# root-biomass
-# data describtion
-# https://data.neonscience.org/data-products/DP1.10067.001
+# step 5 is to determine the plot-level root biomass based on neon data products. The values was based on the mean values of multiple core-level root measurements
 
+# https://data.neonscience.org/data-products/DP1.10067.001# about the data product
 root.data <- loadByProduct(dpID = "DP1.10067.001") #
 root.data[[1]]
 root.data[[2]]
@@ -16,18 +15,17 @@ root.data[[10]] # site description
 head(root.data[[4]])
 unique(root.data[[4]]["sampleType"])
 
-root.mass <- data.frame(root.data[[5]]) # the biomass data
+root.mass <- data.frame(root.data[[5]]) # the root biomass data
 root.mass <- root.mass[, c("siteID", "plotID", "sampleID", "subsampleID", "sizeCategory", "rootStatus", "dryMass", "collectDate")]
-# lump samples within a single core and plot
+# lump samples within a single core and a specific plot
 unique(root.mass$rootStatus)
-# before 2016 roots were sorted based four orders and two root status but after 2016 may, roots were sorted into three orders
+# before 2016 root materials were sorted based on four orders and two root status but after may in 2016, roots were sorted into three orders
 # so we need to use a criteria to lump the data
 code <- substr(root.mass$sampleID, 12, 14)
-root.mass <- cbind(root.mass, code) # samples of the same code are from the same sampling strip
+root.mass <- cbind(root.mass, code) # samples of the same code are from the same sampling strip, located within a plot
 face <- substr(root.mass$sampleID, 25, 29)
-root.mass <- cbind(root.mass, face) # the face of the sample, samples of the same code and face are from the same core
-head(root.mass)
-subset(root.mass, plotID == "BART_074")
+root.mass <- cbind(root.mass, face) # the face of the sampleing point, samples of the same code and face are from the same core
+
 # to get the unique id of a soil core
 core <- paste(root.mass$plotID, "_", root.mass$code, "_", root.mass$face)
 root.mass <- cbind(root.mass, core)
@@ -76,4 +74,7 @@ head(core_mass_type)
 # to look at the number of plot per site
 plotID <- substr(core_mass_type$coreID, 1, 8)
 core_mass_type <- cbind(core_mass_type, plotID)
+
+write.csv(core_mass_type,"core_mass_type.csv")
+
 # in some case, only one core was sampled, either in the S or in the N direction

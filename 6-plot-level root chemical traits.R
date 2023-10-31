@@ -1,4 +1,4 @@
-# get the plot-level root traits#
+# step 6 is to get the plot-level root chemical traits based on neon data products
 library(neonUtilities)
 root.data <- loadByProduct(dpID = "DP1.10067.001") #
 root.chemi <- root.data[[4]]
@@ -10,6 +10,8 @@ root.chemi.mean <- aggregate(root.chemi[, 3:7], by = list(root.chemi$plotID), me
 names(root.chemi.mean)[1] <- "plotID"
 
 write.csv(root.chemi.mean, "root.chemi.mean.csv")
+
+# the below codes might not be relavent but i retained this 
 
 ## get the simulated values for each as the response variable
 a <- list()
