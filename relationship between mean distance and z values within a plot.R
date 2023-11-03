@@ -1,14 +1,14 @@
 # determine the mean distance among pairwise soil cores within the 40 x 40 m plot
 # we can look at how this mean distance impact the simulated z values
-rm(list=ls())
+rm(list = ls())
 neon_dob <- readRDS("/.../.../phylo_V3.1.RDS")
-neon_dob <- subset_samples(neon_dob, get_variable(neon_dob, "horizon")!="AH")
-neon_dob <- subset_samples(neon_dob, get_variable(neon_dob, "horizon")!="OH")# the data only include the O and M soil horizon
+neon_dob <- subset_samples(neon_dob, get_variable(neon_dob, "horizon") != "AH")
+neon_dob <- subset_samples(neon_dob, get_variable(neon_dob, "horizon") != "OH") # the data only include the O and M soil horizon
 neon_dob <- subset_samples(neon_dob, !is.na(lon) & !is.na(lat))
-neon_dob<- subset_taxa(neon_dob, taxa_sums(neon_dob) > 0)
-neon_dob<- subset_samples(neon_dob, sample_sums(neon_dob) > 0)
+neon_dob <- subset_taxa(neon_dob, taxa_sums(neon_dob) > 0)
+neon_dob <- subset_samples(neon_dob, sample_sums(neon_dob) > 0)
 # choose a 3000 reads as the fixed sampling depth
-rare_all=rarefy_even_depth(neon_dob, rngseed=10,sample.size = 3000, replace = F)#764 samples were removed
+rare_all <- rarefy_even_depth(neon_dob, rngseed = 10, sample.size = 3000, replace = F) # 764 samples were removed
 head(sample_data(rare_all))
 
 d <- sample_data(rare_all)
@@ -66,14 +66,14 @@ for (i in 1:length(a1)) {
   ddt[i] <- mean(matrix(dis_tance))
 }
 
-plot_mean_dist=data.frame(cbind(plotID=a1,distance=ddt))
-plot_mean_dist$distance=as.numeric(plot_mean_dist$distance)
+plot_mean_dist <- data.frame(cbind(plotID = a1, distance = ddt))
+plot_mean_dist$distance <- as.numeric(plot_mean_dist$distance)
 
 # does the mean distance affect the estimated z values?
 
-d=aggregate(z~plotID,data=model_data,FUN=mean)# the full dataset includes many variables including the z 
-d=merge(d,plot_mean_dist,by="plotID")
-plot(z~distance,data=subset(d,z<10))
-summary(lm(z~distance,data=subset(d,z<10)))
+d <- aggregate(z ~ plotID, data = model_data, FUN = mean) # the full dataset includes many variables including the z
+d <- merge(d, plot_mean_dist, by = "plotID")
+plot(z ~ distance, data = subset(d, z < 10))
+summary(lm(z ~ distance, data = subset(d, z < 10)))
 # weak while significant positive relationship between the z and the z values
-#slope:0.002642, and p-value of 0.0495 * 
+# slope:0.002642, and p-value of 0.0495 *
