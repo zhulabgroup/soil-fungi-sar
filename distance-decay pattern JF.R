@@ -24,7 +24,7 @@ quantile((sample_sums(otu_table(dob))), 0.1)
 set.seed(1000)
 
 # rarefy
-dob_rare <- rarefy_even_depth(dob, 3000)
+dob_rare <- rarefy_even_depth(dob, 3000)# as we are treating the two data sets as a whole, i think we should rarefy the full data set rather than separately?
 beta_diversity_mat <- vegdist(otu_table(dob_rare), "jaccard")
 d <- sample_data(dob_rare)
 
