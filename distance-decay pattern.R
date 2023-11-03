@@ -1,4 +1,13 @@
-## the distance-decay pattern
+## look at the distance-decay pattern within the 40 by 40 m plot based on the relative location of the soil cores
+rm(list=ls())
+neon_dob <- readRDS("/.../.../phylo_V3.1.RDS")
+neon_dob <- subset_samples(neon_dob, get_variable(neon_dob, "horizon")!="AH")
+neon_dob <- subset_samples(neon_dob, get_variable(neon_dob, "horizon")!="OH")# the data only include the O and M soil horizon
+neon_dob <- subset_samples(neon_dob, !is.na(lon) & !is.na(lat))
+neon_dob<- subset_taxa(neon_dob, taxa_sums(neon_dob) > 0)
+neon_dob<- subset_samples(neon_dob, sample_sums(neon_dob) > 0)
+# choose a 3000 reads as the fixed sampling depth
+rare_all=rarefy_even_depth(neon_dob, rngseed=10,sample.size = 3000, replace = F)#764 samples were removed
 head(sample_data(rare_all))
 
 d <- sample_data(rare_all)
@@ -18,14 +27,12 @@ a1 <- sample_data(d) # the unique plotID, we have 476 plots
 a1 <- unique(a1$plotIDM)
 rare_all <- d
 
-
 # for the neon data
 sub_neon <- subset_samples(rare_all, get_variable(rare_all, "Project") == "NEON")
-
 sub_neon <- subset_samples(sub_neon, get_variable(sub_neon, "horizon") != "AH")
 sub_neon <- subset_samples(sub_neon, get_variable(sub_neon, "horizon") != "OH")
 
-# the location within the 40 by 40 plot
+# the location within the 40 by 40 m plot
 loca <- data.frame(sample_data(sub_neon))["geneticSampleID"] # need to be
 loca <- substr(loca$geneticSampleID, 11, 20)
 loca <- data.frame(loca)
@@ -58,7 +65,7 @@ for (i in 1:length(a1)) {
   pair[[i]] <- matrix(dis_tance)
 }
 
-# the beta diversity between two cores within a 40 by 40 plot
+# the beta diversity between all pairwise cores within a 40 by 40 plot
 
 beta <- list()
 for (i in 1:length(a1)) {
