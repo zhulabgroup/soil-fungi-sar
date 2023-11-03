@@ -117,3 +117,26 @@ for (site_i in plot_names) {
   )
   #dev.off()
 }
+
+d$loc_within_plot <- matrix(as.numeric(unlist(strsplit(gsub(".*[OM]-(\\d+\\.?\\d*-\\d+\\.?\\d*)-.*", "\\1", d$geneticSampleID), "-"))), ncol = 2, byrow = T)
+d$coord_x <- NA
+d$coord_y <- NA
+for(plot_i in plot_names){  
+  d_sub <- d[which(d$plot == plot_i),]
+  site_coord <- unique(d_sub[, 1:2])  # For instance, New York City coordinates
+  
+  # Relative distances in x and y axes from the known plot
+  relative_distance_x <- d_sub$loc_within_plot[,1]  # Hypothetical relative distance on x-axis
+  relative_distance_y <- d_sub$loc_within_plot[,2]  # Hypothetical relative distance on y-axis
+  
+  # Calculate direct distance using Pythagorean theorem
+  direct_distance <- sqrt(relative_distance_x^2 + relative_distance_y^2)
+  
+  # Calculate angle using inverse tangent (arctan) function
+  angle <- atan2(relative_distance_y, relative_distance_x) * (180 / pi)  # Convert radians to degrees
+  
+  # Calculate the new plot's coordinates based on the known plot
+  coord <- t(apply(cbind(angle, direct_distance), 1, function(x) destPoint(p = site_coord, b = x[1], d = x[2])))
+  d$coord_x[which(d$plot == plot_i)] <- coord[,1]
+  d$coord_y[which(d$plot == plot_i)] <- coord[,2]
+}
