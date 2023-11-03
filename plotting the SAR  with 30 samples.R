@@ -1,4 +1,4 @@
-# to show the variation in the number of species for each iteratio
+# to show the variation in the estimated z values, taking a plot for an example
 library(doParallel)
 library(permute)
 library(ggplot2)
