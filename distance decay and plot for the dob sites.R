@@ -60,5 +60,5 @@ dob_dis_spa=cbind(d5,d6)
 
 ggplot(data=dob_dis_spa,aes(x=log(distance+1),y=beta,color=d6))+geom_point(color="black",alpha=0.1)+
   geom_smooth(method="lm")+
-  scale_color_manual("hehe",breaks=c("fine","region","within"),labels=c("<5 m","40x40 m","regional"),values=c("green","red","purple"))+
+  scale_color_manual("",breaks=c("fine","region","within"),labels=c("<5 m","40x40 m","regional"),values=c("green","red","purple"))+
   theme(legend.position = "bottom", text = element_text(size=18), plot.title = element_text(size=15,hjust=0.5),axis.text.y = element_text(hjust = 0),axis.text.x = element_text(hjust = 1),axis.title.y = element_text(size=18),axis.title.x = element_text(size=18),axis.ticks.x = element_blank(),panel.background=element_rect(fill="NA"),panel.border = element_rect(color = "black", size = 1.5, fill = NA))
