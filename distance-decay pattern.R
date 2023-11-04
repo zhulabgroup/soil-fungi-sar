@@ -53,7 +53,8 @@ a <- sample_data(a)
 sub_neon <- merge_phyloseq(sub_neon, a) # adding the location data to the full data.
 
 a1 <- sample_data(sub_neon) # the unique plotID, we have 476 plots
-a1 <- unique(a1$plotIDM) # 472 plotID
+a1 <- unique(a1$plotIDM) # 472 plotID for the neon site
+
 
 
 pair <- list()
