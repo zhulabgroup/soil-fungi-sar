@@ -85,10 +85,61 @@ for (site_i in site_names) {
 # 2. NEON
 beta_neon <- readRDS("E:/beta_dist.RDS") # the calculated beta diversity matrix between each 2 samples in all NEON dataset
 d <- sample_data(neon)
+# d <- read.table("E:/sample_data_neon_dob.txt")
 d <- d[which(row.names(d) %in% attributes(beta_neon)[["Labels"]]),]
-dist_neon <- distm(d[, 1:2], fun = distHaversine)
+
+## directly calculate the distance 
+## without considering relative location of samples 
+## within the same plot
+# dist_neon <- distm(d[, 1:2], fun = distHaversine)
+
+## distance including the relative location of different samples
+## within the same plot
+plot_names <- unique(substr(d$geneticSampleID, 1, 8))
+d$plot <- substr(d$geneticSampleID, 1, 8)
+d$loc_within_plot <- matrix(as.numeric(unlist(strsplit(gsub(".*[OM]-(\\d+\\.?\\d*-\\d+\\.?\\d*)-.*", "\\1", d$geneticSampleID), "-"))), ncol = 2, byrow = T)
+d$coord_x <- NA
+d$coord_y <- NA
+# calculate the coordination of each sample
+for(plot_i in plot_names){  
+  d_sub <- d[which(d$plot == plot_i),]
+  site_coord <- unique(d_sub[, 1:2])  # For instance, New York City coordinates
+  
+  # Relative distances in x and y axes from the known plot
+  relative_distance_x <- d_sub$loc_within_plot[,1]  # Hypothetical relative distance on x-axis
+  relative_distance_y <- d_sub$loc_within_plot[,2]  # Hypothetical relative distance on y-axis
+  
+  # Calculate direct distance using Pythagorean theorem
+  direct_distance <- sqrt(relative_distance_x^2 + relative_distance_y^2)
+  
+  # Calculate angle using inverse tangent (arctan) function
+  angle <- atan2(relative_distance_y, relative_distance_x) * (180 / pi)  # Convert radians to degrees
+  
+  # Calculate the new plot's coordinates based on the known plot
+  coord <- t(apply(cbind(angle, direct_distance), 1, function(x) destPoint(p = site_coord, b = x[1], d = x[2])))
+  d$coord_x[which(d$plot == plot_i)] <- coord[,1]
+  d$coord_y[which(d$plot == plot_i)] <- coord[,2]
+}
+
+dist_neon <- distm(d[, c("coord_x", "coord_y")], fun = distHaversine)
 dist_neon <- as.dist(dist_neon)
-plot(dist_neon[which(dist_neon > 0)], beta_neon[which(dist_neon > 0)], xlab = "distance", ylab = "jaccard distance")
+
+# label the pairwise samples
+# if 2 samples in same plot, the corresponding entry in matrix is 2
+# if in same site, the value is 1
+# if in different sites, the value is 0
+loc_labels <- substr(d$geneticSampleID, 1, 8)
+loc_comparison_matrix <- outer(loc_labels, loc_labels, `==`) + 0
+loc_labels <- substr(d$geneticSampleID, 1, 4)
+loc_comparison_matrix_1 <- outer(loc_labels, loc_labels, `==`) + 0
+loc_comparison_matrix <- as.dist(loc_comparison_matrix + loc_comparison_matrix_1)
+loc_comparison_matrix <- as.character(factor(
+    loc_comparison_matrix, levels = c("0","1","2"), 
+    labels = c("blue", "orange", "green")))
+
+png("distance_decay pattern.png", width = 480 * 3)
+plot(dist_neon[which(dist_neon < 10000 & dist_neon > 0)], beta_neon[which(dist_neon < 10000 & dist_neon > 0)], xlab = "distance", ylab = "jaccard distance", col = class_comparison_matrix[which(dist_neon < 10000 & dist_neon > 0)])
+dev.off()
 
 # distance-decay pattern within plot
 neon <- subset_samples(neon, sample_sums(neon) >= 3000)
@@ -118,25 +169,3 @@ for (site_i in plot_names) {
   #dev.off()
 }
 
-d$loc_within_plot <- matrix(as.numeric(unlist(strsplit(gsub(".*[OM]-(\\d+\\.?\\d*-\\d+\\.?\\d*)-.*", "\\1", d$geneticSampleID), "-"))), ncol = 2, byrow = T)
-d$coord_x <- NA
-d$coord_y <- NA
-for(plot_i in plot_names){  
-  d_sub <- d[which(d$plot == plot_i),]
-  site_coord <- unique(d_sub[, 1:2])  # For instance, New York City coordinates
-  
-  # Relative distances in x and y axes from the known plot
-  relative_distance_x <- d_sub$loc_within_plot[,1]  # Hypothetical relative distance on x-axis
-  relative_distance_y <- d_sub$loc_within_plot[,2]  # Hypothetical relative distance on y-axis
-  
-  # Calculate direct distance using Pythagorean theorem
-  direct_distance <- sqrt(relative_distance_x^2 + relative_distance_y^2)
-  
-  # Calculate angle using inverse tangent (arctan) function
-  angle <- atan2(relative_distance_y, relative_distance_x) * (180 / pi)  # Convert radians to degrees
-  
-  # Calculate the new plot's coordinates based on the known plot
-  coord <- t(apply(cbind(angle, direct_distance), 1, function(x) destPoint(p = site_coord, b = x[1], d = x[2])))
-  d$coord_x[which(d$plot == plot_i)] <- coord[,1]
-  d$coord_y[which(d$plot == plot_i)] <- coord[,2]
-}
