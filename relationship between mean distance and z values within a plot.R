@@ -71,9 +71,9 @@ plot_mean_dist$distance <- as.numeric(plot_mean_dist$distance)
 
 # does the mean distance affect the estimated z values?
 
-d <- aggregate(z ~ plotID, data = model_data, FUN = mean) # the full dataset includes many variables including the z
+d <- aggregate(z ~ plotID, data = model_data, FUN = mean) # the full dataset that includes many variables including the z
 d <- merge(d, plot_mean_dist, by = "plotID")
 plot(z ~ distance, data = subset(d, z < 10))
 summary(lm(z ~ distance, data = subset(d, z < 10)))
-# weak while significant positive relationship between the z and the z values
+# weak while significant positive relationship between the mean distance and the z values
 # slope:0.002642, and p-value of 0.0495 *
