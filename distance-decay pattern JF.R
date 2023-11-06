@@ -32,19 +32,25 @@ d <- sample_data(dob_rare)
 dist_mat <- distm(d[, 1:2], fun = distHaversine)
 dist_mat <- as.dist(dist_mat)
 
-plot(dist_mat, beta_diversity_mat)
-plot(dist_mat[which(dist_mat <= 41 & dist_mat > 0)],
-  beta_diversity_mat[which(dist_mat <= 41 & dist_mat > 0)],
-  xlab = "distance", ylab = "Jaccard Distance", main = "DoB"
+loc_labels <- d$Site
+loc_comparison_matrix <- outer(loc_labels, loc_labels, `==`) + 0
+loc_labels <- substr(d$geneticSampleID, 1, 2)
+loc_comparison_matrix_1 <- outer(loc_labels, loc_labels, `==`) + 0
+loc_comparison_matrix <- as.dist(loc_comparison_matrix + loc_comparison_matrix_1)
+loc_comparison_matrix <- as.character(factor(
+  loc_comparison_matrix, levels = c("0","1","2"), 
+  labels = c("blue", "orange", "green")))
+
+png("distance decay dob.png", width = 480 * 3)
+plot(dist_mat[which(dist_mat > 0)],
+  beta_diversity_mat[which(dist_mat > 0)],
+  xlab = "log(distance)", ylab = "Jaccard Distance", main = "DoB",
+  log = "x", col = loc_comparison_matrix[which(dist_mat > 0)]
 )
-plot(dist_mat[which(dist_mat > 41)],
-  beta_diversity_mat[which(dist_mat > 41)],
-  xlab = "distance", ylab = "Jaccard Distance", main = "DoB"
-)
-plot(log(dist_mat),
-  beta_diversity_mat,
-  xlab = "log(distance)", ylab = "Jaccard Distance", main = "DoB"
-)
+legend("bottomright", pch = c(1,1,1), col = rev(c("blue", "orange", "green")),
+       legend = c("within plot", "within site", "across sites"))
+dev.off()
+
 rownames(dist_mat) <- d$geneticSampleID
 colnames(dist_mat) <- d$geneticSampleID
 
@@ -138,7 +144,13 @@ loc_comparison_matrix <- as.character(factor(
     labels = c("blue", "orange", "green")))
 
 png("distance_decay pattern.png", width = 480 * 3)
-plot(dist_neon[which(dist_neon < 10000 & dist_neon > 0)], beta_neon[which(dist_neon < 10000 & dist_neon > 0)], xlab = "distance", ylab = "jaccard distance", col = class_comparison_matrix[which(dist_neon < 10000 & dist_neon > 0)])
+plot(dist_neon[which(dist_neon > 0)], 
+     beta_neon[which(dist_neon > 0)], 
+     xlab = "log(distance)", ylab = "jaccard distance", 
+     col = loc_comparison_matrix[which(dist_neon > 0)], 
+     log = "x")
+legend("bottomright", pch = c(1,1,1), col = rev(c("blue", "orange", "green")),
+       legend = c("within plot", "within site", "across sites"))
 dev.off()
 
 # distance-decay pattern within plot
