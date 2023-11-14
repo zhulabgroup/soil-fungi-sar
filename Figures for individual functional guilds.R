@@ -58,7 +58,7 @@ a=ggplot()+
   geom_segment(data=acm_effect_plotran[3:21,],color="gray",size=0.8,aes(y=vabe,yend=vabe,x=Estimate  -1.96*Std..Error,xend=Estimate+1.96*Std..Error))+
   geom_vline(xintercept=0,color="red",linetype="dashed",size=1.2)+
   geom_point(data=acm_effect_plotran[3:21,],pch=21,aes(x=Estimate,y=vabe,fill=sig),size=4)+
-  scale_y_discrete(breaks=c("(Intercept)", "logc","bio1","bio2","bio4","bio8","bio12","bio15","bio18","spei", "organicCPercent","ph","nitrogen","sand","rich","funrich","fine","d15N","d13C","rootc","rootcn"),label=c("(Intercept)", "logc","MAT","bio2","Tem.seas.","bio8","MAP","Pre.seas.","bio18","SPEI", "SoilC","pH","SoilN","Sand","Pla.rich","Fun.rich",expression(Root[mass]),expression(Root[d15N]),expression(Root[d13C]),expression(Root[C]),expression(Root[CN])))+
+  scale_y_discrete(breaks=c("(Intercept)", "logc","bio1","bio2","bio4","bio8","bio12","bio15","bio18","spei", "organicCPercent","ph","nitrogen","sand","rich","funrich","fine","d15N","d13C","rootc","rootcn"),label=c("(Intercept)", "logc","MAT","Bio2","Tem.seas.","Bio8","MAP","Pre.seas.","Bio18","SPEI", "SoilC","pH","SoilN","Sand","Pla.rich","Fun.rich",expression(Root[mass]),expression(Root[d15N]),expression(Root[d13C]),expression(Root[C]),expression(Root[CN])))+
 xlab("")+
   ggtitle("ACM (N=87)")+
   scale_fill_manual("",breaks=c("sig","no"),values=c("mediumpurple","gray"))+
@@ -74,7 +74,7 @@ b=ggplot()+
   geom_segment(data=ecm_effect_plotran[3:20,],color="gray",size=0.8,aes(y=vabe,yend=vabe,x=Estimate  -1.96*Std..Error,xend=Estimate+1.96*Std..Error))+
   geom_vline(xintercept=0,color="red",linetype="dashed",size=1.2)+
   geom_point(data=ecm_effect_plotran[3:20,],pch=21,aes(x=Estimate,y=vabe,fill=sig),size=4)+
-  scale_y_discrete(breaks=c("(Intercept)", "logc","bio1","bio2","bio8","bio12","bio15","bio18","spei", "organicCPercent","ph","nitrogen","sand","rich","funrich","fine","d15N","d13C","rootc","rootcn"),label=c("(Intercept)", "logc","MAT","bio2","bio8","MAP","Pre.seas.","bio18","SPEI", "SoilC","pH","SoilN","Sand","Pla.rich","Fun.rich",expression(Root[mass]),expression(Root[d15N]),expression(Root[d13C]),expression(Root[C]),expression(Root[CN])))+
+  scale_y_discrete(breaks=c("(Intercept)", "logc","bio1","bio2","bio8","bio12","bio15","bio18","spei", "organicCPercent","ph","nitrogen","sand","rich","funrich","fine","d15N","d13C","rootc","rootcn"),label=c("(Intercept)", "logc","MAT","Bio2","Bio8","MAP","Pre.seas.","Bio18","SPEI", "SoilC","pH","SoilN","Sand","Pla.rich","Fun.rich",expression(Root[mass]),expression(Root[d15N]),expression(Root[d13C]),expression(Root[C]),expression(Root[CN])))+
   xlab("")+
   ggtitle("ECM (N=104)")+
   scale_fill_manual("",breaks=c("sig","no"),values=c("mediumpurple","gray"))+
@@ -89,7 +89,7 @@ c=ggplot()+
   geom_vline(xintercept=0,color="red",linetype="dashed",size=1.2)+
   geom_point(data=soilsap_effect_plotran[3:20,],pch=21,aes(x=Estimate,y=vabe,fill=sig),size=4)+
   
-  scale_y_discrete(breaks=c("(Intercept)", "logc","bio1","bio2","bio8","bio12","bio15","bio18","spei", "organicCPercent","ph","nitrogen","sand","rich","funrich","fine","d15N","d13C","rootc","rootcn"),label=c("(Intercept)", "logc","MAT","bio2","bio8","MAP","Pre.seas.","bio18","SPEI", "SoilC","pH","SoilN","Sand","Pla.rich","Fun.rich",expression(Root[mass]),expression(Root[d15N]),expression(Root[d13C]),expression(Root[C]),expression(Root[CN])))+
+  scale_y_discrete(breaks=c("(Intercept)", "logc","bio1","bio2","bio8","bio12","bio15","bio18","spei", "organicCPercent","ph","nitrogen","sand","rich","funrich","fine","d15N","d13C","rootc","rootcn"),label=c("(Intercept)", "logc","MAT","Bio2","Bio8","MAP","Pre.seas.","Bio18","SPEI", "SoilC","pH","SoilN","Sand","Pla.rich","Fun.rich",expression(Root[mass]),expression(Root[d15N]),expression(Root[d13C]),expression(Root[C]),expression(Root[CN])))+
   xlab("Effect size and 95% CI")+
   ggtitle("Soilsapro. (N=104)")+
   scale_fill_manual("",breaks=c("sig","no"),values=c("mediumpurple","gray"))+
@@ -106,7 +106,7 @@ d=ggplot()+
   geom_vline(xintercept=0,color="red",linetype="dashed",size=1.2)+
   geom_point(data=plapat_effect_plotran[3:20,],pch=21,aes(x=Estimate,y=vabe,fill=sig),size=4)+
   
-  scale_y_discrete(breaks=c("(Intercept)", "logc","bio1","bio2","bio8","bio12","bio15","bio18","spei", "organicCPercent","ph","nitrogen","sand","rich","funrich","fine","d15N","d13C","rootc","rootcn"),label=c("(Intercept)", "logc","MAT","bio2","bio8","MAP","Pre.seas.","bio18","SPEI", "SoilC","pH","SoilN","Sand","Pla.rich","Fun.rich",expression(Root[mass]),expression(Root[d15N]),expression(Root[d13C]),expression(Root[C]),expression(Root[CN])))+
+  scale_y_discrete(breaks=c("(Intercept)", "logc","bio1","bio2","bio8","bio12","bio15","bio18","spei", "organicCPercent","ph","nitrogen","sand","rich","funrich","fine","d15N","d13C","rootc","rootcn"),label=c("(Intercept)", "logc","MAT","Bio2","Bio8","MAP","Pre.seas.","Bio18","SPEI", "SoilC","pH","SoilN","Sand","Pla.rich","Fun.rich",expression(Root[mass]),expression(Root[d15N]),expression(Root[d13C]),expression(Root[C]),expression(Root[CN])))+
   xlab("Effect size and 95% CI")+
   ggtitle("Plantpatho. (N=103)")+
   scale_fill_manual("",breaks=c("sig","no"),values=c("mediumpurple","gray"))+
