@@ -24,7 +24,7 @@ ggplot() +
   geom_vline(xintercept = 0, color = "red", linetype = "dashed", size = 1.2) +
   geom_point(data = effect_all_clima_soil[3:15, ], pch = 21, aes(x = Estimate, y = vabe, fill = sig), size = 4) +
 
-  scale_y_discrete (breaks = c("bio1" , "bio2","bio8" , "bio18" , "bio4" , "bio12" , "bio15" , "spei",  "organicCPercent", "ph" ,"nitrogen" , "sand" , "funrich" ), label = c("MAT" , "bio2","bio8" , "bio18" , "Tem.seas." , "MAP" , "Pre.seas." , "SPEI",  "SoilC", "pH" ,"SoilN" , "Sand" , "Fun.rich" )) +
+  scale_y_discrete (breaks = c("bio1" , "bio2","bio8" , "bio18" , "bio4" , "bio12" , "bio15" , "spei",  "organicCPercent", "ph" ,"nitrogen" , "sand" , "funrich" ), label = c("MAT" , "Bio2","Bio8" , "Bio18" , "Tem.seas." , "MAP" , "Pre.seas." , "SPEI",  "SoilC", "pH" ,"SoilN" , "Sand" , "Fun.rich" )) +
   xlab("Effect size and 95% CI") +
   scale_fill_manual("", breaks = c("no", "sig"), values = c("gray", "mediumpurple")) +
   ggtitle("Clima.+Soil (N=483)") +
