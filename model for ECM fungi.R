@@ -1,6 +1,4 @@
 # model for ECM
-
-
 a <- list()
 for (i in 1:dim(ecm_c_ranall)[1])
 {
@@ -37,8 +35,8 @@ for (i in 2:dim(ecm_z_ranall)[1])
 
 
 
-acm_z_ranall_30 <- b # for each plot,with 30 estimated z values
-ecm_z_ranall_30 <- cbind(plotID, b) # for each plot,with 30 estimated z values
+ecm_z_ranall_30 <- b # for each plot,with 30 estimated z values
+ # for each plot,with 30 estimated z values
 names(ecm_z_ranall_30)[2] <- "z"
 # cbind the c and z value
 
@@ -82,5 +80,4 @@ sig <- ecm_effect_plotran$Pr...t..
 sig[sig > 0.05] <- "no"
 sig[sig < 0.05] <- "sig"
 ecm_effect_plotran <- cbind(ecm_effect_plotran, sig)
-
 
