@@ -4,6 +4,7 @@
 library(ggcorrplot)
 library(lme4)
 library(lmerTest)
+library(tidyverse)
 plot_loca_all_soil_climate_mean # soil variables# based on step 2 and 7#
 plot_plant_rich # plant data# based on step 3#
 rich_plot # fungal richness# based on step 4#
@@ -73,9 +74,7 @@ mode.data1 <- model_data[, c(2:18, 20, 28)] # GUAN don't have soil variables and
 mode.data1 <- subset(mode.data1, siteIDD != "GUAN" & z < 10)
 # check co linearity among variables
 
-
 cor(mode.data1[, 4:19])
-
 # mapping the correlation
 ggcorrplot(cor(mode.data1[, 4:19]), hc.order = TRUE, type = "lower", lab = TRUE) #
 # bold was related with soil C, and MAT;cec was related with soil C; I decided to exclude cec and bold
@@ -127,7 +126,7 @@ mod <- lmer(z ~ c + organicCPercent + nitrogen + sand + bio18 + bio4 + bio12 + b
 summary(mod)
 
 
-## climate, plant diversity and soil model: only neon sites were included, dob sites do not have plant data (396 plots)
+## climate, plant diversity and soil model: only neon sites were included, as dob sites do not have plant data (396 plots)
 mode.data2 <- model_data[, c(2:20, 28)] # GUAN don't have soil variables and will be excluded(possibly this site is out of place)
 mode.data2 <- subset(mode.data2, siteIDD != "GUAN" & z < 10 & rich > 0) # some sites do have plant data
 # check colinearity among variables
@@ -147,6 +146,17 @@ sig[sig > 0.05] <- "no"
 sig[sig < 0.05] <- "sig"
 effect_neon_clima_soil <- cbind(effect_neon_clima_soil, sig)
 
+# if we just include the plotID as the random effect
+mod <- lmer(z ~ organicCPercent + c + ph + nitrogen + rich + sand + bio2 + bio8 + bio18 + bio12 + bio15 + bio4 + spei + funrich + bio1 + (1 | plotID), data = mode.data2)
+# extract the fixed effect
+effect_neon_clima_soil_plotran <- summary(mod)
+effect_neon_clima_soil_plotran <- effect_neon_clima_soil_plotran$coefficients
+effect_neon_clima_soil_plotran <- data.frame(effect_neon_clima_soil_plotran)
+sig <- effect_neon_clima_soil_plotran$Pr...t..
+sig <- round(sig, 3)
+sig[sig > 0.05] <- "no"
+sig[sig < 0.05] <- "sig"
+effect_neon_clima_soil_plotran <- cbind(effect_neon_clima_soil_plotran, sig)
 
 
 # random slope model for the neon data?
@@ -181,11 +191,12 @@ cor(mode.data3[, 3:27])
 ggcorrplot(cor(mode.data3[, 3:27]), hc.order = TRUE, type = "lower", lab = TRUE) #
 mode.data3[, 3:27] <- apply(mode.data3[, 3:27], 2, range01) %>% data.frame()
 # bold-bio1 related with r>0/75
-# bio1-bio4
+# bio1-bio4(was excluded)
 # bold-soil oc
 # coarse-fine
 # cec-bold
 # root n-root cn
+
 # site and plot are nested, only funrich showed a significant effect with plant rich showing a marginal effect
 mod <- lmer(z ~ organicCPercent + c + ph + nitrogen + rich + sand + bio2 + bio8 + bio18 + +bio12 + bio15 + spei + funrich + bio1 + fine + d13C + rootc + rootcn + (1 | siteIDD / plotID), data = mode.data3)
 
@@ -197,6 +208,19 @@ sig <- round(sig, 3)
 sig[sig > 0.05] <- "no"
 sig[sig < 0.05] <- "sig"
 effect_neon_clima_soil_root <- cbind(effect_neon_clima_soil_root, sig)
+
+# when only plotID was included as the random effect model
+mod <- lmer(z ~ organicCPercent + c + ph + nitrogen + rich + sand + bio2 + bio8 + bio18 + +bio12 + bio15 + spei + funrich + bio1 + fine + d13C + rootc + rootcn + (1 | plotID), data = mode.data3)
+
+effect_neon_clima_soil_root_plotran <- summary(mod)
+effect_neon_clima_soil_root_plotran <- effect_neon_clima_soil_root_plotran$coefficients
+effect_neon_clima_soil_root_plotran <- data.frame(effect_neon_clima_soil_root_plotran)
+sig <- effect_neon_clima_soil_root_plotran$Pr...t..
+sig <- round(sig, 3)
+sig[sig > 0.05] <- "no"
+sig[sig < 0.05] <- "sig"
+effect_neon_clima_soil_root_plotran <- cbind(effect_neon_clima_soil_root_plotran, sig)
+
 
 
 # random slope model
