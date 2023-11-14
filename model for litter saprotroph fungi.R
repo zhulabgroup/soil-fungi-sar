@@ -17,6 +17,23 @@ plotID <- rep(litsap_c_ranall$a1, each = 30)
 
 litsap_c_ranall_30 <- cbind(plotID, b) # for each plot,with 30 estimated z values
 
+#add the z values
+a <- list()
+for (i in 1:dim(litsap_z_ranall)[1])
+{
+  d <- data.frame(t(litsap_z_ranall[i, 3:32]))
+  names(d) <- "id"
+  a[[i]] <- d
+}
+
+b <- a[[1]]
+for (i in 2:dim(litsap_z_ranall)[1])
+{
+  b <- rbind(b, a[[i]])
+}
+litsap_z_ranall_30=b
+names(litsap_z_ranall_30)="z"
+
 litsap_model <- cbind(litsap_c_ranall_30, litsap_z_ranall_30["z"])
 names(litsap_model)[2] <- "logc"
 litsap_model <- merge(litsap_model, model_var, by = "plotID")
@@ -40,3 +57,4 @@ ggcorrplot(cor(litsap_model[, c(2, 3, 5:27)]), hc.order = TRUE, type = "lower", 
 
 mod <- lmer(z ~ logc + organicCPercent + ph + nitrogen + sand + bio2 + bio8 + bio18 + bio12 + bio15 + spei + rich + funrich + bio1 + fine + d15N + d13C + rootc + rootcn + (1 | siteIDD / plotID), data = litsap_model)
 ##
+mod <- lmer(z ~ logc + organicCPercent + ph + nitrogen + sand + bio2 + bio8 + bio18 + bio12 + bio15 + spei + rich + funrich + bio1 + fine + d15N + d13C + rootc + rootcn + (1 | plotID), data = litsap_model)
