@@ -72,3 +72,15 @@ sig <- ecm_effect$Pr...t..
 sig[sig > 0.05] <- "no"
 sig[sig < 0.05] <- "sig"
 ecm_effect <- cbind(ecm_effect, sig)
+
+# with plot as the random terms
+
+mod <- lmer(z ~ logc + organicCPercent + ph + nitrogen + sand + bio2 + bio8 + bio18 + bio12 + bio15 + spei + rich + funrich + bio1 + fine + d15N + d13C + rootc + rootcn + (1 | plotID), data = ecm_model1)
+ecm_effect_plotran <- summary(mod)
+ecm_effect_plotran <- data.frame(ecm_effect_plotran$coefficients)
+sig <- ecm_effect_plotran$Pr...t..
+sig[sig > 0.05] <- "no"
+sig[sig < 0.05] <- "sig"
+ecm_effect_plotran <- cbind(ecm_effect_plotran, sig)
+
+
