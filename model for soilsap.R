@@ -12,12 +12,32 @@ for(i in 2:dim(soilsap_c_ranall)[1])
 {
   b=rbind(b,a[[i]])
 }
+plotID <- rep(soilsap_c_ranall$a1, each = 30)
+soilsap_c_ranall_30 <- cbind(plotID, b)
+## add the z 
 
-plotID=rep(soilsap_c_ranall$a1,each=30)
+a <- list()
+for (i in 1:dim(soilsap_z_ranall)[1])
+{
+  d <- data.frame(t(soilsap_z_ranall[i, 3:32]))
+  names(d) <- "id"
+  a[[i]] <- d
+}
 
-soilsap_c_ranall_30=cbind(plotID,b)# for each plot,with 30 estimated z values
+b <- a[[1]]
+for (i in 2:dim(soilsap_z_ranall)[1])
+{
+  b <- rbind(b, a[[i]])
+}
 
+soilsap_z_ranall_30 <- b
+
+
+
+soilsap_z_ranall_30=cbind(plotID,b)# for each plot,with 30 estimated z values
+names(soilsap_z_ranall_30)[2]="z"
 soilsap_model=cbind(soilsap_c_ranall_30,soilsap_z_ranall_30["z"])
+
 names(soilsap_model)[2]="logc"
 soilsap_model=merge(soilsap_model,model_var,by="plotID")
 soilsap_model=subset(soilsap_model,siteIDD!="GUAN"&z<10&fine>0&rootc>0&rich>0)# only 104 plots from 33 sites
@@ -40,3 +60,12 @@ ggcorrplot(cor(soilsap_model[,c(2,3,5:27)]), hc.order = TRUE, type = "lower", la
 
 mod=lmer(z ~ logc+organicCPercent + ph+ nitrogen+ sand +bio2 +bio8+ bio18 +bio12+ bio15  +spei+ rich+funrich +bio1 +fine+ d15N +d13C +rootc +rootcn +(1 |siteIDD/plotID),data=soilsap_model)
 ##
+mod=lmer(z ~ logc+organicCPercent + ph+ nitrogen+ sand +bio2 +bio8+ bio18 +bio12+ bio15  +spei+ rich+funrich +bio1 +fine+ d15N +d13C +rootc +rootcn +(1 |plotID),data=soilsap_model)
+soilsap_effect_plotran <- summary(mod)
+soilsap_effect_plotran <- data.frame(soilsap_effect_plotran$coefficients)
+sig <- round(soilsap_effect_plotran$Pr...t..,3)
+sig[sig > 0.05] <- "no"
+sig[sig < 0.05] <- "sig"
+
+soilsap_effect_plotran <- cbind(soilsap_effect_plotran, sig)
+
