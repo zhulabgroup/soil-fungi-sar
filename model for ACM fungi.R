@@ -78,6 +78,17 @@ sig[sig > 0.05] <- "no"
 sig[sig < 0.05] <- "sig"
 acm_effect <- cbind(acm_effect, sig)
 
+## use plotid as the only random effect
+
+mod <- lmer(z ~ logc + organicCPercent + ph + nitrogen + sand + bio2 + bio8 + bio18 + bio4 + bio12 + bio15 + spei + rich + funrich + bio1 + fine + d15N + d13C + rootc + rootcn + bio1 + (1 | plotID), data = acm_model1)
+acm_effect_plotran <- summary(mod)
+acm_effect_plotran <- data.frame(acm_effect_plotran$coefficients)
+sig <- acm_effect_plotran$Pr...t..
+sig[sig > 0.05] <- "no"
+sig[sig < 0.05] <- "sig"
+acm_effect_plotran <- cbind(acm_effect_plotran, sig)
+
+
 
 
 # for the random slope mode, takes a long time to compute
