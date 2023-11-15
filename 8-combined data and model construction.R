@@ -243,3 +243,4 @@ mod <- lmer(z ~ c + rich + sand + bio8 + bio15 + funrich + rootc + (1 | plotID),
 #
 #
 ## for different guilds
+#
