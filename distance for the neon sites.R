@@ -1,5 +1,8 @@
 library(vegan)
 library(phyloseq)
+library(geosphere)
+ library(pracma)
+library(ggplot2)
 
 0. # an example showing how to determine the coordinates of a new point based on a reference point, the distance and bearing angle between them with Haversine formula
 calculate_coordinates <- function(lat1, lon1, distance_km, bearing_deg) {
@@ -86,8 +89,11 @@ for (i in 1:length(a1))
 {
   cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
   angle_sub <- subset_samples(sub_neon, plotIDM == a1[i]) # all the samples for each plot
-  k <- sample_data(angle_sub)[, 25] / sample_data(angle_sub)[, 26]
-  bear0[[i]] <- data.frame(atan(k) * 180 / pi)
+  k <- data.frame(sample_data(angle_sub))#Angles are in radians, not degrees,
+  k=atan2(k$gx-0,0-k$gy)*180/pi
+  k=data.frame(k)
+  rownames(k)=rownames(sample_data(angle_sub))
+  bear0[[i]] <- k
 }
 # the bearing angles for all cores based on plotID
 bear1 <- bear0[[1]]
@@ -107,7 +113,7 @@ for (i in 1:length(a1)) {
   cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
   data_sub <- subset_samples(sub_neon, plotIDM == a1[i]) # all the samples for a given plotID
   location <- sample_data(data_sub)[, c("gx", "gy")]
-  dis_tance <- sqrt((location$gx)^2 + (location$gy)^2)
+  dis_tance <- sqrt((location$gx)^2 + (location$gy)^2)# the distance here is in meters
   pair[[i]] <- matrix(dis_tance)
 }
 # bind all the distance output
@@ -122,12 +128,13 @@ pair_cb <- data.frame(pair_cb)
 # add the distance and bearing information to the full dataset
 
 bear_dis <- cbind(bear1, pair_cb)
+#add a rowname to the data
+
 sam_names <- data.frame(rownames(sample_data(sub_neon)))
 bear_dis <- bear_dis[sam_names$rownames.sample_data.sub_neon.., ] # reorder the rows of the data so that it can binded with the full data
-names(bear_dis) <- c("angle", "distance")
+names(bear_dis) <- c("angle", "distance")# in meters
 
 bear_dis <- sample_data(bear_dis)
-
 sub_neon <- merge_phyloseq(sub_neon, bear_dis)
 
 4. # for a given plotID, determined the coordinates of each soil core
@@ -136,7 +143,7 @@ cod <- list()
 for (i in 1:length(a1)) {
   cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
   data_sub <- subset_samples(sub_neon, plotIDM == a1[i]) # all the samples in a given plotID
-  location <- sample_data(data_sub)[, c("lon", "lat", "distance", "angle")]
+  location <- sample_data(data_sub)[, c("lon", "lat", "distance", "angle")]# the distance here is in meters
   location <- data.frame(location)
   new_coordinates <- calculate_coordinates(location[1, 1], location[1, 2], location[, 3] / 1000, location[, 4])
   cod[[i]] <- matrix(new_coordinates, nrow = dim(location)[1], ncol = 2, byrow = FALSE)
@@ -159,14 +166,33 @@ neon_cod <- merge_phyloseq(sub_neon, cod_cb) # the neon dataset with each core h
 save(neon_cod, file = "neon_cod.Rdata")
 
 # look at the diversity and distance
+beta_diversity_neon <- vegdist(otu_table(neon_cod), "jaccard") # beta diversity between all pairwise soil cores
+
+# the beta diversity was calculated on great lakes
 
 beta_diversity_neon <- vegdist(otu_table(neon_cod), "jaccard") # beta diversity between all pairwise soil cores
-d <- sample_data(dob)
-dist_mat <- distm(d[, 1:2], fun = distHaversine)
+d <- sample_data(neon_cod)
+
+dist_mat <- distm(d[, 29:30], fun = distHaversine)
 dist_mat <- as.dist(dist_mat)
 dist_mat <- matrix(dist_mat)
-beta_diversity_mat <- matrix(beta_diversity_mat)
+beta_diversity_neon <- matrix(beta_diversity_neon)
 
-dob_dis <- cbind(beta_diversity_mat, dist_mat)
-dob_dis <- data.frame(dob_dis)
-names(dob_dis) <- c("beta", "distance")
+neon_dis <- cbind(beta_diversity_neon, dist_mat)
+
+neon_dis <- data.frame(neon_dis)
+names(neon_dis) <- c("beta", "distance")# the distance have been overestimated.
+
+d1=subset(neon_dis,distance<5)
+d2=subset(neon_dis,distance<57)
+d3=rbind(d1,d2,neon_dis)
+ty=rep(c("fine","med","reg"),times=c(684,17016,14957715))
+d3=cbind(d3,ty)
+d3=cbind(d3,dd=d3$distance)
+
+##3
+
+ggplot(data=d3,aes(x=log(dd+1),y=beta,color=ty))+geom_point(color="black",alpha=0.1)+
+  geom_smooth(method="lm")+
+  scale_color_manual("",breaks=c("fine","reg","med"),labels=c("<5 m","regional","40x40 m"),values=c("green","red","purple"))+
+  theme(legend.position = "bottom", text = element_text(size=18), plot.title = element_text(size=15,hjust=0.5),axis.text.y = element_text(hjust = 0),axis.text.x = element_text(hjust = 1),axis.title.y = element_text(size=18),axis.title.x = element_text(size=18),axis.ticks.x = element_blank(),panel.background=element_rect(fill="NA"),panel.border = element_rect(color = "black", size = 1.5, fill = NA))
