@@ -68,6 +68,10 @@ model_data$rich <- as.numeric(model_data$rich)
 
 write.csv(model_data, "model_data.csv")# this is a key dataset i saved for the downstream analyses.
 
+library(tidyverse)
+library(lme4)
+library(lmerTest)
+
 
 1. # climate and soil model:both dob and neon sites were included, here only the plotID was treated as a random effect
 mode.data1 <- model_data[, c(2:18, 20, 28)] # GUAN don't have soil variables and will be excluded(possibly this site is out of place)
