@@ -90,7 +90,7 @@ for (j in 20:100)
   pv[[j]]=op$coefficients[1:15,5]# the p-value for each selected variables
   ef[[j]]=op$coefficients[1:15,1]# the effect size for each selected variables
 }
-  }
+
 
 pvv=pv[[20]]
 for(j in 21:100){
