@@ -1,4 +1,5 @@
 # the plant diversity for the dob sites
+library(tidyverse)
 
 pd=read.csv("veg.OTU.Table.all.plot.csv",sep=",",header=T)
 pd[,2:70][pd[,2:70]>0]=1
