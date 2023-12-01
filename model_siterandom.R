@@ -23,7 +23,7 @@ mode.data1[, 4:19] <- apply(mode.data1[, 4:19], 2, range01) %>% data.frame()
 mod <- lmer(z ~ c + organicCPercent + ph + nitrogen + sand + bio2 + bio8 + bio18 + bio4 + bio12 + bio15 + spei + funrich + bio1 + (1 | siteIDD), data = mode.data1)
 step(mod)
 #best model
-mod=lmer(z ~ c + organicCPercent + nitrogen + sand + bio18 + bio4 + bio12 + bio15 + spei + funrich + bio1 + (1 | siteIDD),data=mode.data1)
+mod_site=lmer(z ~ c + organicCPercent + nitrogen + sand + bio18 + bio4 + bio12 + bio15 + spei + funrich + bio1 + (1 | siteIDD),data=mode.data1)
 r.squaredGLMM(mod)
 
 2. # climate, soil and plant diversity model
@@ -39,7 +39,7 @@ mode.data2[, 4:20] <- apply(mode.data2[, 4:20], 2, range01) %>% data.frame()
 mod <- lmer(z ~ organicCPercent + c + ph + nitrogen + richness + sand + bio2 + bio8 + bio18 + bio12 + bio15 + bio4 + spei + funrich + bio1 + (1 | siteIDD ), data = mode.data2)
 
 step(mod)
-mod=lmer(z ~ organicCPercent + c + nitrogen + richness + sand + bio18 + bio12 + bio15 + bio4 + spei + funrich + bio1 + (1 | siteIDD),data=mode.data2)
+mod_site=lmer(z ~ organicCPercent + c + nitrogen + richness + sand + bio18 + bio12 + bio15 + bio4 + spei + funrich + bio1 + (1 | siteIDD),data=mode.data2)
 summary(mod)
 r.squaredGLMM(mod)
 3.# climate, soil, plant and root model
@@ -63,7 +63,7 @@ mode.data3[, 3:26] <- apply(mode.data3[, 3:26], 2, range01) %>% data.frame()
 mod <- lmer(z ~ organicCPercent + c + ph + nitrogen + richness + sand + bio2 + bio8 + bio18 + +bio12 + bio15 + spei + funrich + bio1 + fine + d13C + rootc + rootcn + (1 | siteIDD), data = mode.data3)
 
 step(mod)
-mod=lmer(z ~ c + richness + funrich + bio1 + fine + d13C + rootc + rootcn + (1 | siteIDD),data=mode.data3)
+mod_site=lmer(z ~ c + richness + funrich + bio1 + fine + d13C + rootc + rootcn + (1 | siteIDD),data=mode.data3)
 summary(mod)
 
 
