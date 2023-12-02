@@ -70,6 +70,16 @@ mod <- lmer(z ~ organicCPercent + c + ph + nitrogen + richness + sand + bio2 + b
 step(mod)
 mod_nest=lmer(z ~c + richness + funrich + bio1 + (1 | siteIDD/plotID),data=mode.data3)
 summary(mod)
+###
+pred.mm <- ggpredict(mod_nest, terms = c("funrich","siteIDD","plotID"),type="re")  # this gives overall predictions for the model
 
+ggplot(pred.mm) + 
+  geom_line(aes(x = x, y = predicted)) +       
+  geom_ribbon(aes(x = x, ymin = predicted - std.error, ymax = predicted + std.error), 
+              fill = "lightgrey", alpha = 0.5) +  # error band
+  geom_point(data = mode.data3, aes(x = funrich, y = z, colour = siteIDD),alpha=0.5) + 
+  labs(x = "fungal diversity", y = "z", 
+       title = "") + 
+  theme_minimal()
 
 
