@@ -1,5 +1,8 @@
 # model selection for each model
 #site and plot are nested
+library(sjPlot)
+library(ggplot2)
+library(effects)
 
 1. # climate and soil model:both dob and neon sites were included, here only the plotID was treated as a random effect
 mode.data1 <- model_data[, c(1:18,20)] # GUAN don't have soil variables and will be excluded(possibly this site is out of place)
@@ -28,6 +31,67 @@ step(mod)
 mod_nest=lmer(z ~ c + nitrogen + sand + bio2 + bio12 + bio15 + funrich + (1 | siteIDD/plotID),data=mode.data1)
 summary(mod)
 r.squaredGLMM(mod)
+
+# plot the results of the fixed effects
+#
+set_theme(base = theme_classic(), #To remove the background color and the grids
+theme.font = 'Arial',   #To change the font type
+axis.title.size = 2.0,  #To change axis title size
+axis.textsize.x = 1,  #To change x axis text size
+axis.textsize.y = 1,
+title.size = 2,
+title.align= "center")  #To change y axis text size
+
+plot_model(mod_nest,axis.labels=c("Fun.rich","Pre.seas.","MAP","MDR","Sand","SoilN","c"),rm.terms = "c",title="Climate+Soil (N=483)")
+
+## tables
+tab_model(mod_nest)
+
+# predicting the effects of specific variables
+
+effects_fun <- effects::effect(term= "funrich", mod= mod_nest)
+summary(effects_fun) 
+x_fun <- as.data.frame(effects_fun)
+# creat a plot showing the prediction
+ggplot() + 
+  geom_point(data=mode.data1, aes(funrich, z,color=siteIDD),alpha=0.5) + 
+  geom_point(data=x_fun, aes(x=funrich, y=fit), color="black") +
+  geom_line(data=x_fun, aes(x=funrich, y=fit), color="black") +
+  geom_ribbon(data= x_fun, aes(x=funrich, ymin=lower, ymax=upper), alpha= 0.3, fill="gray") +
+  labs(x="Fungal richness", y=expression(italic(z)))+
+  guides(color=FALSE)
+# for the effect of soil sand content
+
+effects_fun <- effects::effect(term= "funrich", mod= mod_nest)
+summary(effects_fun) 
+x_fun <- as.data.frame(effects_fun)
+# creat a plot showing the prediction
+ggplot() + 
+  geom_point(data=mode.data1, aes(funrich, z,color=siteIDD),alpha=0.5) + 
+  geom_point(data=x_fun, aes(x=funrich, y=fit), color="black") +
+  geom_line(data=x_fun, aes(x=funrich, y=fit), color="black") +
+  geom_ribbon(data= x_fun, aes(x=funrich, ymin=lower, ymax=upper), alpha= 0.3, fill="gray") +
+  labs(x="Fungal richness", y=expression(italic(z)))+
+  guides(color=FALSE)
+
+
+## if we dropped the c, we got the best model
+
+mod <- lmer(z ~   bio4 + bio12 + (1 | siteIDD/plotID), data = mode.data1)
+step(mod)
+
+
+
+
+
+
+
+
+
+
+
+
+
 2. # climate, soil and plant diversity model
 
 mode.data2 <- model_data[, c(1:20)] # GUAN don't have soil variables and will be excluded(possibly this site is out of place)
@@ -42,11 +106,41 @@ mod <- lmer(z ~ organicCPercent + c + ph + nitrogen + richness + sand + bio2 + b
 
 step(mod)
 
-mod_nest=lmer(z  ~ c + nitrogen + richness + sand + bio2 + bio12 + bio15 + funrich + (1 | siteIDD/plotID),data=mode.data2)
+mod_nestCSP=lmer(z  ~ c + nitrogen + richness + sand + bio2 + bio12 + bio15 + funrich + (1 | siteIDD/plotID),data=mode.data2)
 
-summary(mod)
+summary(mod_nestCSP)
 
-r.squaredGLMM(mod)
+set_theme(base = theme_classic(), #To remove the background color and the grids
+          theme.font = 'Arial',   #To change the font type
+          axis.title.size = 2.0,  #To change axis title size
+          axis.textsize.x = 1,  #To change x axis text size
+          axis.textsize.y = 1,
+          title.size = 2,
+          title.align= "center")  #To change y axis text size
+
+plot_model(mod_nestCSP,axis.labels=c("Fun.rich","Pre.seas.","MAP","Mean\n diurnal \n range","Sand","Pla.rich","SoilN","c"),rm.terms = "c",title="Climate+Soil+Plant (N=438)")
+
+# to see the effect of plant richnes
+
+effects_richness <- effects::effect(term= "richness", mod= mod_nestCSP)
+summary(effects_richness) 
+x_richness <- as.data.frame(effects_richness)
+# creat a plot showing the prediction
+ggplot() + 
+  geom_point(data=mode.data2, aes(richness, z,color=siteIDD),alpha=0.5) + 
+  geom_point(data=x_richness, aes(x=richness, y=fit), color="black") +
+  geom_line(data=x_richness, aes(x=richness, y=fit), color="black") +
+  geom_ribbon(data= x_richness, aes(x=richness, ymin=lower, ymax=upper), alpha= 0.3, fill="gray") +
+  labs(x="Plant richness", y=expression(italic(z)))+
+  guides(color=FALSE)
+
+tab_model(mod_nestCSP)
+
+
+
+
+
+
 3.# climate, soil, plant and root model
 
 mode.data3 <- model_data[, c(1:28)] # GUAN don't have soil variables and will be excluded(possibly this site is out of place)
@@ -68,18 +162,24 @@ mode.data3[, 3:26] <- apply(mode.data3[, 3:26], 2, range01) %>% data.frame()
 mod <- lmer(z ~ organicCPercent + c + ph + nitrogen + richness + sand + bio2 + bio8 + bio18 + +bio12 + bio15 + spei + funrich + bio1 + fine + d13C + rootc + rootcn + (1 | siteIDD/plotID), data = mode.data3)
 
 step(mod)
-mod_nest=lmer(z ~c + richness + funrich + bio1 + (1 | siteIDD/plotID),data=mode.data3)
-summary(mod)
-###
-pred.mm <- ggpredict(mod_nest, terms = c("funrich","siteIDD","plotID"),type="re")  # this gives overall predictions for the model
+mod_nestCSPR=lmer(z ~c + richness + funrich + bio1 + (1 | siteIDD/plotID),data=mode.data3)
+# create the effect size plot
 
-ggplot(pred.mm) + 
-  geom_line(aes(x = x, y = predicted)) +       
-  geom_ribbon(aes(x = x, ymin = predicted - std.error, ymax = predicted + std.error), 
-              fill = "lightgrey", alpha = 0.5) +  # error band
-  geom_point(data = mode.data3, aes(x = funrich, y = z, colour = siteIDD),alpha=0.5) + 
-  labs(x = "fungal diversity", y = "z", 
-       title = "") + 
-  theme_minimal()
+plot_model(mod_nestCSPR)
+
+plot_model(mod_nestCSPR,axis.labels=c("MAT","Fun.rich","Pla.rich"),rm.terms = "c",title="Climate+Soil+Plant+Root (N=104)")
+
+effects_bio1 <- effects::effect(term= "bio1", mod= mod_nestCSPR)
+summary(effects_bio1) 
+x_bio1 <- as.data.frame(effects_bio1)
+
+# creat a plot showing the prediction
+ggplot() + 
+  geom_point(data=mode.data3, aes(bio1, z,color=siteIDD),alpha=0.5) + 
+  geom_point(data=x_bio1, aes(x=bio1, y=fit), color="black") +
+  geom_line(data=x_bio1, aes(x=bio1, y=fit), color="black") +
+  geom_ribbon(data= x_bio1, aes(x=bio1, ymin=lower, ymax=upper), alpha= 0.3, fill="gray") +
+  labs(x="MAT", y=expression(italic(z)))+
+  guides(color=FALSE)
 
 
