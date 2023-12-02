@@ -40,12 +40,12 @@ soilsap_model=cbind(soilsap_c_ranall_30,soilsap_z_ranall_30["z"])
 
 names(soilsap_model)[2]="logc"
 soilsap_model=merge(soilsap_model,model_var,by="plotID")
-soilsap_model=subset(soilsap_model,siteIDD!="GUAN"&z<10&fine>0&rootc>0&rich>0)# only 104 plots from 33 sites
+soilsap_model=subset(soilsap_model,siteIDD!="GUAN"&z<10&fine>0&rootc>0&richness>0)# only 104 plots from 33 sites
 
-
+soilsap_model<- cbind(soilsap_model, c = 2.71828^soilsap_model$logc)
 
 #standardized data
-soilsap_model[,c(2,5:27)]=apply(soilsap_model[,c(2,5:27)],2,range01)
+soilsap_model[,c(5:28)]=apply(soilsap_model[,c(5:28)],2,range01)
 # colinearity
 ggcorrplot(cor(soilsap_model[,c(2,3,5:27)]), hc.order = TRUE, type = "lower", lab = TRUE)#
 #bold was related with soil OC and was excluded,cec was related to soil OC and was removed
@@ -58,7 +58,22 @@ ggcorrplot(cor(soilsap_model[,c(2,3,5:27)]), hc.order = TRUE, type = "lower", la
 3
 # build a model for the soilsap guild,with 104 plots included, soil pH and fundiversity
 
-mod=lmer(z ~ logc+organicCPercent + ph+ nitrogen+ sand +bio2 +bio8+ bio18 +bio12+ bio15  +spei+ rich+funrich +bio1 +fine+ d15N +d13C +rootc +rootcn +(1 |siteIDD/plotID),data=soilsap_model)
+mod=lmer(z ~ c+organicCPercent + ph+ nitrogen+ sand +bio2 +bio8+ bio18 +bio12+ bio15  +spei+ richness+funrich +bio1 +fine+ d15N +d13C +rootc +rootcn +(1 |siteIDD/plotID),data=soilsap_model)
+
+step(mod)
+
+mod_soilsap=lmer(z ~ c + bio12 + richness + funrich + bio1 + (1 | siteIDD/plotID),data=soilsap_model)
+
+plot_model(mod_soilsap)
+
+p3=plot_model(mod_soilsap,axis.labels = c("MAT","Fun.rich","Pla.rich","MAP"),rm.terms = "c",title="Soilsap. (N=87)")
+
+
+
+pp$data <- transform(pp$data, term = factor(term, levels = c("bio1","bio12", "funrich", "richness")))
+
+print(pp)
+
 ##
 mod=lmer(z ~ logc+organicCPercent + ph+ nitrogen+ sand +bio2 +bio8+ bio18 +bio12+ bio15  +spei+ rich+funrich +bio1 +fine+ d15N +d13C +rootc +rootcn +(1 |plotID),data=soilsap_model)
 soilsap_effect_plotran <- summary(mod)
