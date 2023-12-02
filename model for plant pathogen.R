@@ -38,12 +38,12 @@ plapat_model <- cbind(plapat_c_ranall_30, plapat_z_ranall_30["z"])
 
 names(plapat_model)[2] <- "logc"
 plapat_model <- merge(plapat_model, model_var, by = "plotID")
-plapat_model <- subset(plapat_model, siteIDD != "GUAN" & z < 10 & fine > 0 & rootc > 0 & rich > 0) # only 104 plots from 33 sites
+plapat_model <- subset(plapat_model, siteIDD != "GUAN" & z < 10 & fine > 0 & rootc > 0 & richness > 0) # only 104 plots from 33 sites
 
-
+plapat_model <- cbind(plapat_model, c = 2.71828^plapat_model$logc)
 
 # standardized data
-plapat_model[, c(2, 5:27)] <- apply(plapat_model[, c(2, 5:27)], 2, range01)
+plapat_model[, c(5:28)] <- apply(plapat_model[, c(5:28)], 2, range01)
 # colinearity
 ggcorrplot(cor(plapat_model[, c(2, 3, 5:27)]), hc.order = TRUE, type = "lower", lab = TRUE) #
 # bold was related with soil OC and was excluded,cec was related to soil OC and was removed
@@ -56,7 +56,17 @@ ggcorrplot(cor(plapat_model[, c(2, 3, 5:27)]), hc.order = TRUE, type = "lower", 
 3
 # build a model for the plapat guild,with 104 plots included, rich and d13
 
-mod <- lmer(z ~ logc + organicCPercent + ph + nitrogen + sand + bio2 + bio8 + bio18 + bio12 + bio15 + spei + rich + funrich + bio1 + fine + d15N + d13C + rootc + rootcn + (1 | siteIDD / plotID), data = plapat_model)
+mod <- lmer(z ~ c + organicCPercent + ph + nitrogen + sand + bio2 + bio8 + bio18 + bio12 + bio15 + spei + richness + funrich + bio1 + fine + d15N + d13C + rootc + rootcn + (1 | siteIDD / plotID), data = plapat_model)
+
+step(mod)
+
+mod_plapat=lmer(z ~ c + organicCPercent + bio15 + funrich + fine + (1 | siteIDD/plotID),data=plapat_model)
+
+plot_model(mod_plapat)
+
+
+p4=plot_model(mod_plapat,axis.labels = c(expression("Root"["fmass"]),"Fun.rich","Pre.seas","SoilC"),rm.terms = "c",title="Pla.patho. (N=87)")
+
 ##
 # #
 mod <- lmer(z ~ logc + organicCPercent + ph + nitrogen + sand + bio2 + bio8 + bio18 + bio12 + bio15 + spei + rich + funrich + bio1 + fine + d15N + d13C + rootc + rootcn + (1 | plotID), data = plapat_model)
