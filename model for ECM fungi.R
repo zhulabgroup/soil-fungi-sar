@@ -69,7 +69,7 @@ step(mod)
 
 mod_ecm=lmer(z ~ logc + ph + funrich + d13C + rootcn + (1 | siteIDD/plotID),data=ecm_model1)
 
-p2=plot_model(mod_ecm,axis.labels = c(expression("Root"["cn"]),"d13C","Fun.rich","pH"),rm.terms="logc",title="ECM (N=104)")
+p2=plot_model(mod_ecm,axis.labels = c(expression("Root"["cn"]),"d13C","Fun.rich","pH"),color=c("blue","red"),rm.terms="logc",title="ECM (N=104)")
 
 plot_model(mod_ecm)
 
