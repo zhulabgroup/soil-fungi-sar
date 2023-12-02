@@ -1,8 +1,9 @@
 # for specific functional guilds
 # for the ACM functional guild
 # get the explanatory variables from the full data based on the plotID
+library(ggcorrplot)
 head(model_data)
-model_var <- model_data[, c(2, 3, 6:28)]
+model_var <- model_data[, c(1,2,5:27)]
 model_var <- unique(model_var)
 
 a <- list()
@@ -46,7 +47,7 @@ acm_z_ranall_30 <- b # for each plot,with 30 estimated z values
 acm_model <- cbind(acm_c_ranall_30, acm_z_ranall_30["id"])
 names(acm_model) <- c("plotID", "logc", "z")
 acm_model <- merge(acm_model, model_var, by = "plotID")
-acm_model <- subset(acm_model, siteIDD != "GUAN" & z < 10 & fine > 0 & rootc > 0 & rich > 0) # only 87 plots from 33 sites
+acm_model <- subset(acm_model, siteIDD != "GUAN" & z < 10 & fine > 0 & rootc > 0 & richness > 0) # only 87 plots from 33 sites
 # head(acm_model)
 # consider the climate and soil data
 
@@ -60,15 +61,53 @@ range01 <- function(x) ## to
 
 
 # standardized data
-acm_model1[, c(2, 5:27)] <- apply(acm_model1[, c(2, 5:27)], 2, range01)
+acm_model1[, c(5:28)] <- apply(acm_model1[, c(5:28)], 2, range01)
 
 # testing colinearity
-ggcorrplot(cor(acm_model1[, c(2, 5:27)]), hc.order = TRUE, type = "lower", lab = TRUE) #
+ggcorrplot(cor(acm_model1[, c(5:28)]), hc.order = TRUE, type = "lower", lab = TRUE) #
 
 # bold was related with soil c and hence was excluded
 # root n (excluded) and root cn were correlated
 # build a model for the acm guild,355 plots
 # decide to remove cec to reduce model complexity
+
+# model in a nested manner
+
+mod <- lmer(z ~ c + organicCPercent + ph + nitrogen + sand +bio1+ bio2 + bio4+ bio8  + bio12 + bio15 ++ bio18 + spei + richness + funrich + fine + d15N + d13C + rootc + rootcn + (1 | siteIDD / plotID), data = acm_model1)
+
+step(mod)
+
+mod_acm=lmer(z ~ c + ph + richness + funrich + (1 | siteIDD/plotID),data=acm_model1)
+
+# creat the effect size plot
+set_theme(base = theme_classic(), #To remove the background color and the grids
+          theme.font = 'Arial',   #To change the font type
+          axis.title.size = 2.0,  #To change axis title size
+          axis.textsize.x = 1,  #To change x axis text size
+          axis.textsize.y = 1,
+          title.size = 2,
+          title.align= "center")  #To change y axis text size
+
+
+p1=plot_model(mod_acm,axis.labels = c("Fun.rich","Pla.rich","pH"),colors="mediumpurple",rm.terms = "c",title="ACM (N=87)")
+# for the prediction
+effects_ph <- effects::effect(term= "ph", mod= mod_acm)
+summary(effects_ph) 
+x_ph <- as.data.frame(effects_ph)
+# creat a plot showing the prediction
+ggplot() + 
+  geom_point(data=acm_model1, aes(ph, z,color=siteIDD),alpha=0.5) + 
+  geom_point(data=x_ph, aes(x=ph, y=fit), color="black") +
+  geom_line(data=x_ph, aes(x=ph, y=fit), color="black") +
+  geom_ribbon(data= x_ph, aes(x=ph, ymin=lower, ymax=upper), alpha= 0.3, fill="gray") +
+  labs(x="pH", y=expression(italic(z)))+
+  guides(color=FALSE)
+
+
+
+
+
+
 
 mod <- lmer(z ~ logc + organicCPercent + ph + nitrogen + sand + bio2 + bio8 + bio18 + bio4 + bio12 + bio15 + spei + rich + funrich + bio1 + fine + d15N + d13C + rootc + rootcn + bio1 + (1 | siteIDD / plotID), data = acm_model1)
 acm_effect <- summary(mod)
