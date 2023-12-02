@@ -66,7 +66,7 @@ mod_soilsap=lmer(z ~ c + bio12 + richness + funrich + bio1 + (1 | siteIDD/plotID
 
 plot_model(mod_soilsap)
 
-p3=plot_model(mod_soilsap,axis.labels = c("MAT","Fun.rich","Pla.rich","MAP"),rm.terms = "c",title="Soilsap. (N=87)")
+p3=plot_model(mod_soilsap,axis.labels = c("MAT","Fun.rich","Pla.rich","MAP"),color=c("blue","red"),rm.terms = "c",title="Soilsap. (N=104)")
 
 
 
