@@ -34,25 +34,25 @@ for (i in 2:dim(ecm_z_ranall)[1])
 }
 
 
-
 ecm_z_ranall_30 <- b # for each plot,with 30 estimated z values
  # for each plot,with 30 estimated z values
-names(ecm_z_ranall_30)[2] <- "z"
+names(ecm_z_ranall_30)[1] <- "z"
 # cbind the c and z value
-
+# when used the nested model, i loaded the saved data
 ecm_model <- cbind(ecm_c_ranall_30, ecm_z_ranall_30["z"])
 names(ecm_model)[2] <- "logc"
 ecm_model <- merge(ecm_model, model_var, by = "plotID")
-ecm_model <- subset(ecm_model, siteIDD != "GUAN" & z < 10 & fine > 0 & rootc > 0 & rich > 0) # only 104 plots from 33 sites
+ecm_model <- subset(ecm_model, siteIDD != "GUAN" & z < 10 & fine > 0 & rootc > 0 & richness > 0) # only 104 plots from 33 sites
 # head(ecm_model)
 # consider the climate and soil data
-ecm_model1 <- ecm_model[, c(1:27)]
+ecm_model1 <- cbind(ecm_model1, c = 2.71828^ecm_model1$logc)
+ecm_model1 <- ecm_model1[, c(1:28)]
 
 
 # standardized data
-ecm_model1[, c(2, 5:27)] <- apply(ecm_model1[, c(2, 5:27)], 2, range01)
+ecm_model1[, c(5:28)] <- apply(ecm_model1[, c(5:28)], 2, range01)
 # colinearity
-ggcorrplot(cor(ecm_model1[, c(2, 3, 5:27)]), hc.order = TRUE, type = "lower", lab = TRUE) #
+ggcorrplot(cor(ecm_model1[, c(5:28)]), hc.order = TRUE, type = "lower", lab = TRUE) #
 # bold was related with soil OC and hence was excluded,cec was related to soil C and was removed
 # bio4 was related with bio1 and was removed
 # coarse (removed) and fine were related
@@ -63,7 +63,17 @@ ggcorrplot(cor(ecm_model1[, c(2, 3, 5:27)]), hc.order = TRUE, type = "lower", la
 3
 # build a model for the ecm guild,with 104 plots included, soil pH and fundive
 
-mod <- lmer(z ~ logc + organicCPercent + ph + nitrogen + sand + bio2 + bio8 + bio18 + bio12 + bio15 + spei + rich + funrich + bio1 + fine + d15N + d13C + rootc + rootcn + (1 | siteIDD / plotID), data = ecm_model1)
+mod <- lmer(z ~ c + organicCPercent + ph + nitrogen + sand + bio2 + bio8 + bio18 + bio12 + bio15 + spei + richness + funrich + bio1 + fine + d15N + d13C + rootc + rootcn + (1 | siteIDD / plotID), data = ecm_model1)
+
+step(mod)
+
+mod_ecm=lmer(z ~ logc + ph + funrich + d13C + rootcn + (1 | siteIDD/plotID),data=ecm_model1)
+
+p2=plot_model(mod_ecm,axis.labels = c(expression("Root"["cn"]),"d13C","Fun.rich","pH"),rm.terms="logc",title="ECM (N=104)")
+
+plot_model(mod_ecm)
+
+
 ecm_effect <- summary(mod)
 ecm_effect <- data.frame(ecm_effect$coefficients)
 sig <- ecm_effect$Pr...t..
