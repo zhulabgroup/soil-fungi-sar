@@ -160,7 +160,7 @@ mod <- lmer(z ~ c + organicCPercent + nitrogen + sand + bio18 + bio4 + bio12 + b
 summary(mod)
 
 
-## climate, plant diversity and soil model: only neon sites were included, as dob sites do not have plant data (396 plots)
+## climate, plant diversity and soil model: only neon sites were included
 mode.data2 <- model_data[, c(1:20)] # GUAN don't have soil variables and will be excluded(possibly this site is out of place)
 mode.data2 <- subset(mode.data2, siteIDD != "GUAN" & z < 10 & richness > 0) # some sites do have plant data
 # check colinearity among variables
