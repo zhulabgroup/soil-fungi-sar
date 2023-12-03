@@ -89,7 +89,7 @@ set_theme(base = theme_classic(), #To remove the background color and the grids
           title.align= "center")  #To change y axis text size
 
 
-p1=plot_model(mod_acm,axis.labels = c("Fun.rich","Pla.rich","pH"),colors="blue",rm.terms = "c",title="ACM (N=87)",axis.lim=c(-1, 1))
+p1=plot_model(mod_acm,axis.labels = c("Fun.rich","Pla.rich","pH"),colors="red",rm.terms = "c",title="ACM (N=87)",axis.lim=c(-1, 1))
 
 # for the prediction
 effects_ph <- effects::effect(term= "ph", mod= mod_acm)
