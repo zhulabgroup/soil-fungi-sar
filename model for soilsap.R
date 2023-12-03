@@ -40,12 +40,15 @@ soilsap_model=cbind(soilsap_c_ranall_30,soilsap_z_ranall_30["z"])
 
 names(soilsap_model)[2]="logc"
 soilsap_model=merge(soilsap_model,model_var,by="plotID")
-soilsap_model=subset(soilsap_model,siteIDD!="GUAN"&z<10&fine>0&rootc>0&richness>0)# only 104 plots from 33 sites
 
-soilsap_model<- cbind(soilsap_model, c = 2.71828^soilsap_model$logc)
+soilsap_model=subset(soilsap_model,siteIDD!="GUAN"&z<10&fine>0&rootc>0&richness>0)# only 104 plots from 33 sites
+soilsap_model_rich=subset(soilsap_model,siteIDD!="GUAN"&z<10&richness>0)# only 104 plots from 33 sites
+
+soilsap_model_rich<- cbind(soilsap_model_rich, c = 2.71828^soilsap_model_rich$logc)
 
 #standardized data
 soilsap_model[,c(5:28)]=apply(soilsap_model[,c(5:28)],2,range01)
+soilsap_model_rich[,c(5:28)]=apply(soilsap_model_rich[,c(5:28)],2,range01)
 # colinearity
 ggcorrplot(cor(soilsap_model[,c(2,3,5:27)]), hc.order = TRUE, type = "lower", lab = TRUE)#
 #bold was related with soil OC and was excluded,cec was related to soil OC and was removed
@@ -68,6 +71,18 @@ plot_model(mod_soilsap)
 
 p3=plot_model(mod_soilsap,axis.labels = c("MAT","Fun.rich","Pla.rich","MAP"),color=c("blue","red"),rm.terms = "c",title="Soilsap. (N=104)")
 
+
+## when root traits were excluded
+
+mod=lmer(z ~ c+organicCPercent + ph+ nitrogen+ sand +bio2 +bio8+ bio18 +bio12+ bio15  +spei+ richness+funrich +bio1  +(1 |siteIDD/plotID),data=soilsap_model_rich)
+
+step(mod)
+
+mod_soilsap_rich=lmer(z ~ c + nitrogen + sand + bio2 + bio18 + bio12 + spei + richness + funrich + (1 | siteIDD/plotID),data=soilsap_model_rich)
+
+plot_model(mod_soilsap_rich)
+
+p30=plot_model(mod_soilsap_rich,axis.labels = c("Fun.rich","Pla.rich","Spei", "MAP","Pre.WQ","Mean\n diurnal\n range","Sand","SoilN"),color=c("blue","red"),rm.terms = "c",title="Soilsap. (N=438)")
 
 
 pp$data <- transform(pp$data, term = factor(term, levels = c("bio1","bio12", "funrich", "richness")))
