@@ -43,14 +43,19 @@ ecm_model <- cbind(ecm_c_ranall_30, ecm_z_ranall_30["z"])
 names(ecm_model)[2] <- "logc"
 ecm_model <- merge(ecm_model, model_var, by = "plotID")
 ecm_model <- subset(ecm_model, siteIDD != "GUAN" & z < 10 & fine > 0 & rootc > 0 & richness > 0) # only 104 plots from 33 sites
+ecm_model_rich <- subset(ecm_model, siteIDD != "GUAN" & z < 10 & richness > 0) # only 104 plots from 33 sites
+
 # head(ecm_model)
 # consider the climate and soil data
 ecm_model1 <- cbind(ecm_model1, c = 2.71828^ecm_model1$logc)
 ecm_model1 <- ecm_model1[, c(1:28)]
 
-
+ecm_model_rich <- cbind(ecm_model_rich, c = 2.71828^ecm_model_rich$logc)
 # standardized data
 ecm_model1[, c(5:28)] <- apply(ecm_model1[, c(5:28)], 2, range01)
+
+ecm_model_rich[, c(5:28)] <- apply(ecm_model_rich[, c(5:28)], 2, range01)
+
 # colinearity
 ggcorrplot(cor(ecm_model1[, c(5:28)]), hc.order = TRUE, type = "lower", lab = TRUE) #
 # bold was related with soil OC and hence was excluded,cec was related to soil C and was removed
@@ -67,11 +72,24 @@ mod <- lmer(z ~ c + organicCPercent + ph + nitrogen + sand + bio2 + bio8 + bio18
 
 step(mod)
 
-mod_ecm=lmer(z ~ logc + ph + funrich + d13C + rootcn + (1 | siteIDD/plotID),data=ecm_model1)
+mod_ecm=lmer(z ~ c + ph + funrich + d13C + rootcn + (1 | siteIDD/plotID),data=ecm_model1)
 
 p2=plot_model(mod_ecm,axis.labels = c(expression("Root"["cn"]),"d13C","Fun.rich","pH"),color=c("blue","red"),rm.terms="logc",title="ECM (N=104)")
 
 plot_model(mod_ecm)
+
+## when root traits were excluded
+
+mod <- lmer(z ~ c + organicCPercent + ph + nitrogen + sand + bio2 + bio8 + bio18 + bio12 + bio15 + spei + richness + funrich + bio1 + (1 | siteIDD / plotID), data = ecm_model_rich)
+
+step(mod)
+
+mod_ecm_rich=lmer(z ~ c + ph + funrich + (1 | siteIDD/plotID),data=ecm_model_rich)
+
+plot_model(mod_ecm_rich)
+
+p20=plot_model(mod_ecm_rich,axis.labels = c("Fun.rich","pH"),color=c("blue","red"),rm.terms="c",title="ECM (N=438)")
+
 
 
 ecm_effect <- summary(mod)
