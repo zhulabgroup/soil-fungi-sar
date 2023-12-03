@@ -43,16 +43,20 @@ for (i in 2:dim(acm_z_ranall)[1])
 
 
 acm_z_ranall_30 <- b # for each plot,with 30 estimated z values
-
 acm_model <- cbind(acm_c_ranall_30, acm_z_ranall_30["id"])
 names(acm_model) <- c("plotID", "logc", "z")
 acm_model <- merge(acm_model, model_var, by = "plotID")
 acm_model <- subset(acm_model, siteIDD != "GUAN" & z < 10 & fine > 0 & rootc > 0 & richness > 0) # only 87 plots from 33 sites
+# does not include root traits but plant richness
+acm_model_rich <- subset(acm_model, siteIDD != "GUAN" & z < 10 &richness>0) # only 87 plots from 33 sites
+
 # head(acm_model)
 # consider the climate and soil data
 
 
 acm_model <- cbind(acm_model, c = 2.71828^acm_model$logc)
+
+acm_model_rich <- cbind(acm_model_rich, c = 2.71828^acm_model_rich$logc)
 
 range01 <- function(x) ## to
 {
@@ -60,8 +64,11 @@ range01 <- function(x) ## to
 }
 
 
-# standardized data
+# standardize the data
+
 acm_model[, c(5:28)] <- apply(acm_model[, c(5:28)], 2, range01)
+
+acm_model_rich[, c(5:28)] <- apply(acm_model_rich[, c(5:28)], 2, range01)
 
 # testing colinearity
 ggcorrplot(cor(acm_model1[, c(5:28)]), hc.order = TRUE, type = "lower", lab = TRUE) #
@@ -71,12 +78,10 @@ ggcorrplot(cor(acm_model1[, c(5:28)]), hc.order = TRUE, type = "lower", lab = TR
 # build a model for the acm guild,355 plots
 # decide to remove cec to reduce model complexity
 
-# model in a nested manner
+# plotid and site id were nested as the random effects
 
 mod <- lmer(z ~ c + organicCPercent + ph + nitrogen + sand +bio1+ bio2 + bio4+ bio8  + bio12 + bio15 ++ bio18 + spei + richness + funrich + fine + d15N + d13C + rootc + rootcn + (1 | siteIDD / plotID), data = acm_model)
-
 step(mod)
-
 mod_acm=lmer(z ~ c + ph + richness + funrich + (1 | siteIDD/plotID),data=acm_model)
 
 # creat the effect size plot
@@ -88,8 +93,16 @@ set_theme(base = theme_classic(), #To remove the background color and the grids
           title.size = 1.5,
           title.align= "center")  #To change y axis text size
 
-
 p1=plot_model(mod_acm,axis.labels = c("Fun.rich","Pla.rich","pH"),colors="red",rm.terms = "c",title="ACM (N=87)",axis.lim=c(-1, 1))
+
+## for the model does not include root traits
+mod <- lmer(z ~ c + organicCPercent + ph + nitrogen + sand +bio1+ bio2 + bio4+ bio8  + bio12 + bio15 + bio18 + spei + richness + funrich  + (1 | siteIDD / plotID), data = acm_model_rich)
+
+step(mod)
+mod_acm_rich=lmer(z ~ c + organicCPercent + bio15 + funrich + (1 | siteIDD/plotID),data=acm_model_rich)
+
+p10=plot_model(mod_acm_rich,axis.labels = c("Fun.rich","Pre.seas.","SoilC"),colors=c("blue","red"),rm.terms="c",title="ACM (N=319)",axis.lim=c(-1, 1))
+
 
 # for the prediction
 effects_ph <- effects::effect(term= "ph", mod= mod_acm)
