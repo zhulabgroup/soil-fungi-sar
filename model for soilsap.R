@@ -82,7 +82,7 @@ mod_soilsap_rich=lmer(z ~ c + nitrogen + sand + bio2 + bio18 + bio12 + spei + ri
 
 plot_model(mod_soilsap_rich)
 
-p30=plot_model(mod_soilsap_rich,axis.labels = c("Fun.rich","Pla.rich","Spei", "MAP","Pre.WQ","Mean\n diurnal\n range","Sand","SoilN"),color=c("blue","red"),rm.terms = "c",title="Soilsap. (N=438)")
+p30=plot_model(mod_soilsap_rich,axis.labels = c("Fun.rich","Pla.rich","Spei", "MAP","Pre.WQ","MDR","Sand","SoilN"),color=c("blue","red"),rm.terms = "c",title="Soilsap. (N=438)")
 
 
 pp$data <- transform(pp$data, term = factor(term, levels = c("bio1","bio12", "funrich", "richness")))
