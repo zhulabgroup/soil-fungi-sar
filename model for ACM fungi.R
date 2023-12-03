@@ -52,7 +52,7 @@ acm_model <- subset(acm_model, siteIDD != "GUAN" & z < 10 & fine > 0 & rootc > 0
 # consider the climate and soil data
 
 
-acm_model1 <- cbind(acm_model, c = 2.71828^acm_model$logc)
+acm_model <- cbind(acm_model, c = 2.71828^acm_model$logc)
 
 range01 <- function(x) ## to
 {
@@ -61,7 +61,7 @@ range01 <- function(x) ## to
 
 
 # standardized data
-acm_model1[, c(5:28)] <- apply(acm_model1[, c(5:28)], 2, range01)
+acm_model[, c(5:28)] <- apply(acm_model[, c(5:28)], 2, range01)
 
 # testing colinearity
 ggcorrplot(cor(acm_model1[, c(5:28)]), hc.order = TRUE, type = "lower", lab = TRUE) #
@@ -73,23 +73,24 @@ ggcorrplot(cor(acm_model1[, c(5:28)]), hc.order = TRUE, type = "lower", lab = TR
 
 # model in a nested manner
 
-mod <- lmer(z ~ c + organicCPercent + ph + nitrogen + sand +bio1+ bio2 + bio4+ bio8  + bio12 + bio15 ++ bio18 + spei + richness + funrich + fine + d15N + d13C + rootc + rootcn + (1 | siteIDD / plotID), data = acm_model1)
+mod <- lmer(z ~ c + organicCPercent + ph + nitrogen + sand +bio1+ bio2 + bio4+ bio8  + bio12 + bio15 ++ bio18 + spei + richness + funrich + fine + d15N + d13C + rootc + rootcn + (1 | siteIDD / plotID), data = acm_model)
 
 step(mod)
 
-mod_acm=lmer(z ~ c + ph + richness + funrich + (1 | siteIDD/plotID),data=acm_model1)
+mod_acm=lmer(z ~ c + ph + richness + funrich + (1 | siteIDD/plotID),data=acm_model)
 
 # creat the effect size plot
 set_theme(base = theme_classic(), #To remove the background color and the grids
           theme.font = 'Arial',   #To change the font type
-          axis.title.size = 2.0,  #To change axis title size
+          axis.title.size = 1.5,  #To change axis title size
           axis.textsize.x = 1,  #To change x axis text size
           axis.textsize.y = 1,
-          title.size = 2,
+          title.size = 1.5,
           title.align= "center")  #To change y axis text size
 
 
-p1=plot_model(mod_acm,axis.labels = c("Fun.rich","Pla.rich","pH"),colors="mediumpurple",rm.terms = "c",title="ACM (N=87)")
+p1=plot_model(mod_acm,axis.labels = c("Fun.rich","Pla.rich","pH"),colors="blue",rm.terms = "c",title="ACM (N=87)",axis.lim=c(-1, 1))
+
 # for the prediction
 effects_ph <- effects::effect(term= "ph", mod= mod_acm)
 summary(effects_ph) 
