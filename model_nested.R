@@ -23,9 +23,10 @@ range01 <- function(x) ## to
 
 mode.data1[, 4:19] <- apply(mode.data1[, 4:19], 2, range01) %>% data.frame()
 
-# plot included as the random effect, here some sites have only samples from the same plot
+# plot and site included as the random effect, here some sites have only samples from the same plot
 mod <- lmer(z ~ c + organicCPercent + ph + nitrogen + sand + bio2 + bio8 + bio18 + bio4 + bio12 + bio15 + spei + funrich + bio1 + (1 | siteIDD/plotID), data = mode.data1)
 step(mod)
+
 
 #best model
 mod_nest=lmer(z ~ c + nitrogen + sand + bio2 + bio12 + bio15 + funrich + (1 | siteIDD/plotID),data=mode.data1)
@@ -42,7 +43,7 @@ axis.textsize.y = 1,
 title.size = 2,
 title.align= "center")  #To change y axis text size
 
-plot_model(mod_nest,axis.labels=c("Fun.rich","Pre.seas.","MAP","MDR","Sand","SoilN","c"),rm.terms = "c",title="Climate+Soil (N=483)")
+plot_model(mod_nest,axis.labels=c("Fun.rich","Pre.seas.","MAP","MDR","Sand","SoilN","c"),color=c("blue","red"),rm.terms = "c",title="Climate+Soil (N=483)")
 
 ## tables
 tab_model(mod_nest)
@@ -88,10 +89,6 @@ step(mod)
 
 
 
-
-
-
-
 2. # climate, soil and plant diversity model
 
 mode.data2 <- model_data[, c(1:20)] # GUAN don't have soil variables and will be excluded(possibly this site is out of place)
@@ -118,7 +115,7 @@ set_theme(base = theme_classic(), #To remove the background color and the grids
           title.size = 2,
           title.align= "center")  #To change y axis text size
 
-plot_model(mod_nestCSP,axis.labels=c("Fun.rich","Pre.seas.","MAP","Mean\n diurnal \n range","Sand","Pla.rich","SoilN","c"),rm.terms = "c",title="Climate+Soil+Plant (N=438)")
+plot_model(mod_nestCSP,axis.labels=c("Fun.rich","Pre.seas.","MAP","Mean\n diurnal \n range","Sand","Pla.rich","SoilN","c"),colors=c("blue","red"),rm.terms = "c",title="Climate+Soil+Plant (N=438)")
 
 # to see the effect of plant richnes
 
@@ -167,7 +164,7 @@ mod_nestCSPR=lmer(z ~c + richness + funrich + bio1 + (1 | siteIDD/plotID),data=m
 
 plot_model(mod_nestCSPR)
 
-plot_model(mod_nestCSPR,axis.labels=c("MAT","Fun.rich","Pla.rich"),rm.terms = "c",title="Climate+Soil+Plant+Root (N=104)")
+plot_model(mod_nestCSPR,axis.labels=c("MAT","Fun.rich","Pla.rich"),color=c("blue","red"),rm.terms = "c",title="Climate+Soil+Plant+Root (N=104)")
 
 effects_bio1 <- effects::effect(term= "bio1", mod= mod_nestCSPR)
 summary(effects_bio1) 

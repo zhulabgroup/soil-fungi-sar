@@ -95,6 +95,9 @@ set_theme(base = theme_classic(), #To remove the background color and the grids
 
 p1=plot_model(mod_acm,axis.labels = c("Fun.rich","Pla.rich","pH"),colors="red",rm.terms = "c",title="ACM (N=87)",axis.lim=c(-1, 1))
 
+p1=plot_model(mod_acm,order.terms=c(3,4,2),colors="red", axis.labels = c("Pla.rich","Fun.rich","pH"),rm.terms = "c",title="ACM (N=87)",axis.lim=c(-1, 1))+
+  theme(axis.text.y = element_text(color=c("seagreen","orange","brown")))
+
 ## for the model does not include root traits
 mod <- lmer(z ~ c + organicCPercent + ph + nitrogen + sand +bio1+ bio2 + bio4+ bio8  + bio12 + bio15 + bio18 + spei + richness + funrich  + (1 | siteIDD / plotID), data = acm_model_rich)
 
