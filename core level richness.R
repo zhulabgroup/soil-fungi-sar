@@ -21,7 +21,11 @@ rich_core=estimate_richness(d, measures="Observed")
 k=data.frame(sample_data(d))["plotIDM"]
 rich_core=cbind("Site"=k,rich_core["Observed"])
 rich_core_mean=aggregate(Observed~plotIDM,data=rich_core,FUN=mean)
-rich_core_sd=aggregate(Observed~Site,data=rich_core,FUN=sd)
+rich_core_sd=aggregate(Observed~plotIDM,data=rich_core,FUN=sd)
+
+names(rich_core_mean)[1]="plotID"
+
+d=merge(model_data,rich_core_mean,by="plotID")
 
 # determine the plot level richness
 
