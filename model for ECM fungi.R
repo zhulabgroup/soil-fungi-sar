@@ -1,4 +1,5 @@
-# model for ECM
+# model for ECM guild
+model_var <- model_data[, c(2, 3, 6:28)]
 a <- list()
 for (i in 1:dim(ecm_c_ranall)[1])
 {
@@ -47,12 +48,18 @@ ecm_model_rich <- subset(ecm_model, siteIDD != "GUAN" & z < 10 & richness > 0) #
 
 # head(ecm_model)
 # consider the climate and soil data
-ecm_model1 <- cbind(ecm_model1, c = 2.71828^ecm_model1$logc)
-ecm_model1 <- ecm_model1[, c(1:28)]
+ecm_model <- cbind(ecm_model, c = 2.71828^ecm_model$logc)
+ecm_model <- ecm_model[, c(1:28)]
 
 ecm_model_rich <- cbind(ecm_model_rich, c = 2.71828^ecm_model_rich$logc)
 # standardized data
-ecm_model1[, c(5:28)] <- apply(ecm_model1[, c(5:28)], 2, range01)
+
+range01 <- function(x) 
+{
+  return((x - min(x)) / (max(x) - min(x))) 
+}
+  
+ecm_model[, c(5:28)] <- apply(ecm_model[, c(5:28)], 2, range01)
 
 ecm_model_rich[, c(5:28)] <- apply(ecm_model_rich[, c(5:28)], 2, range01)
 
@@ -72,9 +79,13 @@ mod <- lmer(z ~ c + organicCPercent + ph + nitrogen + sand + bio2 + bio8 + bio18
 
 step(mod)
 
-mod_ecm=lmer(z ~ c + ph + funrich + d13C + rootcn + (1 | siteIDD/plotID),data=ecm_model1)
+mod_ecm=lmer(z ~ c + ph + funrich + d13C + rootcn + (1 | siteIDD/plotID),data=ecm_model)
 
-p2=plot_model(mod_ecm,axis.labels = c(expression("Root"["cn"]),"d13C","Fun.rich","pH"),color=c("blue","red"),rm.terms="logc",title="ECM (N=104)")
+p2=plot_model(mod_ecm,color=c("blue","red"),rm.terms="c",title="ECM (N=104)",order.terms = c(2,4,5,3,1))+
+  theme(legend.position = c(0.51, 0.85), legend.text = element_text(size = 14), text = element_text(size = 15), axis.title.y = element_text(size = 20), axis.title.x = element_text(size = 20), axis.ticks.x = element_blank(), axis.text.x = element_text(angle =0)) 
+
+p2=plot_model(mod_ecm,order.terms = c(1,3,2,4,5),color=c("blue","red"),title = "",rm.terms = "c",axis.labels = c(expression("Root"["cn"]),"d13C","Fun.rich","pH"))+
+  theme(axis.text.y = element_text(color=c("seagreen","seagreen","orange","brown")))
 
 plot_model(mod_ecm)
 
