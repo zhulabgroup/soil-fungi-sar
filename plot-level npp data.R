@@ -70,10 +70,14 @@ anpp_mean=aggregate(anpp_mean~plotIDM,data=anpp_mean,FUN=mean)# leads to 374 plo
 
 write.csv(anpp_mean,"anpp_mean.csv")
 
+# bind the npp data with the initial model data
 
+anpp_mean=anpp_mean[,-1]
+names(anpp_mean)=c("plotID","npp")
 
+d=merge(model_data[,2:28],anpp_mean,by="plotID",all.x=TRUE)
 
-
+write.csv(d,"model_data.csv")
 
 
 
