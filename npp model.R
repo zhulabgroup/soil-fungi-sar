@@ -46,4 +46,7 @@ step(mod)
 
 mod=lmer(z ~ c + richness + ph+npp + bio12 + bio4 + funrich + (1 | siteIDD/plotID),data=mode.data2)
 
+# model selection 
 
+glmmLasso(z ~ organicCPercent + c +ph+ nitrogen +sand+ cec+richness +npp +  bio1+bio2 + bio8 + bio18 + bio12 + bio15 + bio4 + spei + funrich, mode.data2, lambda=50, rnd=list(plotID=~1),family = gaussian(link="identity"), 
+          switch.NR=FALSE, final.re=FALSE, control = list())
