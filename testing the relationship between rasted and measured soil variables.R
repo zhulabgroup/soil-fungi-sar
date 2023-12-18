@@ -63,7 +63,7 @@ sam <- sam[, c(5, 6:10, 24)]
 sam <- data.frame(sam)
 
 
-# look at the relationship betwwen the rastered and the in-situ measured variables for (N)
+# look at the relationship between the rastered and the in-situ measured variables for (N)
 sam_n <- subset(sam, nitrogenPercent > 0)
 sam_n <- aggregate(nitrogenPercent ~ plotID, data = sam_n, FUN = mean)
 #
@@ -75,7 +75,7 @@ names(model_soil)[1] <- "plotID"
 
 soiln <- merge(sam_n, model_soil, by = "plotID") # (r2=0.18, not well related,n=223)
 
-# # look at the relationship betwwen the rastered and the in-situ measured variables for (soil organic carbon,n=235)
+# # look at the relationship between the rastered and the in-situ measured variables for (soil organic carbon,n=235)
 sam_c <- subset(sam, organicCPercent > 0)
 sam_c <- aggregate(organicCPercent ~ plotID, data = sam_c, FUN = mean)
 
