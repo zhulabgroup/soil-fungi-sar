@@ -164,7 +164,7 @@ mod_nestCSPR=lmer(z ~c + richness + funrich + bio1 + (1 | siteIDD/plotID),data=m
 
 plot_model(mod_nestCSPR)
 
-plot_model(mod_nestCSPR,axis.labels=c("MAT","Fun.rich","Pla.rich"),color=c("blue","red"),rm.terms = "c",title="Climate+Soil+Plant+Root (N=104)")
+plot_model(mod_nestCSPR,axis.labels=c("MAT","Fun.rich","Pla.rich"),color=c("blue","red"),rm.terms = "c",title="Climate+Soil+Plant+Root (N=104)",dot.size = 5)
 
 effects_bio1 <- effects::effect(term= "bio1", mod= mod_nestCSPR)
 summary(effects_bio1) 
