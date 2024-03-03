@@ -3,7 +3,7 @@
 library(car)
 source("http://aoki2.si.gunma-u.ac.jp/R/src/tukey.R", encoding = "euc-jp")
 dim(subset(acm_z_ranall, X1 < 10)) # acm,365 plots,X1<10 means that we excluded plots with <3 soil cores
-dim(subset(ecm_z_ranall, X1 < 10)) # acm,493 plots
+dim(subset(ecm_z_ranall, X1 < 10)) # ecm,493 plots
 dim(subset(litsap_z_ranall, X1 < 10)) # litter sap,493 plots
 dim(subset(para_z_ranall, X1 < 10)) # parasitic,459 plots
 dim(subset(soilsap_z_ranall, X1 < 10)) # parasitic,493 plots
@@ -12,6 +12,7 @@ dim(subset(epiphy_z_ranall, X1 < 10)) # parasitic,482 plots
 dim(subset(plapat_z_ranall, X1 < 10)) # parasitic,482 plots
 # we now have eight guilds and need to compare the mean of z among guilds
 
+# for ACM fungi
 a <- list()
 for (i in 1:dim(acm_z_ranall)[1])
 {
@@ -25,12 +26,10 @@ for (i in 2:dim(acm_z_ranall)[1])
 }
 
 plotID <- rep(acm_z_ranall$a1, each = 30)
-
 acm_z_ranall_30 <- cbind(plotID, b) # for each plot,with 30 estimated z values
-
 acm_z_ranall_30$X1 <- as.numeric(acm_z_ranall_30$X1) # the data will also be used for model
 
-### for "ecm" guild
+# for ectomycorrhizal fungi
 a <- list()
 for (i in 1:dim(ecm_z_ranall)[1])
 {
@@ -44,10 +43,9 @@ for (i in 2:dim(ecm_z_ranall)[1])
 }
 
 plotID <- rep(ecm_z_ranall$a1, each = 30)
-
 ecm_z_ranall_30 <- cbind(plotID, b) # for each plot,with 30 estimated z values
 
-# for "litsap" guild
+# for littler saprotroph guild
 a <- list()
 for (i in 1:dim(litsap_z_ranall)[1])
 {
@@ -61,10 +59,9 @@ for (i in 2:dim(litsap_z_ranall)[1])
 }
 
 plotID <- rep(litsap_z_ranall$a1, each = 30)
-
 litsap_z_ranall_30 <- cbind(plotID, b) # for each plot,with 30 estimated z values
 
-# for "para" guild
+#for parasitic
 a <- list()
 for (i in 1:dim(para_z_ranall)[1])
 {
@@ -78,10 +75,9 @@ for (i in 2:dim(para_z_ranall)[1])
 }
 
 plotID <- rep(para_z_ranall$a1, each = 30)
-
 para_z_ranall_30 <- cbind(plotID, b) # for each plot,with 30 estimated z values
 
-# for "soilsap"
+# for soil saprotroph
 a <- list()
 for (i in 1:dim(soilsap_z_ranall)[1])
 {
@@ -98,7 +94,7 @@ plotID <- rep(soilsap_z_ranall$a1, each = 30)
 
 soilsap_z_ranall_30 <- cbind(plotID, b) # for each plot,with 30 estimated z values
 
-# for "woodsap" guild
+#for wood saprotroph guild
 a <- list()
 for (i in 1:dim(woosap_z_ranall)[1])
 {
@@ -112,10 +108,9 @@ for (i in 2:dim(woosap_z_ranall)[1])
 }
 
 plotID <- rep(woosap_z_ranall$a1, each = 30)
-
 woosap_z_ranall_30 <- cbind(plotID, b) # for each plot,with 30 estimated z values
 
-# for "epiphy" guild
+# for epiphytic guild
 a <- list()
 for (i in 1:dim(epiphy_z_ranall)[1])
 {
@@ -132,7 +127,7 @@ plotID <- rep(epiphy_z_ranall$a1, each = 30)
 
 epiphy_z_ranall_30 <- cbind(plotID, b) # for each plot,with 30 estimated z values
 
-# for "plapat" guild
+# for plant pathogen guild
 a <- list()
 for (i in 1:dim(plapat_z_ranall)[1])
 {
@@ -146,7 +141,6 @@ for (i in 2:dim(plapat_z_ranall)[1])
 }
 
 plotID <- rep(plapat_z_ranall$a1, each = 30)
-
 plapat_z_ranall_30 <- cbind(plotID, b) # for each plot,with 30 estimated z values
 # combine all the data
 # guild=rep(c("acm","ecm","litsap","para","soilsap","woosap","epiphy","plapat"),times=c(dim(acm_z_ranall_30)[1],dim(ecm_z_ranall_30)[1],dim(litsap_z_ranall_30)[1],dim(para_z_ranall_30)[1],dim(soilsap_z_ranall_30)[1],dim(woosap_z_ranall_30)[1],dim(epiphy_z_ranall_30)[1],dim(plapat_z_ranall_30)[1]))
@@ -178,7 +172,7 @@ tukey(com_guild$z, com_guild$guild, method = "G") # multiple comparison with 'Ga
 
 boxplot(z ~ guild, data = subset(com_guild, z < 10))
 
-
+# creat a plot
 k <- aggregate(z ~ guild, data = com_guild, FUN = mean)
 od1 <- k[order(k$z), ] # with the increase trend to display the box plots
 com_guild$guild <- factor(com_guild$guild, levels = od1$guild)
