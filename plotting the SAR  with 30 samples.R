@@ -115,7 +115,7 @@ c=ggplot(ex_dob, aes(x=as.factor(A), y=species))+
   theme(legend.position = "bottom", text = element_text(size=18), plot.title = element_text(size=10,hjust=0.5),axis.text.y = element_text(hjust = 0,angle=90),axis.text.x = element_text(hjust = 1,size=10,angle=90),axis.title.y = element_text(size=18),axis.title.x = element_text(size=18),axis.ticks.x = element_blank(),panel.background=element_rect(fill="NA"),panel.border = element_rect(color = "black", size = 1.5, fill = NA))
   
 
-
+# for the neon site
 
 times <- 30
 power.z <- vector("list", length(a1))
