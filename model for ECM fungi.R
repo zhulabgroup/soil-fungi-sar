@@ -43,13 +43,14 @@ names(ecm_z_ranall_30)[1] <- "z"
 ecm_model <- cbind(ecm_c_ranall_30, ecm_z_ranall_30["z"])
 names(ecm_model)[2] <- "logc"
 ecm_model <- merge(ecm_model, model_var, by = "plotID")
+
 ecm_model <- subset(ecm_model, siteIDD != "GUAN" & z < 10 & fine > 0 & rootc > 0 & richness > 0) # only 104 plots from 33 sites
 ecm_model_rich <- subset(ecm_model, siteIDD != "GUAN" & z < 10 & richness > 0) # only 104 plots from 33 sites
 
 # head(ecm_model)
 # consider the climate and soil data
 ecm_model <- cbind(ecm_model, c = 2.71828^ecm_model$logc)
-ecm_model <- ecm_model[, c(1:28)]
+
 
 ecm_model_rich <- cbind(ecm_model_rich, c = 2.71828^ecm_model_rich$logc)
 # standardized data
@@ -75,7 +76,7 @@ ggcorrplot(cor(ecm_model1[, c(5:28)]), hc.order = TRUE, type = "lower", lab = TR
 3
 # build a model for the ecm guild,with 104 plots included, soil pH and fundive
 
-mod <- lmer(z ~ c + organicCPercent + ph + nitrogen + sand + bio2 + bio8 + bio18 + bio12 + bio15 + spei + richness + funrich + bio1 + fine + d15N + d13C + rootc + rootcn + (1 | siteIDD / plotID), data = ecm_model1)
+mod <- lmer(z ~ c + organicCPercent + ph + nitrogen + sand + bio2 + bio8 + bio18 + bio12 + bio15 + spei + richness + funrich + bio1 + fine + d15N + d13C + rootc + rootcn + (1 | siteIDD / plotID), data = ecm_model)
 
 step(mod)
 
