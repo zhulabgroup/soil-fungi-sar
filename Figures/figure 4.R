@@ -1,18 +1,18 @@
 # date required
-#comp_vege#each plot has 30 estimated z values
-#com_guild#each fungal guil has 30 estimated z values
+# comp_vege#each plot has 30 estimated z values
+# com_guild#each fungal guil has 30 estimated z values
 
-1. #test the homogeneity of the variance
+1. # test the homogeneity of the variance
 leveneTest(z ~ type, data = comp_vege)
 oneway.test(z ~ type, data = comp_vege, na.action = na.omit, var.equal = FALSE)
 tukey(comp_vege$z, comp_vege$type, method = "G")
 source("http://aoki2.si.gunma-u.ac.jp/R/src/tukey.R", encoding = "euc-jp")
 
-2. #create the plot
+2. # create the plot
 k <- aggregate(z ~ type, data = comp_vege, FUN = mean)
 od <- k[order(k$z), ] # with the increase trend to display the box plots
 comp_vege$type <- factor(comp_vege$type, levels = od$type)
-a=ggboxplot(comp_vege, x = "type", y = "z", fill = "type", outlier.shape = NA) +
+a <- ggboxplot(comp_vege, x = "type", y = "z", fill = "type", outlier.shape = NA) +
   xlab("") +
   theme(legend.position = "bottom", legend.text = element_text(size = 14), text = element_text(size = 15), axis.text.x = element_blank(), axis.title.y = element_text(face = "italic", size = 20), axis.title.x = element_text(size = 20), axis.ticks.x = element_blank()) +
   ylab("z") +
@@ -32,7 +32,7 @@ a=ggboxplot(comp_vege, x = "type", y = "z", fill = "type", outlier.shape = NA) +
   annotate("text", x = 10, y = 1.11, label = "a", size = 6) +
   annotate("text", x = 11, y = 1.5, label = "ab", size = 6)
 
-3. #test the homogeneity of the variance
+3. # test the homogeneity of the variance
 leveneTest(z ~ guild, data = com_guild) # testing variance homogenety, unblanced
 oneway.test(z ~ guild, data = com_guild, na.action = na.omit, var.equal = FALSE)
 source("http://aoki2.si.gunma-u.ac.jp/R/src/tukey.R", encoding = "euc-jp")
@@ -60,5 +60,4 @@ b <- ggboxplot(com_guild, x = "guild", y = "z", fill = "guild", outlier.colour =
   ylim(0, 3)
 5. # arrange the two plots
 
-plot_grid(a,b,ncol=1,labels=c("(a)","(b)"))
-
+plot_grid(a, b, ncol = 1, labels = c("(a)", "(b)"))
