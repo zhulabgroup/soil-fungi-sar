@@ -42,6 +42,8 @@ names(soilsap_model)[2]="logc"
 soilsap_model=merge(soilsap_model,model_var,by="plotID")
 
 soilsap_model=subset(soilsap_model,siteIDD!="GUAN"&z<10&fine>0&rootc>0&richness>0)# only 104 plots from 33 sites
+soilsap_model<- cbind(soilsap_model, c = 2.71828^soilsap_model$logc)
+
 soilsap_model_rich=subset(soilsap_model,siteIDD!="GUAN"&z<10&richness>0)# only 104 plots from 33 sites
 
 soilsap_model_rich<- cbind(soilsap_model_rich, c = 2.71828^soilsap_model_rich$logc)
