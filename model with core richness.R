@@ -1,7 +1,20 @@
 # when core level richness was considered while c was included in the model while
 library(lmerTest)
-library(lme4)
 library(MuMIn)
+library(dplyr)
+library(sjPlot)
+library(ggplot2)
+library(effects)
+library(lme4)
+
+
+# function for data standardization
+
+range01 <- function(x) ## to
+{
+  return((x - min(x)) / (max(x) - min(x)))
+}
+
 1.# determine core level fungal richness
 
 # test the relationship between the number of soil cores and the estimated z value
@@ -46,16 +59,25 @@ data_corich=merge(model_data[,1:20],core_rich,by="plotID")
 data_corich <- subset(data_corich, siteIDD != "GUAN" & z < 10)
 data_corich[, 5:21] <- apply(data_corich[, 5:21], 2, range01) %>% data.frame()
 
+
 2.# climate and soil model
 
 mod <- lmer(z ~ corich+ organicCPercent + ph + nitrogen + sand + bio2 + bio8 + bio18 + bio4 + bio12 + bio15 + spei + funrich + bio1 + (1 | siteIDD / plotID), data = data_corich)
 mod_corich=lmer(z ~ corich + bio4 + bio12 + bio15 + (1 | siteIDD/plotID),data=data_corich)
 
+effect_corich_CS=summary(mod_corich)
+effect_corich_CS=effect_corich_CS$coefficients
+
 3.# climate, soil and plant richness model
 data_corich=merge(model_data[,1:20],core_rich,by="plotID")
 data_corich <- subset(data_corich, siteIDD != "GUAN" & z < 10&richness>0)
 data_corich[, 5:21] <- apply(data_corich[, 5:21], 2, range01) %>% data.frame()
-mod <- lmer(z ~ corich+ organicCPercent + ph + nitrogen + sand + bio2 + bio8 + bio18 + bio4 + bio12 + bio15 + spei +richness+ funrich + bio1 + (1 | siteIDD / plotID), data = data_corich)
+mod<- lmer(z ~ corich+ organicCPercent + ph + nitrogen + sand + bio2 + bio8 + bio18 + bio4 + bio12 + bio15 + spei +richness+ funrich + bio1 + (1 | siteIDD / plotID), data = data_corich)
+
+step(mod)
+mod<- lmer(z ~ corich + bio4 + bio12 + bio15 + richness + (1 | siteIDD/plotID), data = data_corich)
+effect_corich_CSP=summary(mod)
+effect_corich_CSP=effect_corich_CSP$coefficients
 
 
 4.# # climate, soil,plant richness and root traits model 
@@ -63,6 +85,11 @@ mod <- lmer(z ~ corich+ organicCPercent + ph + nitrogen + sand + bio2 + bio8 + b
 data_corich=merge(model_data[,1:27],core_rich,by="plotID")
 data_corich=subset(data_corich,siteIDD != "GUAN" & z < 10 & richness > 0 & fine > 0 & rootc > 0)
 data_corich[, 5:27] <- apply(data_corich[, 5:27], 2, range01) %>% data.frame()
-mod <- lmer(z ~ organicCPercent + c + ph + nitrogen + richness + sand + bio2 + bio8 + bio18 + +bio12 + bio15 + spei + funrich + bio1 + fine + d13C + rootc + rootcn + (1 | siteIDD / plotID), data = data_corich)
+
+mod <- lmer(z ~ organicCPercent + corich + ph + nitrogen + richness + sand + bio2 + bio8 + bio18 + +bio12 + bio15 + spei + funrich + bio1 + fine + d13C + rootc + rootcn + (1 | siteIDD / plotID), data = data_corich)
 step(mod)
+
 mod <- lmer(z ~ organicCPercent + corich + richness + funrich + rootc + (1 | siteIDD/plotID), data = data_corich)
+
+effect_corich_CSPR=summary(mod)
+effect_corich_CSPR=effect_corich_CSPR$coefficients
