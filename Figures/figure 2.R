@@ -1,4 +1,6 @@
 # codes that create figure 2. these models don't include root traits.
+
+#________________ when the estimated c was included in the model____________
 library(lme4)
 library(lmerTest)
 library(sjPlot)
@@ -8,7 +10,7 @@ library(ggcorrplot)
 library(cowplot)
 library(ggplot2)
 
-1. # for abscular mycorrhizal fungi
+1. # for arbuscular mycorrhizal fungi
 mod <- lmer(z ~ c + organicCPercent + ph + nitrogen + sand + bio1 + bio2 + bio4 + bio8 + bio12 + bio15 + bio18 + spei + richness + funrich + (1 | siteIDD / plotID), data = acm_model_rich)
 step(mod)
 mod_acm_rich <- lmer(z ~ c + organicCPercent + bio15 + funrich + (1 | siteIDD / plotID), data = acm_model_rich)
@@ -22,7 +24,7 @@ mod_ecm_rich <- lmer(z ~ c + ph + funrich + (1 | siteIDD / plotID), data = ecm_m
 
 p2 <- plot_model(mod_ecm_rich, axis.labels = c("Fun.rich", "pH"), color = c("royalblue1", "red"), rm.terms = "c", title = "ECM (N=438)")
 
-3. # for soil sapprotroph
+3. # for soil saprotroph
 
 mod <- lmer(z ~ c + organicCPercent + ph + nitrogen + sand + bio2 + bio8 + bio18 + bio12 + bio15 + spei + richness + funrich + bio1 + (1 | siteIDD / plotID), data = soilsap_model_rich)
 step(mod)
@@ -49,7 +51,8 @@ step(mod)
 mod_woosap_rich <- lmer(z ~ c + sand + bio2 + bio15 + spei + richness + funrich + bio1 + (1 | siteIDD / plotID), woosap_model_rich)
 p6 <- plot_model(mod_woosap_rich, axis.labels = c("MAT", "Fun.rich", "Pla.rich", "Spei", "MAP", "MDR", "Sand"), colors = c("royalblue1", "red"), rm.terms = "c", title = "Woo.sap. (N=427)")
 
-# when the estimated c was replaced by the core-level richness
+#________________ when the estimated c was replaced by the core-level richness____________-
+# all variables were presented without model selection
 
 range01 <- function(x) ## to
 {
