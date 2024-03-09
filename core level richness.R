@@ -17,7 +17,6 @@ a1 <- unique(a1$plotIDM)
 ##
 
 rich_core=estimate_richness(d, measures="Observed")
-
 k=data.frame(sample_data(d))["plotIDM"]
 rich_core=cbind("Site"=k,rich_core["Observed"])
 rich_core_mean=aggregate(Observed~plotIDM,data=rich_core,FUN=mean)
