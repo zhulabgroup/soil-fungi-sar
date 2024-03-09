@@ -286,9 +286,79 @@ p6=ggplot()+
 
 plot_grid(p1,p2,p3,p4,p5,p6,ncol=2,labels=c("(a)","(b)","(c)","(d)","(e)","(f)"),label_x = 0.25)
 
+# for epiphyte
+
+data=subset(rich_guild_com,aguild=="epiphyte" )
+
+data=merge(epiphy_model_rich,data,by="plotID")
+data=unique(data)
+data[,6:29]=apply(data[,6:29],2,range01)%>%data.frame()
+
+mod <- lmer(z ~ Observed + funrich+organicCPercent + ph + nitrogen + sand +bio1+ bio2 + bio8 + bio12 + bio15 +bio18+ spei + richness  + (1 | siteIDD / plotID), data = data)
+effect_epiphy=summary(mod)
+effect_epiphy=effect_epiphy$coefficients
+effect_epiphy=data.frame(effect_epiphy)[2:dim(effect_epiphy)[1],]
+
+p7=ggplot()+
+  geom_point(data=effect_epiphy,aes(x= Estimate,y=1:dim(effect_epiphy)[1]),
+             color=rev(c("seagreen1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","peru","peru","peru","peru","purple","purple")),size=3)+
+  geom_segment(data=effect_epiphy,size=0.8,color=rev(c("seagreen1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","peru","peru","peru","peru","purple","purple")),aes(x=effect_epiphy$Estimate-1.96*effect_epiphy$Std..Error,y=1:dim(effect_epiphy)[1],xend=effect_epiphy$Estimate+1.96*effect_epiphy$Std..Error,yend=1:dim(effect_epiphy)[1]))+
+  geom_vline(xintercept = 0,color="red",linetype="dashed")+
+  scale_y_continuous(breaks=1:14,labels = rev(c("Pla.rich", "Spei","Pre.WQ","Pre.seas.","MAP","MTWQ","MDR","MAT","Sand","SoilN","pH","SoilC","Plot.rich","Core.rich")))+
+  theme(axis.text.y = element_text(colour = rev(c("seagreen1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","peru","peru","peru","peru","purple","purple"))))+
+  theme(legend.key.size = unit(0.18, "inches"),   
+        legend.position = c(0.4,0.85), 
+        legend.text.align = 0, panel.background = element_blank(), 
+        panel.border = element_rect(fill=NA,size=1,color="black"),
+        legend.text = element_text(size=10),
+        legend.title = element_text(size=15),
+        axis.title.x = element_text(size=20),
+        axis.title.y = element_text(size=20),
+        axis.text.y  = element_text(size=15,color="black"),
+        plot.title=element_text(hjust=0.5,face="bold",size=18),
+        axis.text.x  = element_text(size=15))+
+  xlim(-0.8,0.5)+
+  ylab("")+
+  annotate("text",x=0.3,y=14,label="",size=8)+
+  annotate("text",x=0.28,y=11,label="",size=8)+
+  annotate("text",x=0.35,y=10,label="",size=8)+
+  annotate("text",x=-0.25,y=2,label="*",size=8)+
+  ggtitle("Epiphyte (N=392)")
+
+mod <- lmer(z ~ Observed + funrich+organicCPercent + ph + nitrogen + sand +bio1+ bio2 + bio8 + bio12 + bio15 +bio18+ spei + richness  + (1 | siteIDD / plotID), data = para_model_rich)
+effect_para=summary(mod)
+effect_para=effect_para$coefficients
+effect_para=data.frame(effect_para)[2:dim(effect_para)[1],]
+
+p8=ggplot()+
+  geom_point(data=effect_para,aes(x= Estimate,y=1:dim(effect_para)[1]),
+             color=rev(c("seagreen1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","peru","peru","peru","peru","purple","purple")),size=3)+
+  geom_segment(data=effect_para,size=0.8,color=rev(c("seagreen1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","peru","peru","peru","peru","purple","purple")),aes(x=effect_para$Estimate-1.96*effect_para$Std..Error,y=1:dim(effect_para)[1],xend=effect_para$Estimate+1.96*effect_para$Std..Error,yend=1:dim(effect_para)[1]))+
+  geom_vline(xintercept = 0,color="red",linetype="dashed")+
+  scale_y_continuous(breaks=1:14,labels = rev(c("Pla.rich", "Spei","Pre.WQ","Pre.seas.","MAP","MTWQ","MDR","MAT","Sand","SoilN","pH","SoilC","Plot.rich","Core.rich")))+
+  theme(axis.text.y = element_text(colour = rev(c("seagreen1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","peru","peru","peru","peru","purple","purple"))))+
+  theme(legend.key.size = unit(0.18, "inches"),   
+        legend.position = c(0.4,0.85), 
+        legend.text.align = 0, panel.background = element_blank(), 
+        panel.border = element_rect(fill=NA,size=1,color="black"),
+        legend.text = element_text(size=10),
+        legend.title = element_text(size=15),
+        axis.title.x = element_text(size=20),
+        axis.title.y = element_text(size=20),
+        axis.text.y  = element_text(size=15,color="black"),
+        plot.title=element_text(hjust=0.5,face="bold",size=18),
+        axis.text.x  = element_text(size=15))+
+  xlim(-0.8,0.5)+
+  ylab("")+
+  annotate("text",x=0.35,y=14,label="**",size=8)+
+  annotate("text",x=-0.5,y=13,label="**",size=8)+
+  annotate("text",x=0.35,y=11,label="***",size=8)+
+  annotate("text",x=0.35,y=10,label="",size=8)+
+  annotate("text",x=-0.30,y=1,label="*",size=8)+
+  ggtitle("Parasitic (N=409)")
 
 
-#
+##
 data=subset(rich_guild_com,aguild=="soil_saprotroph")
 data=merge(soilsap_model_rich,data,by="plotID")
 
