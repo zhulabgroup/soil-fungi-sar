@@ -1,6 +1,8 @@
 # model for parasitic fungi
 
 # determine the mean richness within each core for parasitic fungi
+
+1.# prepare the data
 ft <- read.csv("FungalTraits_1.2_ver_16Dec_2020.csv", sep = ",", header = T)
 ft <- ft[, c("GENUS", "primary_lifestyle")]
 # get the genus name of all the taxa in the full data set
@@ -16,6 +18,8 @@ row.names(d) <- row.names(tax_table(rare_all))
 # adding the guild column to the existing phyloseq object
 rare_all <- merge_phyloseq(rare_all, d)
 
+2.# the mean richness at the core level for parasitic fungi
+
 pa <- data.frame(c("animal_parasite", "lichen_parasite", "protistan_parasite", "algal_parasite"))
 names(pa) <- "pa"
 a <- subset_taxa(rare_all, ta2%in%pa$pa) # must first select the guild and then check the sample and taxa sums
@@ -29,7 +33,8 @@ k=cbind(k,rich_para)
 rich_papra_mean=aggregate(Observed~plotIDM,data=k,FUN=mean)
 names(rich_papra_mean)[1]="plotID"
 
-#get the z value for the parasitic fungi
+3.#get the z value for the parasitic fungi
+# get the c value
 a=list()
 for (i in 1:dim(para_c_ranall)[1])
 {
@@ -45,10 +50,9 @@ for(i in 2:dim(para_c_ranall)[1])
 }
 
 plotID=rep(para_c_ranall$a1,each=30)
-
 para_c_ranall_30=cbind(plotID,b)# for each plot,with 30 estimated z values
 
-
+# get the z value
 a=list()
 for (i in 1:dim(para_z_ranall)[1])
 {
@@ -64,9 +68,7 @@ for(i in 2:dim(para_z_ranall)[1])
 }
 
 para_z_ranall_30=cbind(plotID,b)# each plot has 30 estimated z values
-
 names(para_z_ranall_30)[2]="z"
-
 para_model=cbind(para_c_ranall_30,para_z_ranall_30["z"])
 names(para_model)[2]="logc"
 para_model <- cbind(para_model, c = 2.71828^para_model$logc)
@@ -74,8 +76,8 @@ para_model=merge(para_model,model_var,by="plotID")
 
 para_model=subset(para_model,siteIDD!="GUAN"&z<10&fine>0&rootc>0&rich>0)# only 104 plots from 33 sites
 
+# the data that include core level richness
 para_model_rich=subset(para_model,siteIDD!="GUAN"&z<10&richness>0)
-
 para_model_rich=merge(para_model_rich,rich_papra_mean,by="plotID")
 
 #standardized data
