@@ -8,7 +8,7 @@ data_corich=merge(model_data[,1:20],core_rich,by="plotID")
 data_corich <- subset(data_corich, siteIDD != "GUAN" & z < 10)
 data_corich[, 5:21] <- apply(data_corich[, 5:21], 2, range01) %>% data.frame()
 
-# only bold and cec were excluded beause of colinearity
+# only bold and cec were excluded because of colinearity
 
 mod <- lmer(z ~ corich+ funrich+organicCPercent + ph + nitrogen + sand +bio1+ bio2 + bio4+bio8+bio12+bio15+ bio18 + spei  + (1 | siteIDD / plotID), data = data_corich)
 effect_CS=summary(mod)
