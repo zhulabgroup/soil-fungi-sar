@@ -360,7 +360,7 @@ p8=ggplot()+
 
 ##
 data=subset(rich_guild_com,aguild=="soil_saprotroph")
-data=merge(soilsap_model_rich,data,by="plotID")
+data=merge(para_model,rich_papra_mean,by="plotID")
 
 data[,28:29]=apply(data[,28:29],2,range01)%>%data.frame()
 
