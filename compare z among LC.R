@@ -1,4 +1,4 @@
-# compare the turnover among systems
+# compare the turnover rate among land cover types
 library(dplyr)
 library(neonUtilities)
 library(ggplot2)
@@ -10,17 +10,12 @@ library(multcompView)
 
 load("~/soil-sar/data/comp_guild.RData")
 load("~/soil-sar/data/comp_vege.RData")
-head(com_guild)
-head(comp_vege)
-
 d=comp_vege[,c(2,4)]%>%unique()
-table(com_guild$plotID)
-table(com_guild$guild)
 d1=merge(com_guild,d,by="plotID")
 d1=d1[,-2]# the data combing both guild and land cover types
 guild=unique(d1$guild)
 
-# for each guild, to see if land cover types affects the turnover rate
+# for each guild, i examined if turnover rated among land cover types
 # land cover types with less than 5 plots were excluded
 
 source("http://aoki2.si.gunma-u.ac.jp/R/src/tukey.R", encoding = "euc-jp")
@@ -40,7 +35,8 @@ for (i in 1:length(guild))
        comp[[i]]=tk[[2]]
 }
 
-# creat the plots
+# create the plots
+
 data1=subset(d1,guild==guild[1])
 data1=subset(data1,type!="dwarfScrub"&type!="sedgeHerbaceous"&type!="emergentHerbaceousWetlands")
 data1$type <- factor(data1$type, levels = od[[1]]$type)
@@ -72,7 +68,7 @@ data2=subset(d1,guild==guild[2])
 data2=subset(data2,type!="dwarfScrub"&type!="sedgeHerbaceous"&type!="emergentHerbaceousWetlands")
 data2$type <- factor(data2$type, levels = od[[2]]$type)
 
-# creat the plot
+# create the plot
 
 p2=ggboxplot(data2, x = "type", y = "z", fill = "type", outlier.shape = NA) +
   xlab("") +
@@ -95,7 +91,7 @@ p2=ggboxplot(data2, x = "type", y = "z", fill = "type", outlier.shape = NA) +
   scale_fill_manual("", breaks = od[[2]]$type, values = c("tan", "cadetblue1",  "greenyellow", "lavender", "cornsilk", "wheat","mediumseagreen", "purple"), 
                     labels = c("pastureHay(N=17)",  "grassland\nHerbaceous(N=64)","shrubScrub(N=51)","cultivatedCrops(N=22)"   ,"deciduousForest(N=96)","woodyWetlands(N=29)","evergreenForest(N=92)","mixedForest(N=20)")) 
 
-  # for the ecm fungi
+  # for ecm fungi
   
   round(data.frame(p.adjust(comp[[3]][,3])),digits = 3)
   
@@ -124,13 +120,14 @@ p2=ggboxplot(data2, x = "type", y = "z", fill = "type", outlier.shape = NA) +
   scale_fill_manual("", breaks = od[[3]]$type, values = c("tan", "cadetblue1","greenyellow", "lavender", "cornsilk", "wheat", "mediumseagreen","purple"), 
                     labels = c( "pastureHay(N=17)", "grassland\nHerbaceous(N=64)","shrubScrub(N=51)","cultivatedCrops(N=22)"  ,"deciduousForest(N=96)","woodyWetlands(N=29)" ,"evergreenForest(N=93)", "mixedForest(N=20)")) 
   
-# for epiphytic fungi
+# for epiphyte
   round(data.frame(p.adjust(comp[[4]][,3])),digits = 3)
   
   data4=subset(d1,guild==guild[4])
   data4=subset(data4,type!="dwarfScrub"&type!="sedgeHerbaceous"&type!="emergentHerbaceousWetlands")
   data4$type <- factor(data4$type, levels = od[[4]]$type)
-# creat the plots
+
+  # create the plots
   
   p4=ggboxplot(data4, x = "type", y = "z", fill = "type", outlier.shape = NA) +
     xlab("") +
@@ -179,7 +176,7 @@ p2=ggboxplot(data2, x = "type", y = "z", fill = "type", outlier.shape = NA) +
     scale_fill_manual("", breaks = od[[5]]$type, values = c( "cadetblue1","greenyellow", "lavender", "tan","cornsilk",  "mediumseagreen","wheat","purple"), 
                       labels = c( "grassland\nHerbaceous(N=64)","shrubScrub(N=51)","cultivatedCrops(N=22)","pastureHay(N=17)"  ,"deciduousForest(N=96)" ,"evergreenForest(N=93)","woodyWetlands(N=29)", "mixedForest(N=20)")) 
   
-# for acm
+# for acm fungi
   
   round(data.frame(p.adjust(comp[[6]][,3])),digits = 3)
   
