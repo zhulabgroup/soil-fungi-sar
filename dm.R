@@ -1,3 +1,4 @@
+# creat the figure
 
 a=ggplot()+geom_point(data=pca_39_leaf_spe_8,alpha=0.8,size=4,aes(x=Comp.1  ,y=Comp.2 ,shape=m2,fill=m2))+
   geom_vline(xintercept = 0,color="gray",linetype="dotted",size=1)+
