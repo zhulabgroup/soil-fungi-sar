@@ -52,7 +52,7 @@ mod_woosap_rich <- lmer(z ~ c + sand + bio2 + bio15 + spei + richness + funrich 
 p6 <- plot_model(mod_woosap_rich, axis.labels = c("MAT", "Fun.rich", "Pla.rich", "Spei", "MAP", "MDR", "Sand"), colors = c("royalblue1", "red"), rm.terms = "c", title = "Woo.sap. (N=427)")
 
 #________________ when the estimated c was replaced by the core-level richness____________-
-# all variables were presented without model selection
+# all variables were presented without model selection, and root traits were excluded
 
 range01 <- function(x) ## to
 {
@@ -64,8 +64,9 @@ data=subset(rich_guild_com,aguild=="arbuscular_mycorrhizal")
 data=merge(acm_model_rich,data,by="plotID")
 data=unique(data)
 data[,28:29]=apply(data[,28:29],2,range01)%>%data.frame()
-
-mod <- lmer(z ~ Observed + funrich+organicCPercent + ph + nitrogen + sand +bio1+ bio2 + bio8 + bio12 + bio15 +bio18+ spei + richness  + (1 | siteIDD / plotID), data = data)
+ggcorrplot(cor(data[, c(5:20,29)]), hc.order = TRUE, type = "lower", lab = TRUE)
+#bold-soilC[for an earlier version the cec and bio4 were not included in the model]
+mod <- lmer(z ~ Observed + funrich+organicCPercent +cec+ ph + nitrogen + sand +bio1+ bio2 +bio4+ bio8 + bio12 + bio15 +bio18+ spei + richness  + (1 | siteIDD / plotID), data = data)
 
 effect_acm=summary(mod)
 
@@ -102,8 +103,11 @@ data=subset(rich_guild_com,aguild=="ectomycorrhizal")
 data=merge(ecm_model_rich,data,by="plotID")
 data=unique(data)
 data[,28:29]=apply(data[,28:29],2,range01)%>%data.frame()
-
+ggcorrplot(cor(data[, c(5:20,29)]), hc.order = TRUE, type = "lower", lab = TRUE)
+#bold-soilC
 mod <- lmer(z ~ Observed + funrich+organicCPercent + ph + nitrogen + sand +bio1+ bio2 + bio8 + bio12 + bio15 +bio18+ spei + richness  + (1 | siteIDD / plotID), data = data)
+
+mod <- lmer(z ~ Observed + funrich+organicCPercent +cec+ ph + nitrogen + sand +bio1+ bio2 +bio4+ bio8 + bio12 + bio15 +bio18+ spei + richness  + (1 | siteIDD / plotID), data = data)
 
 effect_ecm=summary(mod)
 effect_ecm=effect_ecm$coefficients
@@ -140,8 +144,11 @@ data=subset(rich_guild_com,aguild=="soil_saprotroph" )
 data=merge(soilsap_model_rich,data,by="plotID")
 data=unique(data)
 data[,28:29]=apply(data[,28:29],2,range01)%>%data.frame()
+ggcorrplot(cor(data[, c(5:20,29)]), hc.order = TRUE, type = "lower", lab = TRUE)
 
 mod <- lmer(z ~ Observed + funrich+organicCPercent + ph + nitrogen + sand +bio1+ bio2 + bio8 + bio12 + bio15 +bio18+ spei + richness  + (1 | siteIDD / plotID), data = data)
+#bold-soilC
+mod <- lmer(z ~ Observed + funrich+organicCPercent +cec+ ph + nitrogen + sand +bio1+ bio2 +bio4+ bio8 + bio12 + bio15 +bio18+ spei + richness  + (1 | siteIDD / plotID), data = data)
 
 effect_soilsap=summary(mod)
 effect_soilsap=effect_soilsap$coefficients
@@ -178,8 +185,11 @@ data=subset(rich_guild_com,aguild=="plant_pathogen"  )
 data=merge(plapat_model_rich,data,by="plotID")
 data=unique(data)
 data[,28:29]=apply(data[,28:29],2,range01)%>%data.frame()
-
+ggcorrplot(cor(data[, c(5:20,29)]), hc.order = TRUE, type = "lower", lab = TRUE)
+#bold-soilC
 mod <- lmer(z ~ Observed + funrich+organicCPercent + ph + nitrogen + sand +bio1+ bio2 + bio8 + bio12 + bio15 +bio18+ spei + richness  + (1 | siteIDD / plotID), data = data)
+mod <- lmer(z ~ Observed + funrich+organicCPercent +cec+ ph + nitrogen + sand +bio1+ bio2 +bio4+ bio8 + bio12 + bio15 +bio18+ spei + richness  + (1 | siteIDD / plotID), data = data)
+
 effect_plapat=summary(mod)
 effect_plapat=effect_plapat$coefficients
 effect_plapat=data.frame(effect_plapat)[2:dim(effect_plapat)[1],]
@@ -215,8 +225,11 @@ data=subset(rich_guild_com,aguild=="litter_saprotroph"   )
 data=merge(litsap_model_rich,data,by="plotID")
 data=unique(data)
 data[,28:29]=apply(data[,28:29],2,range01)%>%data.frame()
+ggcorrplot(cor(data[, c(5:20,29)]), hc.order = TRUE, type = "lower", lab = TRUE)
 
 mod <- lmer(z ~ Observed + funrich+organicCPercent + ph + nitrogen + sand +bio1+ bio2 + bio8 + bio12 + bio15 +bio18+ spei + richness  + (1 | siteIDD / plotID), data = data)
+mod <- lmer(z ~ Observed + funrich+organicCPercent +cec+ ph + nitrogen + sand +bio1+ bio2 +bio4+ bio8 + bio12 + bio15 +bio18+ spei + richness  + (1 | siteIDD / plotID), data = data)
+
 effect_litsap=summary(mod)
 effect_litsap=effect_litsap$coefficients
 effect_litsap=data.frame(effect_litsap)[2:dim(effect_litsap)[1],]
@@ -252,8 +265,11 @@ data=subset(rich_guild_com,aguild=="wood_saprotroph"    )
 data=merge(woosap_model_rich,data,by="plotID")
 data=unique(data)
 data[,28:29]=apply(data[,28:29],2,range01)%>%data.frame()
-
+ggcorrplot(cor(data[, c(5:20,29)]), hc.order = TRUE, type = "lower", lab = TRUE)
+#bold-soilC
 mod <- lmer(z ~ Observed + funrich+organicCPercent + ph + nitrogen + sand +bio1+ bio2 + bio8 + bio12 + bio15 +bio18+ spei + richness  + (1 | siteIDD / plotID), data = data)
+mod <- lmer(z ~ Observed + funrich+organicCPercent +cec+ ph + nitrogen + sand +bio1+ bio2 +bio4+ bio8 + bio12 + bio15 +bio18+ spei + richness  + (1 | siteIDD / plotID), data = data)
+
 effect_woosap=summary(mod)
 effect_woosap=effect_woosap$coefficients
 effect_woosap=data.frame(effect_woosap)[2:dim(effect_woosap)[1],]
@@ -289,12 +305,14 @@ plot_grid(p1,p2,p3,p4,p5,p6,ncol=2,labels=c("(a)","(b)","(c)","(d)","(e)","(f)")
 # for epiphyte
 
 data=subset(rich_guild_com,aguild=="epiphyte" )
-
 data=merge(epiphy_model_rich,data,by="plotID")
 data=unique(data)
 data[,6:29]=apply(data[,6:29],2,range01)%>%data.frame()
-
+ggcorrplot(cor(data[, c(6:20,29)]), hc.order = TRUE, type = "lower", lab = TRUE)
+#bold-soilC
 mod <- lmer(z ~ Observed + funrich+organicCPercent + ph + nitrogen + sand +bio1+ bio2 + bio8 + bio12 + bio15 +bio18+ spei + richness  + (1 | siteIDD / plotID), data = data)
+mod <- lmer(z ~ Observed + funrich+organicCPercent +cec+ ph + nitrogen + sand +bio1+ bio2 +bio4+ bio8 + bio12 + bio15 +bio18+ spei + richness  + (1 | siteIDD / plotID), data = data)
+
 effect_epiphy=summary(mod)
 effect_epiphy=effect_epiphy$coefficients
 effect_epiphy=data.frame(effect_epiphy)[2:dim(effect_epiphy)[1],]
@@ -324,8 +342,19 @@ p7=ggplot()+
   annotate("text",x=0.35,y=10,label="",size=8)+
   annotate("text",x=-0.25,y=2,label="*",size=8)+
   ggtitle("Epiphyte (N=392)")
+# for saprotroph fungi
+
+
+data=merge(para_model,rich_papra_mean,by="plotID")
+data=subset(data,siteIDD!="GUAN"&z<10&richness>0)
+data=unique(data)
+ggcorrplot(cor(data[, c(6:20,29)]), hc.order = TRUE, type = "lower", lab = TRUE)
+data[,c(6:21,29)]=apply(data[,c(6:21,29)],2,range01)%>%data.frame()
+#bold-soilC
 
 mod <- lmer(z ~ Observed + funrich+organicCPercent + ph + nitrogen + sand +bio1+ bio2 + bio8 + bio12 + bio15 +bio18+ spei + richness  + (1 | siteIDD / plotID), data = para_model_rich)
+mod <- lmer(z ~ Observed + funrich+organicCPercent +cec+ ph + nitrogen + sand +bio1+ bio2 +bio4+ bio8 + bio12 + bio15 +bio18+ spei + richness  + (1 | siteIDD / plotID), data = data)
+
 effect_para=summary(mod)
 effect_para=effect_para$coefficients
 effect_para=data.frame(effect_para)[2:dim(effect_para)[1],]
@@ -357,12 +386,62 @@ p8=ggplot()+
   annotate("text",x=-0.30,y=1,label="*",size=8)+
   ggtitle("Parasitic (N=409)")
 
+# combine all the effect sizes
+effect_acm=cbind(va=rownames(effect_acm),effect_acm)
+effect_ecm=cbind(va=rownames(effect_ecm),effect_ecm)
+effect_soilsap=cbind(va=rownames(effect_soilsap),effect_soilsap)
+effect_plapat=cbind(va=rownames(effect_plapat),effect_plapat)
+effect_litsap=cbind(va=rownames(effect_litsap),effect_litsap)
+effect_woosap=cbind(va=rownames(effect_woosap),effect_woosap)
+effect_epiphy=cbind(va=rownames(effect_epiphy),effect_epiphy)
+effect_para=cbind(va=rownames(effect_para),effect_para)
+
+effect_noroot=left_join(effect_acm[,c(1,2,6)],effect_ecm[,c(1,2,6)], by="va")
+effect_noroot=left_join(effect_noroot,effect_soilsap[,c(1,2,6)],by="va")
+effect_noroot=left_join(effect_noroot,effect_plapat[,c(1,2,6)],by="va")
+effect_noroot=left_join(effect_noroot,effect_litsap[,c(1,2,6)],by="va")
+effect_noroot=left_join(effect_noroot,effect_woosap[,c(1,2,6)],by="va")
+effect_noroot=left_join(effect_noroot,effect_epiphy[,c(1,2,6)],by="va")
+effect_noroot=left_join(effect_noroot,effect_para[,c(1,2,6)],by="va")
+names(effect_noroot)=c("va","acm","pacm", "ecm","pecm","soilsap","psoilsap","plapat","pplapat","litsap", "plitsap","woosap", "pwoosap","epiphy","pepiphy","para","ppara")
+
+
+effect_noroot_value=effect_noroot[,c(2,4,6,8,10,12,14,16)]
+effect_noroot_pva=effect_noroot[,c(3,5,7,9,11,13,15,17)]
+rownames(effect_noroot_value)=rownames(effect_acm)
+rownames(effect_noroot_pva)=rownames(effect_acm)
+effect_noroot_pva=as.matrix(effect_noroot_pva)
+effect_noroot_value=as.matrix(effect_noroot_value)# need to be convered as a matrix
+
+effect_noroot_value=melt(effect_noroot_value)
+effect_noroot_pva=melt(effect_noroot_pva)
+effect_noroot_pva$value[effect_noroot_pva$value<0.01]="**"
+effect_noroot_pva$value[effect_noroot_pva$value>0.01&effect_noroot_pva$value<0.05]="*"
+effect_noroot_pva$value[effect_noroot_pva$value>0.05]=""
+
+effect_noroot_value=cbind(effect_noroot_value,effect_noroot_pva$value)
+
+ggplot(effect_noroot_value, aes(x = X1, y = X2, fill = value)) +
+  geom_tile(color = "white", lwd = 1,linetype = 1)+
+  geom_text(aes(x = X1, y = X2, label = effect_noroot_pva$value))+
+  scale_fill_gradient2("Eeffect size",low = "#075AFF", mid = "#FFFFCC", high = "#FF0000")+
+
+  scale_y_discrete(breaks=as.character(unique(effect_noroot_value$X2)),labels=c("ACM(N=319)","ECM(N=438)","Soil saprotroph(N=438)","Plant pathogen(N=427)","Litter saprotroph(N=438)","Wood saprotroph(N=427)","Epiphyte(N=392)","Parasitic(N=409)"))+
+  scale_x_discrete(breaks=as.character(unique(effect_noroot_value$X1)),labels = rev(c("Pla.rich", "Spei","Pre.WQ","Pre.seas.","MAP","MTWQ","Tem.seas.","MDR","MAT","Sand","SoilN","pH","Cec","SoilC","Plot.rich","Core.rich")))+
+  theme(panel.border = element_rect(fill=NA,size=1,color="black"),
+        axis.title.x = element_text(size=20),
+        axis.title.y = element_text(size=20),
+        axis.text.y  = element_text(size=15,color="black"),
+        plot.title=element_text(hjust=0.5,face="bold",size=18),
+        axis.text.x  = element_text(size=15,angle=270,hjust=0,
+                                    color=rev(c("seagreen1", "royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","peru","peru","peru","peru","peru","purple","purple"))))+
+  xlab("")+
+  ylab("")
+
+
+
 
 ##
-data=subset(rich_guild_com,aguild=="soil_saprotroph")
-data=merge(para_model,rich_papra_mean,by="plotID")
-
-data[,28:29]=apply(data[,28:29],2,range01)%>%data.frame()
 
 mod <- lmer(z ~ Observed + organicCPercent + ph + nitrogen + sand + bio2 + bio8 + bio18 + bio12 + bio15 + spei + richness + funrich + bio1 + (1 | siteIDD / plotID), data = data)
 
