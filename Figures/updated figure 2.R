@@ -67,11 +67,15 @@ data[,28:29]=apply(data[,28:29],2,range01)%>%data.frame()
 ggcorrplot(cor(data[, c(5:20,29)]), hc.order = TRUE, type = "lower", lab = TRUE)
 #bold-soilC[for an earlier version the cec and bio4 were not included in the model]
 mod <- lmer(z ~ Observed + funrich+organicCPercent +cec+ ph + nitrogen + sand +bio1+ bio2 +bio4+ bio8 + bio12 + bio15 +bio18+ spei + richness  + (1 | siteIDD / plotID), data = data)
-
 effect_acm=summary(mod)
-
 effect_acm=effect_acm$coefficients
 effect_acm=data.frame(effect_acm)[2:dim(effect_acm)[1],]
+# best-fit model
+step(mod)
+mod_fit=lmer(z ~ organicCPercent + ph + nitrogen + bio15 + (1 | siteIDD/plotID),data=data)
+effect_best_acm=summary(mod_fit)
+effect_best_acm=effect_best_acm$coefficients
+effect_best_acm=data.frame(effect_best_acm)[2:dim(effect_best_acm)[1],]
 
 p1=ggplot()+
   geom_point(data=effect_acm,aes(x= Estimate,y=1:dim(effect_acm)[1]),
@@ -112,6 +116,12 @@ mod <- lmer(z ~ Observed + funrich+organicCPercent +cec+ ph + nitrogen + sand +b
 effect_ecm=summary(mod)
 effect_ecm=effect_ecm$coefficients
 effect_ecm=data.frame(effect_ecm)[2:dim(effect_ecm)[1],]
+#best model
+mod_best=lmer(z ~ Observed + bio4 + bio12 + bio15 + spei + richness + (1 | siteIDD/plotID),data=data)
+effect_best_ecm=summary(mod_best)
+effect_best_ecm=effect_best_ecm$coefficients
+effect_best_ecm=data.frame(effect_best_ecm)[2:dim(effect_best_ecm)[1],]
+
 
 p2=ggplot()+
   geom_point(data=effect_ecm,aes(x= Estimate,y=1:dim(effect_ecm)[1]),
@@ -153,6 +163,13 @@ mod <- lmer(z ~ Observed + funrich+organicCPercent +cec+ ph + nitrogen + sand +b
 effect_soilsap=summary(mod)
 effect_soilsap=effect_soilsap$coefficients
 effect_soilsap=data.frame(effect_soilsap)[2:dim(effect_soilsap)[1],]
+step(mod)
+
+mod_best=lmer(z ~ Observed + nitrogen + bio4 + bio12 + bio15 + richness + (1 | siteIDD/plotID),data=data)
+
+effect_best_soilsap=summary(mod_best)#unconverge
+effect_best_soilsap=effect_best_soilsap$coefficients
+effect_best_soilsap=data.frame(effect_best_soilsap)[2:dim(effect_best_soilsap)[1],]
 
 p3=ggplot()+
   geom_point(data=effect_soilsap,aes(x= Estimate,y=1:dim(effect_soilsap)[1]),
@@ -188,11 +205,18 @@ data[,28:29]=apply(data[,28:29],2,range01)%>%data.frame()
 ggcorrplot(cor(data[, c(5:20,29)]), hc.order = TRUE, type = "lower", lab = TRUE)
 #bold-soilC
 mod <- lmer(z ~ Observed + funrich+organicCPercent + ph + nitrogen + sand +bio1+ bio2 + bio8 + bio12 + bio15 +bio18+ spei + richness  + (1 | siteIDD / plotID), data = data)
+
 mod <- lmer(z ~ Observed + funrich+organicCPercent +cec+ ph + nitrogen + sand +bio1+ bio2 +bio4+ bio8 + bio12 + bio15 +bio18+ spei + richness  + (1 | siteIDD / plotID), data = data)
 
 effect_plapat=summary(mod)
 effect_plapat=effect_plapat$coefficients
 effect_plapat=data.frame(effect_plapat)[2:dim(effect_plapat)[1],]
+#best model
+
+mod_best=lmer(z ~ Observed + (1 | siteIDD/plotID),data=data)
+effect_best_plapat=summary(mod_best)
+effect_best_plapat=effect_best_plapat$coefficients
+effect_best_plapat=data.frame(effect_best_plapat)[2:dim(effect_best_plapat)[1],]
 
 p4=ggplot()+
   geom_point(data=effect_plapat,aes(x= Estimate,y=1:dim(effect_plapat)[1]),
@@ -233,6 +257,12 @@ mod <- lmer(z ~ Observed + funrich+organicCPercent +cec+ ph + nitrogen + sand +b
 effect_litsap=summary(mod)
 effect_litsap=effect_litsap$coefficients
 effect_litsap=data.frame(effect_litsap)[2:dim(effect_litsap)[1],]
+# mod_best
+mod_best=lmer(z ~ Observed + cec + nitrogen + sand + bio2 + bio4 + bio12 + richness + (1 | siteIDD/plotID),data=data)
+effect_best_litsap=summary(mod_best)
+effect_best_litsap=effect_best_litsap$coefficients
+effect_best_litsap=data.frame(effect_best_litsap)[2:dim(effect_best_litsap)[1],]
+
 
 p5=ggplot()+
   geom_point(data=effect_litsap,aes(x= Estimate,y=1:dim(effect_litsap)[1]),
@@ -270,9 +300,15 @@ ggcorrplot(cor(data[, c(5:20,29)]), hc.order = TRUE, type = "lower", lab = TRUE)
 mod <- lmer(z ~ Observed + funrich+organicCPercent + ph + nitrogen + sand +bio1+ bio2 + bio8 + bio12 + bio15 +bio18+ spei + richness  + (1 | siteIDD / plotID), data = data)
 mod <- lmer(z ~ Observed + funrich+organicCPercent +cec+ ph + nitrogen + sand +bio1+ bio2 +bio4+ bio8 + bio12 + bio15 +bio18+ spei + richness  + (1 | siteIDD / plotID), data = data)
 
+
 effect_woosap=summary(mod)
 effect_woosap=effect_woosap$coefficients
 effect_woosap=data.frame(effect_woosap)[2:dim(effect_woosap)[1],]
+#best model
+mod_best=lmer(z ~ Observed + (1 | siteIDD/plotID),data=data)
+effect_best_woosap=summary(mod_best)
+effect_best_woosap=effect_best_woosap$coefficients
+effect_best_woosap=data.frame(effect_best_woosap)[2:dim(effect_best_woosap)[1],]
 
 p6=ggplot()+
   geom_point(data=effect_woosap,aes(x= Estimate,y=1:dim(effect_woosap)[1]),
@@ -303,7 +339,6 @@ p6=ggplot()+
 plot_grid(p1,p2,p3,p4,p5,p6,ncol=2,labels=c("(a)","(b)","(c)","(d)","(e)","(f)"),label_x = 0.25)
 
 # for epiphyte
-
 data=subset(rich_guild_com,aguild=="epiphyte" )
 data=merge(epiphy_model_rich,data,by="plotID")
 data=unique(data)
@@ -316,6 +351,11 @@ mod <- lmer(z ~ Observed + funrich+organicCPercent +cec+ ph + nitrogen + sand +b
 effect_epiphy=summary(mod)
 effect_epiphy=effect_epiphy$coefficients
 effect_epiphy=data.frame(effect_epiphy)[2:dim(effect_epiphy)[1],]
+# best model selection
+mod_best=lmer(z ~ funrich + bio2 + (1 | siteIDD/plotID),data=data)
+effect_best_epiphy=summary(mod_best)
+effect_best_epiphy=effect_best_epiphy$coefficients
+effect_best_epiphy=data.frame(effect_best_epiphy)[2:dim(effect_best_epiphy)[1],]
 
 p7=ggplot()+
   geom_point(data=effect_epiphy,aes(x= Estimate,y=1:dim(effect_epiphy)[1]),
@@ -358,6 +398,11 @@ mod <- lmer(z ~ Observed + funrich+organicCPercent +cec+ ph + nitrogen + sand +b
 effect_para=summary(mod)
 effect_para=effect_para$coefficients
 effect_para=data.frame(effect_para)[2:dim(effect_para)[1],]
+
+mod_best=lmer(z ~ Observed + organicCPercent + bio4 + bio12 + bio15 + spei + richness + (1 | siteIDD/plotID),data=data)
+effect_best_para=summary(mod_best)
+effect_best_para=effect_best_para$coefficients
+effect_best_para=data.frame(effect_best_para)[2:dim(effect_best_para)[1],]
 
 p8=ggplot()+
   geom_point(data=effect_para,aes(x= Estimate,y=1:dim(effect_para)[1]),
@@ -437,6 +482,67 @@ ggplot(effect_noroot_value, aes(x = X1, y = X2, fill = value)) +
                                     color=rev(c("seagreen1", "royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","peru","peru","peru","peru","peru","purple","purple"))))+
   xlab("")+
   ylab("")
+
+
+######
+effect_best_acm=cbind(va=rownames(effect_best_acm),effect_best_acm)
+effect_best_ecm=cbind(va=rownames(effect_best_ecm),effect_best_ecm)
+effect_best_soilsap=cbind(va=rownames(effect_best_soilsap),effect_best_soilsap)
+effect_best_plapat=cbind(va=rownames(effect_best_plapat),effect_best_plapat)
+effect_best_litsap=cbind(va=rownames(effect_best_litsap),effect_best_litsap)
+effect_best_woosap=cbind(va=rownames(effect_best_woosap),effect_best_woosap)
+effect_best_epiphy=cbind(va=rownames(effect_best_epiphy),effect_best_epiphy)
+effect_best_para=cbind(va=rownames(effect_best_para),effect_best_para)
+
+
+va=cbind(va= c("Observed"  , "funrich" , "organicCPercent", "cec"   , "ph"   , "nitrogen"  , "sand", "bio1"  ,"bio2"  ,  "bio4" , "bio8" ,"bio12" , "bio15" ,"bio18" , "spei" , "richness"  ),code=c(1:16))%>%data.frame()
+
+effect_best_noroot=left_join(va,effect_best_acm[,c(1,2,6)], by="va")
+effect_best_noroot=left_join(effect_best_noroot,effect_best_ecm[,c(1,2,6)], by="va")
+effect_best_noroot=left_join(effect_best_noroot,effect_best_soilsap[,c(1,2,6)],by="va")
+effect_best_noroot=left_join(effect_best_noroot,effect_best_plapat[,c(1,2,6)],by="va")
+effect_best_noroot=left_join(effect_best_noroot,effect_best_litsap[,c(1,2,6)],by="va")
+effect_best_noroot=left_join(effect_best_noroot,effect_best_woosap[,c(1,2,6)],by="va")
+effect_best_noroot=left_join(effect_best_noroot,effect_best_epiphy[,c(1,2,6)],by="va")
+effect_best_noroot=left_join(effect_best_noroot,effect_best_para[,c(1,2,6)],by="va")
+# delete the code
+effect_best_noroot=effect_best_noroot[,-2]
+
+names(effect_best_noroot)=c("va","acm","pacm", "ecm","pecm","soilsap","psoilsap","plapat","pplapat","litsap", "plitsap","woosap", "pwoosap","epiphy","pepiphy","para","ppara")
+rownames(effect_best_noroot)=effect_best_noroot$va
+
+
+
+effect_best_noroot_value=effect_best_noroot[,c(2,4,6,8,10,12,14,16)]
+effect_best_noroot_pva=effect_best_noroot[,c(3,5,7,9,11,13,15,17)]
+effect_best_noroot_value= melt(as.matrix(effect_best_noroot_value))
+effect_best_noroot_pva= melt(as.matrix(effect_best_noroot_pva))
+effect_best_noroot_value=cbind(effect_best_noroot_value,effect_best_noroot_pva$value)
+names(effect_best_noroot_value)[4]="pv"
+effect_best_noroot_value$pv[effect_best_noroot_value$pv<0.001]="***"
+effect_best_noroot_value$pv[effect_best_noroot_value$pv<0.01&effect_best_noroot_value$pv>0.001]="**"
+effect_best_noroot_value$pv[effect_best_noroot_value$pv<0.05&effect_best_noroot_value$pv>0.01]="*"
+effect_best_noroot_value$pv[effect_best_noroot_value$pv>0.05]=""
+effect_best_noroot_value$value[effect_best_noroot_value$value=="NA"]="0"
+#
+
+ggplot(effect_best_noroot_value, aes(x = X1, y = X2, fill = value)) +
+  geom_tile(color = "gray50", lwd = 1,linetype = 1)+
+  geom_text(aes(x = X1, y = X2, label = pv))+
+  scale_fill_gradient2("Eeffect size",low = "#075AFF", mid = "#FFFFCC", high = "#FF0000",na.value = "white")+
+  
+  scale_y_discrete(breaks=as.character(unique(effect_best_noroot_value$X2)),labels=c("ACM(N=319)","ECM(N=438)","Soil saprotroph(N=438)","Plant pathogen(N=427)","Litter saprotroph(N=438)","Wood saprotroph(N=427)","Epiphyte(N=392)","Parasitic(N=409)"))+
+  scale_x_discrete(breaks=as.character(unique(effect_best_noroot_value$X1)),labels = rev(c("Pla.rich", "Spei","Pre.WQ","Pre.seas.","MAP","MTWQ","Tem.seas.","MDR","MAT","Sand","SoilN","pH","Cec","SoilC","Plot.rich","Core.rich")))+
+  theme(panel.border = element_rect(fill=NA,size=1,color="black"),
+        axis.title.x = element_text(size=20),
+        axis.title.y = element_text(size=20),
+        axis.text.y  = element_text(size=15,color="black"),
+        plot.title=element_text(hjust=0.5,face="bold",size=18),
+        axis.text.x  = element_text(size=15,angle=270,hjust=0,
+                                    color=rev(c("seagreen1", "royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","peru","peru","peru","peru","peru","purple","purple"))))+
+  xlab("")+
+  ylab("")
+
 
 
 
