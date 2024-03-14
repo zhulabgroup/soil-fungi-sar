@@ -1,6 +1,6 @@
-# load the required data
+# load the required datasets
 load("/model_data.RData")
-load("/core_rich.RData") # core-level fungal richness for each plot
+load("/core_rich.RData") # core-level fungal richness mean for each plot
 
 1. # climate and soil model
 
@@ -8,12 +8,26 @@ data_corich <- merge(model_data[, 1:20], core_rich, by = "plotID")
 data_corich <- subset(data_corich, siteIDD != "GUAN" & z < 10)
 data_corich[, 5:21] <- apply(data_corich[, 5:21], 2, range01) %>% data.frame()
 
-# only bold and cec were excluded because of colinearity
+ggcorrplot(cor(data_corich[, c(5:18,20:21)]), hc.order = TRUE, type = "lower", lab = TRUE)
+
+#cec-soilC
+#bold-soilC
+# bold and cec were excluded from the model
 
 mod <- lmer(z ~ corich + funrich + organicCPercent + ph + nitrogen + sand + bio1 + bio2 + bio4 + bio8 + bio12 + bio15 + bio18 + spei + (1 | siteIDD / plotID), data = data_corich)
+
 effect_CS <- summary(mod)
 effect_CS <- effect_CS$coefficients
 effect_CS <- data.frame(effect_CS)[2:dim(effect_CS)[1], ]
+
+# best model
+step(mod)
+
+mod_best=lmer(z ~ corich + bio4 + bio12 + bio15 + (1 | siteIDD/plotID),data=data_corich)
+
+effect_best_CS <- summary(mod_best)
+effect_best_CS <- effect_best_CS$coefficients
+effect_best_CS <- data.frame(effect_best_CS)[2:dim(effect_best_CS)[1], ]
 
 p01 <- ggplot() +
   geom_point(
@@ -50,12 +64,24 @@ p01 <- ggplot() +
 data_corich <- merge(model_data[, 1:20], core_rich, by = "plotID")
 data_corich <- subset(data_corich, siteIDD != "GUAN" & z < 10 & richness > 0)
 data_corich[, 5:21] <- apply(data_corich[, 5:21], 2, range01) %>% data.frame()
-# onlyd bold and cec were included
+ggcorrplot(cor(data_corich[, c(5:21)]), hc.order = TRUE, type = "lower", lab = TRUE)
+
+# only bold and soilC were excluded
 
 mod <- lmer(z ~ corich + funrich + organicCPercent + ph + nitrogen + sand + bio1 + bio2 + bio4 + bio8 + bio12 + bio15 + bio18 + spei + richness + (1 | siteIDD / plotID), data = data_corich)
 effect_CSP <- summary(mod)
 effect_CSP <- effect_CSP$coefficients
 effect_CSP <- data.frame(effect_CSP)[2:dim(effect_CSP)[1], ]
+
+
+#best model
+step(mod)
+
+mod_best=lmer(z ~ corich + bio4 + bio12 + bio15 + richness + (1 | siteIDD/plotID),data=data_corich)
+
+effect_best_CSP <- summary(mod_best)
+effect_best_CSP <- effect_best_CSP$coefficients
+effect_best_CSP <- data.frame(effect_best_CSP)[2:dim(effect_best_CSP)[1], ]
 
 p02 <- ggplot() +
   geom_point(
@@ -94,12 +120,26 @@ data_corich <- merge(model_data[, 1:27], core_rich, by = "plotID")
 data_corich <- subset(data_corich, siteIDD != "GUAN" & z < 10 & richness > 0 & fine > 0 & rootc > 0)
 data_corich[, 5:27] <- apply(data_corich[, 5:27], 2, range01) %>% data.frame()
 ggcorrplot(cor(data_corich[, c(5:28)]), hc.order = TRUE, type = "lower", lab = TRUE)
+#coarse-fine
+#cec and soilC
+# rootn-rootcn
+#bio1-bio4
+#bold-soilC
+
 
 mod <- lmer(z ~ corich + funrich + organicCPercent + ph + nitrogen + sand + bio1 + bio2 + bio4 + bio8 + bio12 + bio15 + bio18 + spei + richness + fine + d15N + d13C + rootc + rootcn + (1 | siteIDD / plotID), data = data_corich)
+
+mod <- lmer(z ~ corich + funrich + organicCPercent + ph + nitrogen + sand + bio1 + bio2 + bio8 + bio12 + bio15 + bio18 + spei + richness + fine + d15N + d13C + rootc + rootcn + (1 | siteIDD / plotID), data = data_corich)
 
 effect_CSPR <- summary(mod)
 effect_CSPR <- effect_CSPR$coefficients
 effect_CSPR <- data.frame(effect_CSPR)[2:dim(effect_CSPR)[1], ]
+
+mod_best=lmer(z ~ corich + funrich + bio1 + richness + rootcn + (1 | siteIDD/plotID),data=data_corich)
+
+effect_best_CSPR <- summary(mod_best)
+effect_best_CSPR <- effect_best_CSPR$coefficients
+effect_best_CSPR <- data.frame(effect_best_CSPR)[2:dim(effect_best_CSPR)[1], ]
 
 p03 <- ggplot() +
   geom_point(
@@ -135,6 +175,7 @@ effect_ALL <- merge(effect_ALL, effect_CSP[, c("va", "Estimate", "Std..Error")],
 names(effect_ALL) <- c("va", "es", "sd", "es1", "sd1", "es2", "sd2")
 effect_ALL[is.na(effect_ALL)] <- 0
 
+# when all the variables were included
 # for the climate and soil model
 
 p001 <- ggplot() +
@@ -232,3 +273,122 @@ p003 <- ggplot() +
   annotate("text", x = 0.325192048, y = 15, label = "***", size = 10) +
   ggtitle("Clima.+Soil+Pla.+\n Root (N=104)") +
   xlab("")
+# for the best fitted model
+
+effect_best_CS=cbind(va=rownames(effect_best_CS),effect_best_CS)
+effect_best_CSP=cbind(va=rownames(effect_best_CSP),effect_best_CSP)
+effect_best_CSPR=cbind(va=rownames(effect_best_CSPR),effect_best_CSP)
+
+effect_ALL_best= left_join(effect_ALL[,1:2],effect_best_CS[,c(1,2,3)],by="va")
+effect_ALL_best= left_join(effect_ALL_best,effect_best_CSP[,c(1,2,3)],by="va")
+effect_ALL_best= left_join(effect_ALL_best,effect_best_CSPR[,c(1,2,3)],by="va")
+
+names(effect_ALL_best)=c("va","es","esCS","sdCS","esCSP","sdCSP","esCSPR","SDCSPR")
+effect_ALL_best[is.na(effect_ALL_best)]=0
+
+#create the plots
+# for the climate and soil model
+
+pp1=ggplot() +
+  geom_point(
+    data = effect_ALL_best, aes(x = esCS, y = 1:dim(effect_ALL_best)[1]),
+    color = rev(c("gray", "gray", "gray", "gray", "gray", "gray", "gray", "gray", "royalblue1", "royalblue1", "gray", "royalblue1", "gray", "gray", "gray", "gray", "gray", "gray", "gray", "purple")), size = 3
+  ) +
+  geom_segment(data = effect_ALL_best, size = 0.8, color = rev(c("seagreen1", "seagreen1", "seagreen1", "seagreen1", "seagreen1", "seagreen1", "royalblue1", "royalblue1", "royalblue1", "royalblue1", "royalblue1", "royalblue1", "royalblue1", "royalblue1", "peru", "peru", "peru", "peru", "purple", "purple")), aes(x = effect_ALL_best$esCS - 1.96 * effect_ALL_best$sdCS, y = 1:dim(effect_ALL_best)[1], xend = effect_ALL_best$esCS + 1.96 * effect_ALL_best$sdCS, yend = 1:dim(effect_ALL_best)[1])) +
+  geom_vline(xintercept = 0, color = "red", linetype = "dashed") +
+  scale_y_continuous(breaks = 1:20, labels = rev(c(expression("Root"["cn"]), expression("Root"["c"]), "d13C", "d15N", expression("Root"["fmass"]), "Pla.rich", "Spei", "Pre.WQ", "Pre.seas.", "MAP", "MTWQ", "Tem.seas", "MDR", "MAT", "Sand", "SoilN", "pH", "SoilC", "Plot.rich", "Core.rich")))  +
+  theme(
+    legend.key.size = unit(0.18, "inches"),
+    legend.position = c(0.4, 0.85),
+    legend.text.align = 0, panel.background = element_blank(),
+    panel.border = element_rect(fill = NA, size = 1, color = "black"),
+    legend.text = element_text(size = 10),
+    legend.title = element_text(size = 15),
+    axis.title.x = element_text(size = 20),
+    axis.title.y = element_text(size = 20),
+    axis.text.y = element_text(size = 15, color = "black"),
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 18),
+    axis.text.x = element_text(size = 15)
+  ) +
+  xlim(-0.8, 0.5) +
+  ylab("") +
+  annotate("text", x = -0.20592048, y = 1, label = "**", size = 10) +
+  annotate("text", x = 0.325192048, y = 15, label = "", size = 10) +
+  annotate("text", x = 0.2825192048, y = 9, label = "*", size = 10) +
+  annotate("text", x = 0.325192048, y = 11, label = "***", size = 10) +
+  annotate("text", x = 0.225192048, y = 12, label = "*", size = 10) +
+  
+  ggtitle("Clima.+Soil\n(N=483)") +
+  xlab("")
+# for the climate, soil and plant model
+
+pp2=ggplot() +
+  geom_point(
+    data = effect_ALL_best, aes(x = esCSP, y = 1:dim(effect_ALL_best)[1]),
+    color = rev(c("gray", "gray", "gray", "gray", "gray", "seagreen1", "gray", "gray", "royalblue1", "royalblue1", "gray", "royalblue1", "gray", "gray", "gray", "gray", "gray", "gray", "gray", "purple")), size = 3
+  ) +
+  geom_segment(data = effect_ALL_best, size = 0.8, color = rev(c("seagreen1", "seagreen1", "seagreen1", "seagreen1", "seagreen1", "seagreen1", "royalblue1", "royalblue1", "royalblue1", "royalblue1", "royalblue1", "royalblue1", "royalblue1", "royalblue1", "peru", "peru", "peru", "peru", "purple", "purple")), aes(x = effect_ALL_best$esCSP - 1.96 * effect_ALL_best$sdCSP, y = 1:dim(effect_ALL_best)[1], xend = effect_ALL_best$esCSP + 1.96 * effect_ALL_best$sdCSP, yend = 1:dim(effect_ALL_best)[1])) +
+  geom_vline(xintercept = 0, color = "red", linetype = "dashed") +
+  scale_y_continuous(breaks = 1:20, labels = rev(c(expression("Root"["cn"]), expression("Root"["c"]), "d13C", "d15N", expression("Root"["fmass"]), "Pla.rich", "Spei", "Pre.WQ", "Pre.seas.", "MAP", "MTWQ", "Tem.seas", "MDR", "MAT", "Sand", "SoilN", "pH", "SoilC", "Plot.rich", "Core.rich")))  +
+  theme(
+    legend.key.size = unit(0.18, "inches"),
+    legend.position = c(0.4, 0.85),
+    legend.text.align = 0, panel.background = element_blank(),
+    panel.border = element_rect(fill = NA, size = 1, color = "black"),
+    legend.text = element_text(size = 10),
+    legend.title = element_text(size = 15),
+    axis.title.x = element_text(size = 20),
+    axis.title.y = element_text(size = 20),
+    axis.text.y = element_text(size = 15, color = "black"),
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 18),
+    axis.text.x = element_text(size = 15)
+  ) +
+  xlim(-0.8, 0.5) +
+  ylab("") +
+  annotate("text", x = -0.240592048, y = 1, label = "***", size = 10) +
+  annotate("text", x = 0.325192048, y = 15, label = "***", size = 10) +
+  annotate("text", x = 0.2825192048, y = 9, label = "**", size = 10) +
+  annotate("text", x = 0.325192048, y = 11, label = "***", size = 10) +
+  annotate("text", x = 0.225192048, y = 12, label = "*", size = 10) +
+  annotate("text", x = 0.225192048, y = 12, label = "*", size = 10) +
+  ggtitle("Clima.+Soil+Pla.\n(N=438)") +
+  xlab("")
+# for the climate soil plant and root model
+
+pp3=ggplot() +
+  geom_point(
+    data = effect_ALL_best, aes(x = esCSPR, y = 1:dim(effect_ALL_best)[1]),
+    color = rev(c("seagreen1", "gray", "gray", "gray", "gray", "seagreen1", "gray", "gray", "gray", "gray", "gray", "gray", "gray", "royalblue1", "gray", "gray", "gray", "gray", "purple", "purple")), size = 3
+  ) +
+  geom_segment(data = effect_ALL_best, size = 0.8, color = rev(c("seagreen1", "seagreen1", "seagreen1", "seagreen1", "seagreen1", "seagreen1", "royalblue1", "royalblue1", "royalblue1", "royalblue1", "royalblue1", "royalblue1", "royalblue1", "royalblue1", "peru", "peru", "peru", "peru", "purple", "purple")), aes(x = effect_ALL_best$esCSPR - 1.96 * effect_ALL_best$SDCSPR, y = 1:dim(effect_ALL_best)[1], xend = effect_ALL_best$esCSPR + 1.96 * effect_ALL_best$SDCSPR, yend = 1:dim(effect_ALL_best)[1])) +
+  geom_vline(xintercept = 0, color = "red", linetype = "dashed") +
+  scale_y_continuous(breaks = 1:20, labels = rev(c(expression("Root"["cn"]), expression("Root"["c"]), "d13C", "d15N", expression("Root"["fmass"]), "Pla.rich", "Spei", "Pre.WQ", "Pre.seas.", "MAP", "MTWQ", "Tem.seas", "MDR", "MAT", "Sand", "SoilN", "pH", "SoilC", "Plot.rich", "Core.rich")))  +
+  theme(
+    legend.key.size = unit(0.18, "inches"),
+    legend.position = c(0.4, 0.85),
+    legend.text.align = 0, panel.background = element_blank(),
+    panel.border = element_rect(fill = NA, size = 1, color = "black"),
+    legend.text = element_text(size = 10),
+    legend.title = element_text(size = 15),
+    axis.title.x = element_text(size = 20),
+    axis.title.y = element_text(size = 20),
+    axis.text.y = element_text(size = 15, color = "black"),
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 18),
+    axis.text.x = element_text(size = 15)
+  ) +
+  xlim(-0.8, 0.5) +
+  ylab("") +
+  annotate("text", x = -0.230592048, y = 1, label = "***", size = 10) +
+  annotate("text", x = 0.1325192048, y = 15, label = "*", size = 10) +
+  annotate("text", x = 0.2825192048, y = 20, label = "***", size = 10) +
+  annotate("text", x = 0.325192048, y = 11, label = "", size = 10) +
+  annotate("text", x = 0.225192048, y = 2, label = "**", size = 10) +
+  annotate("text", x = 0.2825192048, y = 7, label = "***", size = 10) +
+  ggtitle("Clima.+Soil+Pla.+\nRoot(N=104)") +
+  xlab("")
+
+cowplot::plot_grid(pp1,pp2,pp3,ncol=3,labels=c("(a)","(b)","(c)"),label_x = 0.2)
+
+
+
+
