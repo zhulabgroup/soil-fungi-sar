@@ -466,11 +466,10 @@ effect_noroot_pva$value[effect_noroot_pva$value>0.05]=""
 
 effect_noroot_value=cbind(effect_noroot_value,effect_noroot_pva$value)
 
-ggplot(effect_noroot_value, aes(x = X1, y = X2, fill = value)) +
+P1=ggplot(effect_noroot_value, aes(x = X1, y = X2, fill = value)) +
   geom_tile(color = "white", lwd = 1,linetype = 1)+
   geom_text(aes(x = X1, y = X2, label = effect_noroot_pva$value))+
   scale_fill_gradient2("Eeffect size",low = "#075AFF", mid = "#FFFFCC", high = "#FF0000")+
-
   scale_y_discrete(breaks=as.character(unique(effect_noroot_value$X2)),labels=c("ACM(N=319)","ECM(N=438)","Soil saprotroph(N=438)","Plant pathogen(N=427)","Litter saprotroph(N=438)","Wood saprotroph(N=427)","Epiphyte(N=392)","Parasitic(N=409)"))+
   scale_x_discrete(breaks=as.character(unique(effect_noroot_value$X1)),labels = rev(c("Pla.rich", "Spei","Pre.WQ","Pre.seas.","MAP","MTWQ","Tem.seas.","MDR","MAT","Sand","SoilN","pH","Cec","SoilC","Plot.rich","Core.rich")))+
   theme(panel.border = element_rect(fill=NA,size=1,color="black"),
@@ -478,10 +477,13 @@ ggplot(effect_noroot_value, aes(x = X1, y = X2, fill = value)) +
         axis.title.y = element_text(size=20),
         axis.text.y  = element_text(size=15,color="black"),
         plot.title=element_text(hjust=0.5,face="bold",size=18),
-        axis.text.x  = element_text(size=15,angle=270,hjust=0,
-                                    color=rev(c("seagreen1", "royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","peru","peru","peru","peru","peru","purple","purple"))))+
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        plot.margin = margin(b=-0.5, unit="cm"))+
+  ggtitle("Full model")+
   xlab("")+
   ylab("")
+  
 
 
 ######
@@ -526,26 +528,31 @@ effect_best_noroot_value$pv[effect_best_noroot_value$pv>0.05]=""
 effect_best_noroot_value$value[effect_best_noroot_value$value=="NA"]="0"
 #
 
-ggplot(effect_best_noroot_value, aes(x = X1, y = X2, fill = value)) +
-  geom_tile(color = "gray50", lwd = 1,linetype = 1)+
+P2=ggplot(effect_best_noroot_value, aes(x = X1, y = X2, fill = value)) +
+  geom_tile(color = "white", lwd = 1,linetype = 1)+
   geom_text(aes(x = X1, y = X2, label = pv))+
-  scale_fill_gradient2("Eeffect size",low = "#075AFF", mid = "#FFFFCC", high = "#FF0000",na.value = "white")+
+  scale_fill_gradient2("Eeffect size",low = "#075AFF", mid = "#FFFFCC", high = "#FF0000",na.value = "gray50")+
   
   scale_y_discrete(breaks=as.character(unique(effect_best_noroot_value$X2)),labels=c("ACM(N=319)","ECM(N=438)","Soil saprotroph(N=438)","Plant pathogen(N=427)","Litter saprotroph(N=438)","Wood saprotroph(N=427)","Epiphyte(N=392)","Parasitic(N=409)"))+
   scale_x_discrete(breaks=as.character(unique(effect_best_noroot_value$X1)),labels = rev(c("Pla.rich", "Spei","Pre.WQ","Pre.seas.","MAP","MTWQ","Tem.seas.","MDR","MAT","Sand","SoilN","pH","Cec","SoilC","Plot.rich","Core.rich")))+
   theme(panel.border = element_rect(fill=NA,size=1,color="black"),
         axis.title.x = element_text(size=20),
         axis.title.y = element_text(size=20),
+        plot.margin = margin(t=-0.1, unit="cm"),# reduce the space between individual plots
         axis.text.y  = element_text(size=15,color="black"),
         plot.title=element_text(hjust=0.5,face="bold",size=18),
         axis.text.x  = element_text(size=15,angle=270,hjust=0,
-                                    color=rev(c("seagreen1", "royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","peru","peru","peru","peru","peru","purple","purple"))))+
+        color=rev(c("seagreen1", "royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","peru","peru","peru","peru","peru","purple","purple"))))+
   xlab("")+
-  ylab("")
+  ylab("")+
+  ggtitle("Best-fit model")
+
+# 
+P1=ggplotGrob(P1)
+P2=ggplotGrob(P2)
 
 
-
-
+plot_grid(P1,P2,ncol=1,labels=c("(a)","(b)",label_x = 0.8),rel_heights = c(1,1.3),label_size = 14)
 
 ##
 
