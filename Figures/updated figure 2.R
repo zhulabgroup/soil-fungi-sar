@@ -551,7 +551,6 @@ P2=ggplot(effect_best_noroot_value, aes(x = X1, y = X2, fill = value)) +
 P1=ggplotGrob(P1)
 P2=ggplotGrob(P2)
 
-
 plot_grid(P1,P2,ncol=1,labels=c("(a)","(b)",label_x = 0.8),rel_heights = c(1,1.3),label_size = 14)
 
 ##
