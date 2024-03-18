@@ -1,5 +1,7 @@
 
 library(ggplot2)
+library(dplyr)
+library(reshape)
 
 set.seed(1010)
 times=30
@@ -58,7 +60,7 @@ for (i in df$or[1:493])
  d30[[i]]=melt(power.z[[i]][,c(seq(from=2,to=60,by=2))])["value"]
  d30a[[i]]=melt(power.z[[i]][,c(seq(from=1,to=59,by=2))])["value"]
  dcb[[i]]=cbind(d30a[[i]],d30[[i]])
-}# some rows have NA because of less than two cores in these plots
+}# some rows have NA because of < 3 cores
 
 
 # cbind all the simulations 
@@ -75,8 +77,8 @@ ak=list()
 for (i in 1:493)
 {
   akk=df[i,]
-  akkk=paste(akk$a1,"_",1:akk$df)
-  ak[[i]]=rep(akkk,each=30)%>%data.frame()
+  akkk=paste(akk$a1,"_",1:30)
+  ak[[i]]=rep(akkk,each=df$df[i])%>%data.frame()
 }
 
 # rbind all the names
@@ -92,31 +94,6 @@ df30=cbind(df30,pid)
 
 #create plots
 
-
-b=ggplot(data=subset(df30,pid%in%c("NIWO_043","TALL_044")),
-       aes(x=log(A),y=log(spe),color=pt))+
-geom_point(size=2,alpha=0.1)+
-geom_smooth(data=subset(df30,pid%in%c("NIWO_043","TALL_044")),
-              aes(x=log(A),y=log(spe),color=pt),
-              method = "lm",se=FALSE,size=0.45)+
-scale_color_manual(breaks=subset(df30,pid%in%c("NIWO_043","TALL_044"))[,"pt"],labels=rep(c(1:2),each=750),values=rep(c("seagreen1","mediumpurple"),each=750))+
-guides(color="none")+
-  theme(legend.position = "bottom",
-        text = element_text(size = 18),
-        plot.title = element_text(size = 15, hjust = 0.5), 
-        axis.text.y = element_text(hjust = 0), 
-        axis.text.x = element_text(hjust = 1), 
-        axis.title.y = element_text(size = 18), 
-        axis.title.x = element_text(size = 18), 
-        axis.ticks.x = element_blank(), 
-        panel.background = element_rect(fill = "NA"),
-        panel.border = element_rect(color = "black", size = 1.5, fill = NA)) +
-  xlab("Log(Area)") +
-  ylab("Log(Species)") +
-  geom_point(aes(x=2,y=5),size=3)+
-  annotate("text", x = 2.5, y = 5, label = "NIWO_043", color="mediumpurple",size = 3) +
-  annotate("text", x = 2.5, y = 4.8, label = "TALL_044", size = 3) +
-  geom_point(aes(x=2,y=4.8),size=3,color="seagreen1")
 
 
 df1=power.z[[1]]
@@ -145,7 +122,7 @@ df4=unique(df4)
 
 ggplot(data=df30,aes(x=log(A),y=log(spe),color=pt))+
   #geom_point(size=2,alpha=0.25)+
-  geom_smooth(method = "lm",se=FALSE,size=0.25,alpha=0.5) +
+  geom_smooth(data=df30,aes(x=log(A),y=log(spe),color=pt),method = "lm",se=FALSE,size=0.25,alpha=0.5) +
   guides(color="none")+
   theme(legend.position = "bottom",
         text = element_text(size = 18),
@@ -158,15 +135,20 @@ ggplot(data=df30,aes(x=log(A),y=log(spe),color=pt))+
         panel.background = element_rect(fill = "NA"),
         panel.border = element_rect(color = "black", size = 1.5, fill = NA)) +
   xlab("Log(Area)") +
-  ylab("Log(Species)")
-
-  scale_color_manual(breaks=df30$pt,labels=df30$pt,values=rep("seagreen1",times=6344))
+  ylab("Log(Species)")+
+  scale_color_manual(breaks=unique(df30$pt),labels=unique(df30$pt),values=rep("pink",times=14790))
 
 # the density plot
   
-  ggplot(data=subset(model_data,z<10),aes(x=z))+
-    geom_histogram(aes(y=..density..),    colour="black", fill="white")+
-    geom_density(alpha=.2, fill="#FF6666")+
+  
+  # for one plot
+
+  p1=ggplot(data=subset(df30,piddd=="WY1"),
+           aes(x=log(A),y=log(spe),color=pid))+
+    geom_point(size=3,alpha=0.1)+
+    geom_smooth(data=subset(df30,piddd=="WY1"),
+                aes(x=log(A),y=log(spe),color=pt),
+                method = "lm",se=FALSE,size=0.45)+
     theme(legend.position = "bottom",
           text = element_text(size = 18),
           plot.title = element_text(size = 15, hjust = 0.5), 
@@ -176,21 +158,18 @@ ggplot(data=df30,aes(x=log(A),y=log(spe),color=pt))+
           axis.title.x = element_text(size = 18), 
           axis.ticks.x = element_blank(), 
           panel.background = element_rect(fill = "NA"),
-          panel.border = element_rect(color = "black", size = 1.5, fill = NA))+
-    xlab(expression(italic(z)))+
-    ylab("Density")+
-    geom_vline(xintercept  =0.7538,linetype="dashed",color="blue",size=1)+
-    annotate("text",x=1.15,y=3.5,label="Mean=0.7538",size=6)
+          panel.border = element_rect(color = "black", size = 1.5, fill = NA)) +
+    xlab("Log(Area)") +
+    ylab("Log(Species)") +
+    guides(color="none")
   
-  # for one plot
-  ggplot(data=subset(df30,piddd=="WY1"),
-           aes(x=log(A),y=log(spe),color=pid))+
-    geom_point(size=2,alpha=0.1)+
-    geom_smooth(data=subset(df30,piddd=="WY1"),
+  ####
+  p2=ggplot(data=subset(df30,pid%in%c("NIWO_043","TALL_044")),
+         aes(x=log(A),y=log(spe),color=pt))+
+    geom_point(size=3,alpha=0.1)+
+    geom_smooth(data=subset(df30,pid%in%c("NIWO_043","TALL_044")),
                 aes(x=log(A),y=log(spe),color=pt),
-                method = "lm",se=FALSE,size=0.45)
-  
-  
+                method = "lm",se=FALSE,size=0.45)+
     scale_color_manual(breaks=subset(df30,pid%in%c("NIWO_043","TALL_044"))[,"pt"],labels=rep(c(1:2),each=750),values=rep(c("seagreen1","mediumpurple"),each=750))+
     guides(color="none")+
     theme(legend.position = "bottom",
@@ -210,32 +189,63 @@ ggplot(data=df30,aes(x=log(A),y=log(spe),color=pt))+
     annotate("text", x = 2.5, y = 4.8, label = "TALL_044", size = 3) +
     geom_point(aes(x=2,y=4.8),size=3,color="seagreen1")
   
+  ####
+  p3=ggplot(data = subset(df30mean,projd=="neon"&Freq>24), aes(x = log(A), y = spe, color = piddd)) +
+    geom_point(size = 3, alpha = 0.6) +
+    geom_segment(data = subset(df30mean,projd=="neon"&Freq>24), size=0.3,
+                 aes(x = log(A), xend=log(A),y = spe-sd,yend=spe+sd,
+                     color = as.factor(piddd)))+
+    guides(color = guide_legend(nrow = 6, byrow = TRUE))+
+    theme(legend.position = c(0.7,0.213), 
+          legend.title = element_text(size=10),
+          text = element_text(size = 18), 
+          legend.text = element_text(size=8),
+          plot.title = element_text(size = 15, hjust = 0.5), 
+          axis.text.y = element_text(hjust = 0), 
+          axis.text.x = element_text(hjust = 1), 
+          axis.title.y = element_text(size = 18), 
+          axis.title.x = element_text(size = 18),
+          axis.ticks.x = element_blank(), 
+          panel.background = element_rect(fill = "NA"), 
+          panel.border = element_rect(color = "black", size = 1.5, fill = NA)) +
+    xlab("Log(Area)") +
+    ylab("Log(Species)") +
+    scale_color_manual("plotID",breaks=unique(data$piddd),labels=unique(data$piddd),
+                       values=c(c("purple", "gray", "cadetblue1", "tan1", "greenyellow", "mediumseagreen", "burlywood1", "tan", "wheat", "gold", "mediumpurple",
+                                          "midnightblue","blue","cyan","black","gold3","deeppink","aquamarine2")))
+                                          
   
   
   
+  ggplot(data=subset(model_data,z<10),aes(x=z,color=projd))+
+    geom_histogram(aes(y=..density..,fill=projd),color="gray")+
+    geom_density(alpha=0.1)+
+    theme(legend.position = c(0.5,0.7),
+          text = element_text(size = 18),
+          plot.title = element_text(size = 15, hjust = 0.5), 
+          axis.text.y = element_text(hjust = 0), 
+          axis.text.x = element_text(hjust = 1), 
+          axis.title.y = element_text(size = 18), 
+          axis.title.x = element_text(size = 18), 
+          axis.ticks.x = element_blank(), 
+          panel.background = element_rect(fill = "NA"),
+          panel.border = element_rect(color = "black", size = 1.5, fill = NA))+
+    xlab(expression(italic(z)))+
+    ylab("Density")+
+    geom_vline(xintercept  =0.7538,linetype="dashed",color="blue",size=1)+
+    annotate("text",x=1.15,y=3.5,label="Mean=0.7538",size=6)+
+  geom_vline(xintercept  =0.717,linetype="dashed",color="blue",size=1)
+  
+  scale_color_manual("Project",breaks=c("dob","neon"),labels=c("dob","neon"),values=c("mediumpurple","seagreen1"))+
+  scale_fill_manual("Project",breaks=c("dob","neon"),labels=c("dob","neon"),values=c("mediumpurple","seagreen1"))
   
   
-  
-ggplot(data=subset(df4,cores>28),aes(x=A,y=spe,color=pid))+
-  geom_point(size=2,alpha=0.5)+
-  geom_smooth(method = "lm",se=TRUE) +
-  guides(color="none")+
-  theme(legend.position = "bottom",
-        text = element_text(size = 18),
-        plot.title = element_text(size = 15, hjust = 0.5), 
-        axis.text.y = element_text(hjust = 0), 
-        axis.text.x = element_text(hjust = 1), 
-        axis.title.y = element_text(size = 18), 
-        axis.title.x = element_text(size = 18), 
-        axis.ticks.x = element_blank(), 
-        panel.background = element_rect(fill = "NA"),
-        panel.border = element_rect(color = "black", size = 1.5, fill = NA)) +
-  xlab("Log(Area)") +
-  ylab("Log(Species)") +
   
   
 
-# rename the plot id of the df30 data
+  
+
+# add the plotID to the data
 pid=vector("list",length=dim(df30)[1])
 for (i in 1:dim(df30)[1])
   {
@@ -265,45 +275,36 @@ df30mean=cbind(df30mean,df30sd["log(spe)"])
 
 names(df30mean)[4]="sd"
 
-guild(color="none")+
-  
-  d <- ggplot(data = ex_neon, aes(x = log(A), y = log(species), color = as.factor(dd))) +
-  geom_point(size = 3, alpha = 0.5) +
-  geom_smooth(method = "lm", se = FALSE) +
-  theme(legend.position = "bottom", 
-        text = element_text(size = 18), 
-        plot.title = element_text(size = 15, hjust = 0.5), 
-        axis.text.y = element_text(hjust = 0), axis.text.x = element_text(hjust = 1), axis.title.y = element_text(size = 18), axis.title.x = element_text(size = 18), axis.ticks.x = element_blank(), panel.background = element_rect(fill = "NA"), panel.border = element_rect(color = "black", size = 1.5, fill = NA)) +
-  xlab("Log(Area)") +
-  ylab("Log(Species)") +
-  guides(color = "none") +
-  geom_smooth(method = "lm", se = FALSE)
+## add the project id to the data
+
+proj=vector("list",length=dim(df30mean)[1])
+for (i in 1:dim(df30mean)[1])
+{
+  pidd=df30mean[i,2]
+  dim2=str_length(pidd)
+  if (dim2<4)
+  {
+    proj[[i]] ="dob"
+  }
+  else{
+    proj[[i]]="neon"
+  }
+}
+
+projd=matrix(ncol=1,nrow=dim(df30mean)[1])
+for (i in 1:dim(df30mean)[1])
+{
+  projd[i,1]=proj[[i]]
+}
+
+df30mean=cbind(df30mean,projd)
+
 names(df30mean)[3]="spe"
 
+names(df)[2]="piddd"
 
-a=ggplot(data = subset(df30mean,projd=="neon"&Freq>24), aes(x = log(A), y = spe, color = piddd)) +
-  geom_point(size = 2, alpha = 0.6) +
-  geom_segment(data = subset(df30mean,projd=="neon"&Freq>24), size=0.3,
-               aes(x = log(A), xend=log(A),y = spe-sd,yend=spe+sd,
-                   color = as.factor(piddd)))+
-  guides(color = guide_legend(nrow = 6, byrow = TRUE))+
-  theme(legend.position = c(0.7,0.213), 
-        legend.title = element_text(size=10),
-        text = element_text(size = 18), 
-        legend.text = element_text(size=8),
-        plot.title = element_text(size = 15, hjust = 0.5), 
-        axis.text.y = element_text(hjust = 0), 
-        axis.text.x = element_text(hjust = 1), 
-        axis.title.y = element_text(size = 18), 
-        axis.title.x = element_text(size = 18),
-        axis.ticks.x = element_blank(), 
-        panel.background = element_rect(fill = "NA"), 
-        panel.border = element_rect(color = "black", size = 1.5, fill = NA)) +
-  xlab("Log(Area)") +
-  ylab("Log(Species)") +
-  scale_color_manual("plotID",breaks=unique(data$piddd),labels=unique(data$piddd),
-                     values=c(c("purple", "gray", "cadetblue1", "tan1", "greenyellow", "mediumseagreen", "burlywood1", "tan", "wheat", "gold", "mediumpurple",
-                                            "midnightblue","blue","cyan","black","gold3","deeppink","aquamarine2")))
+df30mean=merge(df30mean,df[,c(1,2)],by="piddd")
+names(df30mean)[6]="Freq"
 
 
 
@@ -350,23 +351,15 @@ for(i in 1:length(a1)){
 
 
 ##
-proj=vector("list",length=dim(df30mean)[1])
-for (i in 1:dim(df30mean)[1])
-{
-  pidd=df30mean[i,2]
-  dim2=str_length(pidd)
-  if (dim2<4)
-  {
-    proj[[i]] ="dob"
-  }
-  else{
-    proj[[i]]="neon"
-  }
-}
 
-projd=matrix(ncol=1,nrow=dim(df30mean)[1])
-for (i in 1:dim(df30mean)[1])
-{
-  projd[i,1]=proj[[i]]
-}
 
+op=aggregate(log(spe)~log(A),data=df30,FUN=mean)
+opd=aggregate(log(spe)~log(A),data=df30,FUN=sd)
+
+op=cbind(op,opd[,"log(spe)"])
+names(op)=c("A","spe","sd")
+
+ggplot()+
+  geom_point(data=op,aes(x=A,y=spe))+
+  geom_segment(data=op,aes(x=A,xend=A,y=spe-sd,yend=spe+sd))
+  
