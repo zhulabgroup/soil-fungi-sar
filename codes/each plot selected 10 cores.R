@@ -72,15 +72,64 @@ for(i in 1:length(a1)){
   all_z[i,]=power.z00[[i]][1,]
 }
 
-a
+all_z=data.frame(all_z)
 
 all_z=data.frame(a1,all_z)
-write.csv(all_z,"all_z.ranall.csv")
 
-all_c=matrix(nrow=length(a1),ncol=30)# get the 30 simulated c values for the neon site
-for(i in 1:length(a1)){
-  all_c[i,]=power.z00[[i]][2,]
-}
+write.csv(all_z,"all_z.ran30_10cores.csv")
 
-all_c=data.frame(a1,all_c)
-write.csv(all_c,"all_c.ranall.csv")
+# get the means for each plot
+
+all_z_eq10=apply(all_z[,2:31],1,data=all_z,FUN=mean)%>%data.frame()%>%cbind(a1)
+
+names(all_z_eq10)=c("z","piddd")
+# look at the z values determined with two different approaches
+
+head(model_data)
+all_z_ran=aggregate(z~piddd,data=model_data,FUN=mean)
+com_z=merge(all_z_eq10,all_z_ran,by="piddd")
+names(com_z)=c("piddd","z10","zall")
+  
+com_z=merge(com_z, df,by="piddd")
+com_z=subset(com_z,z10<10)
+# compare different approach
+
+app1=melt(com_z[,c(1,2,3)])
+app2=melt(com_z[,c(1,4,4)])
+app3=cbind(app1,app2["value"])
+names(app3)[4]="core"
+
+p1=ggplot()+
+geom_point(data=app3,pch=21,color="black",size=3,aes(x=core,y=value,fill=variable))+
+  theme(legend.position = c(0.88, 0.182027558), 
+        legend.text = element_text(size = 14), 
+        text = element_text(size = 15), 
+        axis.text.x = element_blank(), 
+        axis.title.y = element_text(face = "italic", size = 20), 
+        axis.title.x = element_text(size = 20), 
+        axis.ticks.x = element_blank(),
+        panel.border = element_rect(color = "black", size = 1.5, fill = NA),
+        panel.background = element_rect(fill = "NA"))+
+  geom_smooth(data=app3,aes(x=core,y=value,color=variable),
+              method = "lm",se=FALSE,size=1)+
+  xlab("Number of soil cores")+
+  ylab("z")+
+  scale_fill_manual("",breaks=c("z10","zall"),labels=c("z10","zall"),values=c("seagreen1","mediumpurple"))+
+scale_color_manual("",breaks=c("z10","zall"),labels=c("z10","zall"),values=c("seagreen1","mediumpurple"))
+
+
+p2=ggplot()+
+  geom_point(data=com_z,pch=21,fill="gray",size=3,aes(x=z10,y=zall))+
+  theme(legend.position = c(0.88, 0.182027558), 
+        legend.text = element_text(size = 14), 
+        text = element_text(size = 15), 
+        axis.text.x = element_blank(), 
+        axis.title.y = element_text(face = "italic", size = 20), 
+        axis.title.x = element_text(size = 20), 
+        axis.ticks.x = element_blank(),
+        panel.border = element_rect(color = "black", size = 1.5, fill = NA),
+        panel.background = element_rect(fill = "NA"))+
+  ylab(expression(italic(z)["All cores sampled"]))+
+  xlab(expression(italic(z)["10 cores sampled"]))
+
+
