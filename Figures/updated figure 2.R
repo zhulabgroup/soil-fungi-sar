@@ -65,7 +65,9 @@ data=merge(acm_model_rich,data,by="plotID")
 data=unique(data)
 data[,28:29]=apply(data[,28:29],2,range01)%>%data.frame()
 ggcorrplot(cor(data[, c(5:20,29)]), hc.order = TRUE, type = "lower", lab = TRUE)
+
 #bold-soilC[for an earlier version the cec and bio4 were not included in the model]
+
 mod <- lmer(z ~ Observed + funrich+organicCPercent +cec+ ph + nitrogen + sand +bio1+ bio2 +bio4+ bio8 + bio12 + bio15 +bio18+ spei + richness  + (1 | siteIDD / plotID), data = data)
 effect_acm=summary(mod)
 effect_acm=effect_acm$coefficients
@@ -76,6 +78,17 @@ mod_fit=lmer(z ~ organicCPercent + ph + nitrogen + bio15 + (1 | siteIDD/plotID),
 effect_best_acm=summary(mod_fit)
 effect_best_acm=effect_best_acm$coefficients
 effect_best_acm=data.frame(effect_best_acm)[2:dim(effect_best_acm)[1],]
+
+# for the variance partitioning analysis
+
+data$climate=data$bio15
+
+
+data$soil=data$organicCPercent*data$ph*data$nitrogen
+
+mod_fit=lmer(z ~ climate+soil + (1 | siteIDD/plotID),data=data)
+
+pacm=glmm.hp(mod_fit,commonality=TRUE)
 
 p1=ggplot()+
   geom_point(data=effect_acm,aes(x= Estimate,y=1:dim(effect_acm)[1]),
@@ -122,6 +135,15 @@ effect_best_ecm=summary(mod_best)
 effect_best_ecm=effect_best_ecm$coefficients
 effect_best_ecm=data.frame(effect_best_ecm)[2:dim(effect_best_ecm)[1],]
 
+# variance par.
+data$climate=data$bio4*data$bio12*data$bio15*data$spei
+
+data$myco=data$Observed
+data$plant=data$richness
+
+mod_best=lmer(z ~ climate+plant+myco+ (1 | siteIDD/plotID),data=data)
+
+pecm=glmm.hp(mod_best,commonality=TRUE)
 
 p2=ggplot()+
   geom_point(data=effect_ecm,aes(x= Estimate,y=1:dim(effect_ecm)[1]),
@@ -170,6 +192,16 @@ mod_best=lmer(z ~ Observed + nitrogen + bio4 + bio12 + bio15 + richness + (1 | s
 effect_best_soilsap=summary(mod_best)#unconverge
 effect_best_soilsap=effect_best_soilsap$coefficients
 effect_best_soilsap=data.frame(effect_best_soilsap)[2:dim(effect_best_soilsap)[1],]
+#variance par
+data$climate=data$bio4*data$bio12*data$bio15
+
+data$myco=data$Observed
+data$plant=data$richness
+data$soil=data$nitrogen
+
+mod_best=lmer(z ~ climate+plant+myco+ soil+(1 | siteIDD/plotID),data=data)
+
+psoilsap=glmm.hp(mod_best,commonality = TRUE)# all included
 
 p3=ggplot()+
   geom_point(data=effect_soilsap,aes(x= Estimate,y=1:dim(effect_soilsap)[1]),
@@ -217,6 +249,14 @@ mod_best=lmer(z ~ Observed + (1 | siteIDD/plotID),data=data)
 effect_best_plapat=summary(mod_best)
 effect_best_plapat=effect_best_plapat$coefficients
 effect_best_plapat=data.frame(effect_best_plapat)[2:dim(effect_best_plapat)[1],]
+# variance par
+
+data$myco=data$Observed
+mod_best=lmer(z ~ myco + (1 | siteIDD/plotID),data=data)
+
+pplapat=glmm.hp(mod_best,commonality = TRUE)
+
+
 
 p4=ggplot()+
   geom_point(data=effect_plapat,aes(x= Estimate,y=1:dim(effect_plapat)[1]),
@@ -252,6 +292,7 @@ data[,28:29]=apply(data[,28:29],2,range01)%>%data.frame()
 ggcorrplot(cor(data[, c(5:20,29)]), hc.order = TRUE, type = "lower", lab = TRUE)
 
 mod <- lmer(z ~ Observed + funrich+organicCPercent + ph + nitrogen + sand +bio1+ bio2 + bio8 + bio12 + bio15 +bio18+ spei + richness  + (1 | siteIDD / plotID), data = data)
+
 mod <- lmer(z ~ Observed + funrich+organicCPercent +cec+ ph + nitrogen + sand +bio1+ bio2 +bio4+ bio8 + bio12 + bio15 +bio18+ spei + richness  + (1 | siteIDD / plotID), data = data)
 
 effect_litsap=summary(mod)
@@ -262,7 +303,16 @@ mod_best=lmer(z ~ Observed + cec + nitrogen + sand + bio2 + bio4 + bio12 + richn
 effect_best_litsap=summary(mod_best)
 effect_best_litsap=effect_best_litsap$coefficients
 effect_best_litsap=data.frame(effect_best_litsap)[2:dim(effect_best_litsap)[1],]
+# variance par.
 
+data$climate=data$bio2*data$bio4*data$bio12
+data$plant=data$richness
+data$myco=data$Observed
+data$soil=data$cec*data$nitrogen*data$sand
+
+mod_best=lmer(z ~ climate+plant+myco+soil+ (1 | siteIDD/plotID),data=data)
+
+plitsap=glmm.hp(mod_best,commonality = TRUE)
 
 p5=ggplot()+
   geom_point(data=effect_litsap,aes(x= Estimate,y=1:dim(effect_litsap)[1]),
@@ -309,6 +359,14 @@ mod_best=lmer(z ~ Observed + (1 | siteIDD/plotID),data=data)
 effect_best_woosap=summary(mod_best)
 effect_best_woosap=effect_best_woosap$coefficients
 effect_best_woosap=data.frame(effect_best_woosap)[2:dim(effect_best_woosap)[1],]
+
+# variance par
+
+data$myco=data$Observed
+
+mod_best=lmer(z ~ myco + (1 | siteIDD/plotID),data=data)
+
+pwoosap=glmm.hp(mod_best)# no need to partitioning
 
 p6=ggplot()+
   geom_point(data=effect_woosap,aes(x= Estimate,y=1:dim(effect_woosap)[1]),
@@ -357,6 +415,15 @@ effect_best_epiphy=summary(mod_best)
 effect_best_epiphy=effect_best_epiphy$coefficients
 effect_best_epiphy=data.frame(effect_best_epiphy)[2:dim(effect_best_epiphy)[1],]
 
+# variance par
+
+data$climate=data$bio2
+data$myco=data$funrich
+
+mod_best=lmer(z ~ climate+myco + (1 | siteIDD/plotID),data=data)
+
+pepiphy=glmm.hp(mod_best,commonality = TRUE)
+
 p7=ggplot()+
   geom_point(data=effect_epiphy,aes(x= Estimate,y=1:dim(effect_epiphy)[1]),
              color=rev(c("seagreen1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","peru","peru","peru","peru","purple","purple")),size=3)+
@@ -388,8 +455,10 @@ p7=ggplot()+
 data=merge(para_model,rich_papra_mean,by="plotID")
 data=subset(data,siteIDD!="GUAN"&z<10&richness>0)
 data=unique(data)
-ggcorrplot(cor(data[, c(6:20,29)]), hc.order = TRUE, type = "lower", lab = TRUE)
+
 data[,c(6:21,29)]=apply(data[,c(6:21,29)],2,range01)%>%data.frame()
+
+ggcorrplot(cor(data[, c(6:20,29)]), hc.order = TRUE, type = "lower", lab = TRUE)
 #bold-soilC
 
 mod <- lmer(z ~ Observed + funrich+organicCPercent + ph + nitrogen + sand +bio1+ bio2 + bio8 + bio12 + bio15 +bio18+ spei + richness  + (1 | siteIDD / plotID), data = para_model_rich)
@@ -403,6 +472,16 @@ mod_best=lmer(z ~ Observed + organicCPercent + bio4 + bio12 + bio15 + spei + ric
 effect_best_para=summary(mod_best)
 effect_best_para=effect_best_para$coefficients
 effect_best_para=data.frame(effect_best_para)[2:dim(effect_best_para)[1],]
+# variance par
+
+data$climate=data$bio4*data$bio12*data$bio15*data$spei
+data$plant=data$richness
+data$myco=data$Observed
+data$soil=data$organicCPercent
+
+mod_best=lmer(z ~ climate+plant+myco+soil  + (1 | siteIDD/plotID),data=data)
+
+ppara=glmm.hp(mod_best,commonality = TRUE)
 
 p8=ggplot()+
   geom_point(data=effect_para,aes(x= Estimate,y=1:dim(effect_para)[1]),
@@ -555,10 +634,51 @@ plot_grid(P1,P2,ncol=1,labels=c("(a)","(b)",label_x = 0.8),rel_heights = c(1,1.3
 
 ##
 
-mod <- lmer(z ~ Observed + organicCPercent + ph + nitrogen + sand + bio2 + bio8 + bio18 + bio12 + bio15 + spei + richness + funrich + bio1 + (1 | siteIDD / plotID), data = data)
+ppva=data.frame(va=rownames(ppara$commonality.analysis),code=1:16)
+ppva$va=gsub(" ","",ppva$va)
+pacm$va=gsub(" ","",pacm$va)
+pecm$va=gsub(" ","",pecm$va)
+psoilsap$va=gsub(" ","",psoilsap$va)
+pwoosap$va=gsub(" ","",pwoosap$va)
+plitsap$va=gsub(" ","",plitsap$va)
+pplapat$va=gsub(" ","",pplapat$va)
+pepiphy$va=gsub(" ","",pepiphy$va)
+ppara$va=gsub(" ","",ppara$va)
 
-step(mod)
-mod_soilsap_rich <- lmer(z ~ c + nitrogen + sand + bio2 + bio18 + bio12 + spei + richness + funrich + (1 | siteIDD / plotID), data = soilsap_model_rich)
+pplapat=data.frame(va="Unique to myco",Fractions=0.06549204,Total=1)
+pacm=data.frame(va=rownames(pacm$commonality.analysis),pacm$commonality.analysis)
 
-p3 <- plot_model(mod_soilsap_rich, axis.labels = c("Fun.rich", "Pla.rich", "Spei", "MAP", "Pre.WQ", "MDR", "Sand", "SoilN"), color = c("royalblue1", "red"), rm.terms = "c", title = "Soilsap. (N=438)")
+pecm=data.frame(va=rownames(pecm$commonality.analysis),pecm$commonality.analysis)
+psoilsap=data.frame(va=rownames(psoilsap$commonality.analysis),psoilsap$commonality.analysis)
+pwoosap=data.frame(va="Unique to myco",Fractions=0.007427951,Total=1)
+plitsap=data.frame(va=rownames(plitsap$commonality.analysis),plitsap$commonality.analysis)
+
+pepiphy=data.frame(va=rownames(pepiphy$commonality.analysis),pepiphy$commonality.analysis)
+ppara=data.frame(va=rownames(ppara$commonality.analysis),ppara$commonality.analysis)
+
+# combine all the data
+varp=left_join(ppva,pacm,by="va")
+varp=left_join(varp,pecm,by="va")
+varp=left_join(varp,psoilsap,by="va")
+varp=left_join(varp,pwoosap,by="va")
+varp=left_join(varp,plitsap,by="va")
+varp=left_join(varp,pepiphy,by="va")
+varp=left_join(varp,ppara,by="va")
+varp=left_join(varp,pplapat,by="va")
+
+names(varp)=c("va","code","facm","tacm","fecm","tecm",
+              "fsoilsap","tsoilsap","fwoosap","twoosap",
+              "flitsap","tlitsap","fepiphy","tepiphy",
+              "fpara","tpara","fplapat","tplapat")
+
+var2=varp[,seq(from=1,to=18,by=2)]
+
+var2=melt(var2)
+
+var2[is.na(var2)]=0
+var2[var2<0]=0
+
+ggplot(data=subset(var2,va!="Total"),aes(x = variable, y = value, fill = va))+
+  geom_bar(stat = "identity", position = "fill")
+
 
