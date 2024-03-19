@@ -267,7 +267,7 @@ dmpp$value[dmpp$value>0.05]=""
 
 dm3=cbind(dm3,dmpp$value)
 
-ggplot(dm3, aes(x = va, y = variable, fill = value)) +
+P1=ggplot(dm3, aes(x = va, y = variable, fill = value)) +
 geom_tile(color = "white", lwd = 1,linetype = 1)+
   geom_text(aes(x = va, y = variable, label = dm3$`dmpp$value`))+
 scale_fill_gradient2("Eeffect size",low = "#075AFF", mid = "#FFFFCC", high = "#FF0000")+
@@ -277,13 +277,15 @@ scale_x_discrete(breaks=as.character(unique(dm3$va)),labels = rev(c("Pla.rich", 
         axis.title.x = element_text(size=20),
         axis.title.y = element_text(size=20),
         axis.text.y  = element_text(size=15,color="black"),
+        plot.margin = margin(b=-0.8, unit="cm"),
         plot.title=element_text(hjust=0.5,face="bold",size=18),
-        axis.text.x  = element_text(size=15,angle=270,hjust=0,
-        color=rev(c("seagreen1","seagreen1","seagreen1","seagreen1","seagreen1","seagreen1","seagreen1", "royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","peru","peru","peru","peru","peru","purple","purple"))))+
-  xlab("")+
-  ylab("")
+        axis.text.x  = element_blank(),
+        axis.ticks =element_blank())+
+        xlab("")+
+       ylab("")+
+  ggtitle("Full model")
 
-  ## aftering modeling selection
+  ## after modeling selection
 
 effect_bestroot_acm=cbind(va=rownames(effect_bestroot_acm),effect_bestroot_acm)
 effect_bestroot_ecm=cbind(va=rownames(effect_bestroot_ecm),effect_bestroot_ecm)
@@ -328,7 +330,7 @@ effect_best_root_value$pva[effect_best_root_value$pva>0.05]=""
 
 # plots
 
-ggplot(effect_best_root_value, aes(x = X1, y = X2, fill = value)) +
+P2=ggplot(effect_best_root_value, aes(x = X1, y = X2, fill = value)) +
   geom_tile(color = "white", lwd = 1,linetype = 1)+
   geom_text(aes(x =X1, y = X2, label =pva))+
   scale_fill_gradient2("Eeffect size",low = "#075AFF", mid = "#FFFFCC", high = "#FF0000")+
@@ -338,9 +340,16 @@ ggplot(effect_best_root_value, aes(x = X1, y = X2, fill = value)) +
         axis.title.x = element_text(size=20),
         axis.title.y = element_text(size=20),
         axis.text.y  = element_text(size=15,color="black"),
+        
         plot.title=element_text(hjust=0.5,face="bold",size=18),
         axis.text.x  = element_text(size=15,angle=270,hjust=0,
-                                    color=rev(c("seagreen1","seagreen1","seagreen1","seagreen1","seagreen1","seagreen1","seagreen1", "royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","peru","peru","peru","peru","peru","purple","purple"))))+
+        color=rev(c("seagreen1","seagreen1","seagreen1","seagreen1","seagreen1","seagreen1","seagreen1", "royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","peru","peru","peru","peru","peru","purple","purple"))))+
   xlab("")+
-  ylab("")
+  ylab("")+
+  ggtitle("Best-fit model")
+
+# combine the plots
+P1=ggplotGrob(P1)
+P2=ggplotGrob(P2)
+plot_grid(P1,P2,ncol=1,labels=c("(a)","(b)",label_x = 0.8),rel_heights = c(1,1.3),label_size = 14)
 
