@@ -1,6 +1,6 @@
 # step 1 calculates the z and c values for both the neon and dob sites and the resulting outputs were saved locally
 # this step firstly involves the rarefation of the data, which will be used in the downstream analyses when necessary.
-
+library(doParallel)
 rarefy all the data
 neon_dob <- readRDS("/.../.../phylo_V3.1.RDS")
 neon_dob <- subset_samples(neon_dob, get_variable(neon_dob, "horizon")!="AH")
@@ -31,7 +31,7 @@ a1=unique(a1$plotIDM)
 
 set.seed(1010)
 times=30
-power.z <- vector("list", length(a1))
+power.z3 <- vector("list", length(a1))
 
 for (i in 1:length(a1))
 {
@@ -42,7 +42,7 @@ for (i in 1:length(a1))
   {
     cl <- makeCluster(3)
     registerDoParallel(cl)
-    power.z[[i]] <- foreach(i = 1:times, .combine = "cbind", .packages = c("phyloseq")) %dopar%{
+    power.z3[[i]] <- foreach(i = 1:times, .combine = "cbind", .packages = c("phyloseq")) %dopar%{
       species <- vector(length = dim1[1]) # create a vector to save diversity
       for (j in 1:dim1[1]) 
       { 
@@ -61,7 +61,7 @@ for (i in 1:length(a1))
   
   else
   {
-    power.z[[i]]=matrix(10,nrow=2,ncol = dim1[1])#the number 10 is randomly selected, to create a matrix for the plots with < 3 cores to avoid NULL output
+    power.z3[[i]]=matrix(10,nrow=2,ncol = dim1[1])#the number 10 is randomly selected, to create a matrix for the plots with < 3 cores to avoid NULL output
   }
 }
 
