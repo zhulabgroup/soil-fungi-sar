@@ -120,7 +120,7 @@ names(df4)[1]="plotID"
 df4=merge(df4,comp_vege[,c(2,4)],by="plotID")
 df4=unique(df4)
 
-ggplot(data=df30,aes(x=log(A),y=log(spe),color=pt))+
+p4=ggplot(data=df30,aes(x=log(A),y=log(spe),color=pt))+
   #geom_point(size=2,alpha=0.25)+
   geom_smooth(data=df30,aes(x=log(A),y=log(spe),color=pt),method = "lm",se=FALSE,size=0.25,alpha=0.5) +
   guides(color="none")+
@@ -149,7 +149,10 @@ ggplot(data=df30,aes(x=log(A),y=log(spe),color=pt))+
     geom_smooth(data=subset(df30,piddd=="WY1"),
                 aes(x=log(A),y=log(spe),color=pt),
                 method = "lm",se=FALSE,size=0.45)+
-    theme(legend.position = "bottom",
+    guides(color = guide_legend(nrow = 10, byrow = TRUE))+
+    theme(legend.position = c(0.75,0.28),
+          legend.text = element_text(size=8),
+          legend.title  = element_text(size=10),
           text = element_text(size = 18),
           plot.title = element_text(size = 15, hjust = 0.5), 
           axis.text.y = element_text(hjust = 0), 
@@ -161,7 +164,43 @@ ggplot(data=df30,aes(x=log(A),y=log(spe),color=pt))+
           panel.border = element_rect(color = "black", size = 1.5, fill = NA)) +
     xlab("Log(Area)") +
     ylab("Log(Species)") +
-    guides(color="none")
+    scale_color_manual("plotID=WY1",breaks=unique(dk$pt),
+                       labels=c(expression(italic(z)*"=0.69"),
+                                expression(italic(z)*"=0.67"),
+                                expression(italic(z)*"=0.65"),
+                                expression(italic(z)*"=0.75"),
+                                expression(italic(z)*"=0.65"),
+                                expression(italic(z)*"=0.71"),
+                                expression(italic(z)*"=0.72"),
+                                expression(italic(z)*"=0.73"),
+                                expression(italic(z)*"=0.80"),
+                                expression(italic(z)*"=0.61"),
+                                expression(italic(z)*"=0.71"),
+                                expression(italic(z)*"=0.78"),
+                                expression(italic(z)*"=0.68"),
+                                expression(italic(z)*"=0.72"),
+                                expression(italic(z)*"=0.82"),
+                                expression(italic(z)*"=0.74"),
+                                expression(italic(z)*"=0.75"),
+                                expression(italic(z)*"=0.72"),
+                                expression(italic(z)*"=0.67"),
+                                expression(italic(z)*"=0.73"),
+                                expression(italic(z)*"=0.73"),
+                                expression(italic(z)*"=0.76"),
+                                expression(italic(z)*"=0.84"),
+                                expression(italic(z)*"=0.65"),
+                                expression(italic(z)*"=0.80"),
+                                expression(italic(z)*"=0.72"),
+                                expression(italic(z)*"=0.67"),
+                                expression(italic(z)*"=0.74"),
+                                expression(italic(z)*"=0.71"),
+                                expression(italic(z)*"=0.73") ),
+                       values=1:30)+
+    annotate("text", x = 0.386, y = 7, label = expression("CV=7%"), size = 6)+ 
+  annotate("text", x = 0.8, y = 6.8, label = expression("Range=0.61~0.84"), size = 6)+ 
+  annotate("text", x = 0.55, y = 6.6, label = expression("Mean=0.72"), size = 6) 
+  
+  
   
   ####
   p2=ggplot(data=subset(df30,pid%in%c("NIWO_043","TALL_044")),
@@ -170,6 +209,8 @@ ggplot(data=df30,aes(x=log(A),y=log(spe),color=pt))+
     geom_smooth(data=subset(df30,pid%in%c("NIWO_043","TALL_044")),
                 aes(x=log(A),y=log(spe),color=pt),
                 method = "lm",se=FALSE,size=0.45)+
+    guides(color="none")+
+  
     scale_color_manual(breaks=subset(df30,pid%in%c("NIWO_043","TALL_044"))[,"pt"],labels=rep(c(1:2),each=750),values=rep(c("seagreen1","mediumpurple"),each=750))+
     guides(color="none")+
     theme(legend.position = "bottom",
@@ -184,10 +225,11 @@ ggplot(data=df30,aes(x=log(A),y=log(spe),color=pt))+
           panel.border = element_rect(color = "black", size = 1.5, fill = NA)) +
     xlab("Log(Area)") +
     ylab("Log(Species)") +
-    geom_point(aes(x=2,y=5),size=3)+
-    annotate("text", x = 2.5, y = 5, label = "NIWO_043", color="mediumpurple",size = 3) +
-    annotate("text", x = 2.5, y = 4.8, label = "TALL_044", size = 3) +
-    geom_point(aes(x=2,y=4.8),size=3,color="seagreen1")
+    geom_point(aes(x=1,y=5),size=5,pch=21,color="black",fill="mediumpurple")+
+    annotate("text", x = 2, y = 5, label = "NIWO_043 Mean=0.85", color="mediumpurple",size = 6) +
+    annotate("text", x = 2, y = 4.7, label = "TALL_044 Mean=0.59", color="seagreen1",size = 6) +
+    geom_point(aes(x=1,y=4.7),pch=21,size=5,color="black",fill="seagreen1")+
+    annotate("text", x = 2.5, y = 5.2, label = expression(italic(P)*"<0.001"), size = 6) 
   
   ####
   p3=ggplot(data = subset(df30mean,projd=="neon"&Freq>24), aes(x = log(A), y = spe, color = piddd)) +
@@ -210,6 +252,7 @@ ggplot(data=df30,aes(x=log(A),y=log(spe),color=pt))+
           panel.border = element_rect(color = "black", size = 1.5, fill = NA)) +
     xlab("Log(Area)") +
     ylab("Log(Species)") +
+  
     scale_color_manual("plotID",breaks=unique(data$piddd),labels=unique(data$piddd),
                        values=c(c("purple", "gray", "cadetblue1", "tan1", "greenyellow", "mediumseagreen", "burlywood1", "tan", "wheat", "gold", "mediumpurple",
                                           "midnightblue","blue","cyan","black","gold3","deeppink","aquamarine2")))
@@ -217,9 +260,30 @@ ggplot(data=df30,aes(x=log(A),y=log(spe),color=pt))+
   
   
   
-  ggplot(data=subset(model_data,z<10),aes(x=z,color=projd))+
-    geom_histogram(aes(y=..density..,fill=projd),color="gray")+
-    geom_density(alpha=0.1)+
+  p4=ggplot(data=subset(model_data,projd=="neon"),aes(x=z))+
+    geom_histogram(aes(y=..density..),alpha=0.2,position="identity",color="black")+
+    geom_density(alpha=0.2,fill="#FF6666")+
+    theme(legend.position = c(0.5,0.7),
+          text = element_text(size = 18),
+          plot.title = element_text(size = 15, hjust = 0.5), 
+          axis.text.y = element_text(hjust = 0), 
+          axis.text.x = element_text(hjust = 1), 
+          axis.title.y = element_text(size = 18), 
+          axis.title.x = element_text(size = 18), 
+          axis.ticks.x = element_blank(), 
+          panel.background = element_rect(fill = "NA"),
+          panel.border = element_rect(color = "black", size = 1.5, fill = NA))+
+    xlab(expression(italic(z)))+
+    ylab("Density")+
+    geom_vline(xintercept  =0.75,linetype="dashed",color="blue",size=1)+
+    annotate("text",x=1.225,y=3.1,label="Mean=0.75",size=6)+
+    annotate("text", x = 1.16, y = 3.5, label = expression("CV=19%"), size = 6)+ 
+    annotate("text", x = 1.3752029, y = 3.3, label = expression("Range=0.27~2.09"), size = 6) 
+    
+  
+  ggplot(data=subset(model_data,projd=="dob"),aes(x=z))+
+    geom_histogram(aes(y=..density..),alpha=0.2,position="identity",color="black")+
+    geom_density(alpha=0.2,fill="#FF6666")+
     theme(legend.position = c(0.5,0.7),
           text = element_text(size = 18),
           plot.title = element_text(size = 15, hjust = 0.5), 
@@ -234,7 +298,9 @@ ggplot(data=df30,aes(x=log(A),y=log(spe),color=pt))+
     ylab("Density")+
     geom_vline(xintercept  =0.7538,linetype="dashed",color="blue",size=1)+
     annotate("text",x=1.15,y=3.5,label="Mean=0.7538",size=6)+
-  geom_vline(xintercept  =0.717,linetype="dashed",color="blue",size=1)
+    xlim(0,1.5)
+  
+  
   
   scale_color_manual("Project",breaks=c("dob","neon"),labels=c("dob","neon"),values=c("mediumpurple","seagreen1"))+
   scale_fill_manual("Project",breaks=c("dob","neon"),labels=c("dob","neon"),values=c("mediumpurple","seagreen1"))
@@ -362,4 +428,18 @@ names(op)=c("A","spe","sd")
 ggplot()+
   geom_point(data=op,aes(x=A,y=spe))+
   geom_segment(data=op,aes(x=A,xend=A,y=spe-sd,yend=spe+sd))
+
+dk=subset(df30,piddd=="WY1")
+
+a22=unique(dk$pt)
+pp=numeric()
+for (i in 1:30)
+  {
+  ex=subset(dk,pt==a22[i])
+  
+  temp<- summary(lm(log(spe)~log(A),ex))[["coefficients"]] 
+  pp[i]=temp[2,1]
+}
+
+
   
