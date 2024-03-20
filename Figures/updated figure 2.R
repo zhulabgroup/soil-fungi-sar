@@ -74,7 +74,9 @@ effect_acm=effect_acm$coefficients
 effect_acm=data.frame(effect_acm)[2:dim(effect_acm)[1],]
 # best-fit model
 step(mod)
+
 mod_fit=lmer(z ~ organicCPercent + ph + nitrogen + bio15 + (1 | siteIDD/plotID),data=data)
+
 effect_best_acm=summary(mod_fit)
 effect_best_acm=effect_best_acm$coefficients
 effect_best_acm=data.frame(effect_best_acm)[2:dim(effect_best_acm)[1],]
@@ -348,6 +350,7 @@ data[,28:29]=apply(data[,28:29],2,range01)%>%data.frame()
 ggcorrplot(cor(data[, c(5:20,29)]), hc.order = TRUE, type = "lower", lab = TRUE)
 #bold-soilC
 mod <- lmer(z ~ Observed + funrich+organicCPercent + ph + nitrogen + sand +bio1+ bio2 + bio8 + bio12 + bio15 +bio18+ spei + richness  + (1 | siteIDD / plotID), data = data)
+
 mod <- lmer(z ~ Observed + funrich+organicCPercent +cec+ ph + nitrogen + sand +bio1+ bio2 +bio4+ bio8 + bio12 + bio15 +bio18+ spei + richness  + (1 | siteIDD / plotID), data = data)
 
 
@@ -462,6 +465,7 @@ ggcorrplot(cor(data[, c(6:20,29)]), hc.order = TRUE, type = "lower", lab = TRUE)
 #bold-soilC
 
 mod <- lmer(z ~ Observed + funrich+organicCPercent + ph + nitrogen + sand +bio1+ bio2 + bio8 + bio12 + bio15 +bio18+ spei + richness  + (1 | siteIDD / plotID), data = para_model_rich)
+
 mod <- lmer(z ~ Observed + funrich+organicCPercent +cec+ ph + nitrogen + sand +bio1+ bio2 +bio4+ bio8 + bio12 + bio15 +bio18+ spei + richness  + (1 | siteIDD / plotID), data = data)
 
 effect_para=summary(mod)
@@ -678,7 +682,37 @@ var2=melt(var2)
 var2[is.na(var2)]=0
 var2[var2<0]=0
 
-ggplot(data=subset(var2,va!="Total"),aes(x = variable, y = value, fill = va))+
-  geom_bar(stat = "identity", position = "fill")
+p6=ggplot(data=subset(var2,va!="Total"),aes(x = variable, y = value, fill = va),alpha=0.5)+
+  geom_bar(stat = "identity", pch=21,color="black",position = "fill",width=0.6)+
+  scale_x_discrete(breaks=as.character(unique(var2$variable)),
+                   labels=c("ACM(N=87)\n [  2.4%]","ECM(N=104)\n [  8.4%]","Soil saprotroph(N=104)\n [  6.9%]","Wood saprotroph(N=103)\n [  0.7%]","Litter saprotroph(N=104)\n [  7.9%]","Epiphyte(N=103)\n [  2.5%]","Parasitic(N=98)\n [10.4%]","Plant pathogen(N=103)\n [  6.6%]"))+
+  scale_fill_manual("Components",breaks=unique(var2$va),labels=c("Clima.","Plant","Fung.","Soil","Clima.+Plant",
+   "Clima.+Fung.","Plant+Fung.","Clima.+Soil","Plant+Soil",
+   "Fung.+Soil","Clima.+Plant+Fung.","Clima.+Plant+Soil",
+    "Clima.+Fung.+Soil","Plant+Fung.+Soil","Clima.+Plant+Fung.+Soil","Total"),
+   values=c("mediumpurple", "royalblue1", "tomato",  "tan1", 
+                          "tan",   "mediumseagreen", "burlywood1", "seagreen1",
+                          "wheat", "gold",  "purple",  "midnightblue",
+                          "yellow","gold3","deeppink","aquamarine2"))+
+      theme(legend.position = "none",   legend.title = element_text(size=10),
+          text = element_text(size = 18), 
+          legend.text = element_text(size=8),
+       plot.title = element_text(size = 15, hjust = 0.5), 
+         axis.text.y = element_text(hjust = 0), 
+           axis.text.x = element_text(hjust = 1), 
+          axis.title.y = element_text(size = 18), 
+           axis.title.x = element_text(size = 18),
+          axis.ticks.x = element_blank(), 
+           panel.background = element_rect(fill = "NA"), 
+           panel.border = element_rect(color = "black", size = 1.5, fill = NA))+
+  ylab("Contribution to the explained variance")+
+  xlab("")+
+  coord_flip()
+
+
+
+
+
+
 
 
