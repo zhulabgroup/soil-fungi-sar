@@ -611,24 +611,23 @@ effect_best_noroot_value$pv[effect_best_noroot_value$pv>0.05]=""
 effect_best_noroot_value$value[effect_best_noroot_value$value=="NA"]="0"
 #
 
-P2=ggplot(effect_best_noroot_value, aes(x = X1, y = X2, fill = value)) +
+a=ggplot(effect_best_noroot_value, aes(x = X1, y = X2, fill = value)) +
   geom_tile(color = "white", lwd = 1,linetype = 1)+
   geom_text(aes(x = X1, y = X2, label = pv))+
   scale_fill_gradient2("Eeffect size",low = "#075AFF", mid = "#FFFFCC", high = "#FF0000",na.value = "gray50")+
   
   scale_y_discrete(breaks=as.character(unique(effect_best_noroot_value$X2)),labels=c("ACM(N=319)","ECM(N=438)","Soil saprotroph(N=438)","Plant pathogen(N=427)","Litter saprotroph(N=438)","Wood saprotroph(N=427)","Epiphyte(N=392)","Parasitic(N=409)"))+
-  scale_x_discrete(breaks=as.character(unique(effect_best_noroot_value$X1)),labels = rev(c("Pla.rich", "Spei","Pre.WQ","Pre.seas.","MAP","MTWQ","Tem.seas.","MDR","MAT","Sand","SoilN","pH","Cec","SoilC","Plot.rich","Core.rich")))+
+  scale_x_discrete(breaks=as.character(unique(effect_best_noroot_value$X1)),labels = rev(c("Pla.rich.", "Spei","Pre.WQ","Pre.seas.","MAP","MTWQ","Tem.seas.","MDR","MAT","Sand","SoilN","pH","Cec","SoilC","Plot.rich.","Core.rich.")))+
   theme(panel.border = element_rect(fill=NA,size=1,color="black"),
         axis.title.x = element_text(size=20),
         axis.title.y = element_text(size=20),
-        plot.margin = margin(t=-0.1, unit="cm"),# reduce the space between individual plots
-        axis.text.y  = element_text(size=15,color="black"),
+        #plot.margin = margin(b=5, unit="cm"),# reduce the space between individual plots
+        axis.text.y  = element_text(size=15,color="black",hjust=0),
         plot.title=element_text(hjust=0.5,face="bold",size=18),
         axis.text.x  = element_text(size=15,angle=270,hjust=0,
         color=rev(c("seagreen1", "royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","royalblue1","peru","peru","peru","peru","peru","purple","purple"))))+
   xlab("")+
-  ylab("")+
-  ggtitle("Best-fit model")
+  ylab("")
 
 # 
 P1=ggplotGrob(P1)
@@ -682,37 +681,79 @@ var2=melt(var2)
 var2[is.na(var2)]=0
 var2[var2<0]=0
 
-p6=ggplot(data=subset(var2,va!="Total"),aes(x = variable, y = value, fill = va),alpha=0.5)+
+varp_no_root=var2# this data was saved
+
+varp_no_root$variable=factor(varp_no_root$variable,
+   levels=c("facm",     "fecm",     "fsoilsap", "fplapat",  "flitsap", "fwoosap", "fepiphy" , "fpara"  ))
+
+b=ggplot(data=subset(varp_no_root,va!="Total"),aes(x = variable, y = value, fill = va),alpha=0.5)+
   geom_bar(stat = "identity", pch=21,color="black",position = "fill",width=0.6)+
-  scale_x_discrete(breaks=as.character(unique(var2$variable)),
-                   labels=c("ACM(N=87)\n [  2.4%]","ECM(N=104)\n [  8.4%]","Soil saprotroph(N=104)\n [  6.9%]","Wood saprotroph(N=103)\n [  0.7%]","Litter saprotroph(N=104)\n [  7.9%]","Epiphyte(N=103)\n [  2.5%]","Parasitic(N=98)\n [10.4%]","Plant pathogen(N=103)\n [  6.6%]"))+
-  scale_fill_manual("Components",breaks=unique(var2$va),labels=c("Clima.","Plant","Fung.","Soil","Clima.+Plant",
-   "Clima.+Fung.","Plant+Fung.","Clima.+Soil","Plant+Soil",
-   "Fung.+Soil","Clima.+Plant+Fung.","Clima.+Plant+Soil",
-    "Clima.+Fung.+Soil","Plant+Fung.+Soil","Clima.+Plant+Fung.+Soil","Total"),
-   values=c("mediumpurple", "royalblue1", "tomato",  "tan1", 
-                          "tan",   "mediumseagreen", "burlywood1", "seagreen1",
-                          "wheat", "gold",  "purple",  "midnightblue",
-                          "yellow","gold3","deeppink","aquamarine2"))+
-      theme(legend.position = "none",   legend.title = element_text(size=10),
-          text = element_text(size = 18), 
-          legend.text = element_text(size=8),
-       plot.title = element_text(size = 15, hjust = 0.5), 
-         axis.text.y = element_text(hjust = 0), 
-           axis.text.x = element_text(hjust = 1), 
-          axis.title.y = element_text(size = 18), 
-           axis.title.x = element_text(size = 18),
-          axis.ticks.x = element_blank(), 
-           panel.background = element_rect(fill = "NA"), 
-           panel.border = element_rect(color = "black", size = 1.5, fill = NA))+
+  scale_x_discrete(breaks=as.character(unique(varp_no_root$variable)),
+                   labels=c("ACM(N=319)\n [  2.4%]","ECM(N=438)\n [  8.4%]","Soil saprotroph(N=438)\n [  6.9%]","Wood saprotroph(N=427)\n [  0.7%]","Litter saprotroph(N=438)\n [  7.9%]","Epiphyte(N=392)\n [  2.5%]","Parasitic(N=409)\n [10.4%]","Plant pathogen(N=427)\n [  6.6%]"))+
+  scale_fill_manual("Components",breaks=unique(varp_no_root$va),labels=c("Clima.","Plant","Fung.","Soil","Clima.+Plant",
+                                                                         "Clima.+Fung.","Plant+Fung.","Clima.+Soil","Plant+Soil",
+                                                                         "Fung.+Soil","Clima.+Plant+Fung.","Clima.+Plant+Soil",
+                                                                         "Clima.+Fung.+Soil","Plant+Fung.+Soil","Clima.+Plant+Fung.+Soil","Total"),
+                    values=c("mediumpurple", "royalblue1", "tomato",  "tan1", 
+                                           "tan",   "mediumseagreen", "burlywood1", "seagreen1",
+                                           "wheat", "gold",  "purple",  "midnightblue",
+                                           "yellow","gold3","deeppink","aquamarine2"))+
+                                             theme(legend.position = "right",   legend.title = element_text(size=10),
+                                                   text = element_text(size = 18), 
+                                                   legend.text = element_text(size=8),
+                                                   plot.title = element_text(size = 15, hjust = 0.5), 
+                                                   axis.text.y = element_text(hjust = 0,size=15), 
+                                                   #plot.margin = margin(t=3, unit="cm"),
+                                                   axis.text.x = element_text(hjust = 1), 
+                                                   axis.title.y = element_text(size = 18), 
+                                                   axis.title.x = element_text(size = 18),
+                                                   axis.ticks.x = element_blank(), 
+                                                   panel.background = element_rect(fill = "NA"), 
+                                                   panel.border = element_rect(color = "black", size = 1.5, fill = NA))+
   ylab("Contribution to the explained variance")+
   xlab("")+
   coord_flip()
 
 
+# remove the text
+
+b=ggplot(data=subset(varp_no_root,va!="Total"),aes(x = variable, y = value, fill = va),alpha=0.5)+
+  geom_bar(stat = "identity", pch=21,color="black",position = "fill",width=0.6)+
+  scale_x_discrete(breaks=as.character(unique(varp_no_root$variable)),
+                   labels=c("[  2.4%]","[  8.4%]","[  6.9%]","[  0.7%]","[  7.9%]","[  2.5%]","[10.4%]","[  6.6%]"))+
+  scale_fill_manual("Components",breaks=unique(varp_no_root$va),labels=c("Clima.","Plant","Fung.","Soil","Clima.+Plant",
+                                                                         "Clima.+Fung.","Plant+Fung.","Clima.+Soil","Plant+Soil",
+                                                                         "Fung.+Soil","Clima.+Plant+Fung.","Clima.+Plant+Soil",
+                                                                         "Clima.+Fung.+Soil","Plant+Fung.+Soil","Clima.+Plant+Fung.+Soil","Total"),
+                    values=c("mediumpurple", "royalblue1", "tomato",  "tan1", 
+                                           "tan",   "mediumseagreen", "burlywood1", "seagreen1",
+                                           "wheat", "gold",  "purple",  "midnightblue",
+                                           "yellow","gold3","deeppink","aquamarine2"))+
+                                             theme(legend.position = "right",   legend.title = element_text(size=10),
+                                                   text = element_text(size = 18), 
+                                                   legend.text = element_text(size=8),
+                                                   plot.title = element_text(size = 15, hjust = 0.5), 
+                                                   axis.text.y = element_text(hjust = 0), 
+                                                   axis.text.x = element_text(hjust = 1), 
+                                                   axis.title.y = element_text(size = 18), 
+                                                   axis.title.x = element_text(size = 18),
+                                                   axis.ticks.x = element_blank(), 
+                                                   panel.background = element_rect(fill = "NA"), 
+                                                   panel.border = element_rect(color = "black", size = 1.5, fill = NA))+
+  ylab("Contribution to the explained variance")+
+  xlab("")+
+  coord_flip()
 
 
+p2=ggplotGrob(p2)
+p22=ggplotGrob(p22)
+p2$heights=p22$heights
+p2$widths=p22$widths
 
+plot_grid(p2, p22, ncol = 1, labels = c("(a)", "(b)"),rel_widths = c(1,1))
 
+a=ggplotGrob(a)
+b=ggplotGrob(b)
+a$widths=b$widths
 
-
+plot_grid(a, b, ncol = 1, labels = c("(a)", "(b)"),rel_widths = c(1,1))
