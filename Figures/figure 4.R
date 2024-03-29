@@ -59,11 +59,11 @@ od1 <- k[order(k$z), ] # with the increase trend to display the box plots
 
 com_guild$guild <- factor(com_guild$guild, levels = od1$guild)
 
- bb=ggboxplot(com_guild, x = "guild", y = "z", fill = "guild", outlier.colour = "gray", outlier.shape = NA) +
+ ggboxplot(com_guild, x = "guild", y = "z", fill = "guild", outlier.colour = "gray", outlier.shape = NA) +
   guides(fill = guide_legend(nrow = 4, byrow = TRUE)) +
   geom_hline(yintercept = 0.787, linetype = "dashed", color = "red") +
   xlab("") +
-  theme(legend.position = c(0.51, 0.85), legend.text = element_text(size = 14), text = element_text(size = 15), axis.text.x = element_blank(), axis.title.y = element_text(face = "italic", size = 20), axis.title.x = element_text(size = 20), axis.ticks.x = element_blank()) +
+  theme(legend.position = "top", legend.text = element_text(size = 14), text = element_text(size = 15), axis.text.x = element_blank(), axis.title.y = element_text(face = "italic", size = 20), axis.title.x = element_text(size = 20), axis.ticks.x = element_blank()) +
   scale_fill_manual("", breaks = od1$guild, values = c("chocolate1", "gray", "cadetblue1", "greenyellow", "forestgreen", "purple","lavender", "tan"), labels = c("soil saprotroph(N=493)", "parasite(N=459)", "wood saprotroph(N=482)", "plant pathogen(N=482)", "litter saprotroph(N=493)", "ECM(N=493)","epiphyte(N=482)",  "ACM(N=482)")) +
   annotate(x = 1, y = 1.2, "text", label = "g", size = 6) +
   annotate(x = 2, y = 1.5, "text", label = "f", size = 6) +
@@ -73,8 +73,56 @@ com_guild$guild <- factor(com_guild$guild, levels = od1$guild)
   annotate(x = 6, y = 1.4, "text", label = "c", size = 6) +
   annotate(x = 7, y = 1.705, "text", label = "b", size = 6) +
   annotate(x = 8, y = 1.8, "text", label = "a", size = 6) +
-  ylim(0, 3)
+  ylim(0, 1.8)
  
 5. # arrange the two plots
 
 plot_grid(aa, bb, ncol = 1, labels = c("(a)", "(b)"))
+
+
+# broader scales
+
+broguild=com_guild$guild
+
+broguild=data.frame(broguild)
+
+broguild$broguild=gsub("acm","sym",broguild$broguild)
+broguild$broguild=gsub("ecm","sym",broguild$broguild)
+broguild$broguild=gsub("epiphy","sym",broguild$broguild)
+
+broguild$broguild=gsub("soilsap","sap",broguild$broguild)
+broguild$broguild=gsub("woosap","sap",broguild$broguild)
+broguild$broguild=gsub("litsap","sap",broguild$broguild)
+broguild$broguild=gsub("plapat","para",broguild$broguild)
+
+com_guild=cbind(com_guild,broguild)
+
+leveneTest(z ~ broguild, data = com_guild) # testing variance homogenety, unblanced
+oneway.test(z ~ broguild, data = com_guild, na.action = na.omit, var.equal = FALSE)
+source("http://aoki2.si.gunma-u.ac.jp/R/src/tukey.R", encoding = "euc-jp")
+
+tukey(com_guild$z, com_guild$broguild, method = "G") # multiple comparison with 'Games.Howell' Post-hoc Test
+
+# creat the plot
+
+k <- aggregate(z ~ broguild, data = com_guild, FUN = mean)
+
+od <- k[order(k$z), ] # with the increase trend to display the box plots
+
+com_guild$broguild <- factor(com_guild$broguild, levels = od$broguild)
+
+
+cc=ggboxplot(com_guild, x = "broguild", y = "z", fill = "broguild", outlier.colour = "gray", outlier.shape = NA) +
+  guides(fill = guide_legend(nrow = 4, byrow = TRUE)) +
+  geom_hline(yintercept = 0.787, linetype = "dashed", color = "red") +
+  xlab("") +
+  theme(legend.position = c(0.5,0.8), legend.text = element_text(size = 14), text = element_text(size = 15), axis.text.x = element_blank(), axis.title.y = element_text(face = "italic", size = 20), axis.title.x = element_text(size = 20), axis.ticks.x = element_blank()) +
+  scale_fill_manual("", breaks = od$broguild, values = c("chocolate1",  "tan","forestgreen"), labels = c("Pathotroph", "Saprotroph", "Symbiotroph"))+
+  annotate(x = 1, y = 1.50, "text", label = "b", size = 6) +
+  annotate(x = 2, y = 1.35, "text", label = "b", size = 6) +
+  annotate(x = 3, y = 1.56, "text", label = "a", size = 6) 
+
+
+
+
+
