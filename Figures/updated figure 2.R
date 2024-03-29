@@ -702,7 +702,7 @@ b=ggplot(data=subset(varp_no_root,va!="Total"),aes(x = variable, y = value, fill
                                                    text = element_text(size = 18), 
                                                    legend.text = element_text(size=8),
                                                    plot.title = element_text(size = 15, hjust = 0.5), 
-                                                   axis.text.y = element_text(hjust = 0,size=15), 
+                                                   axis.text.y = element_text(hjust = 0,size=15,color="black"), 
                                                    #plot.margin = margin(t=3, unit="cm"),
                                                    axis.text.x = element_text(hjust = 1), 
                                                    axis.title.y = element_text(size = 18), 
