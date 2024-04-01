@@ -54,6 +54,14 @@ for (i in 1:length(a1)) {
   dis_tance <- dist(location, diag = TRUE, upper = TRUE)
   pair[[i]] <- matrix(dis_tance)
 }
+#
+pair1=pair[[1]]
+{
+  for (i in 2:472)
+  pair1=rbind(pair1,pair[[i]])  
+}
+
+
 
 # the beta diversity between two cores within a 40 by 40 plot
 
