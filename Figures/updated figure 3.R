@@ -267,9 +267,9 @@ dmpp$value[dmpp$value>0.05]=""
 
 dm3=cbind(dm3,dmpp$value)
 
-P1=ggplot(dm3, aes(x = va, y = variable, fill = value)) +
+ggplot(dm3, aes(x = va, y = variable, fill = value)) +
 geom_tile(color = "white", lwd = 1,linetype = 1)+
-  geom_text(aes(x = va, y = variable, label = dm3$`dmpp$value`))+
+  geom_text(aes(x = va, y = variable, label = dm3$sig))+
 scale_fill_gradient2("Eeffect size",low = "#075AFF", mid = "#FFFFCC", high = "#FF0000")+
 scale_y_discrete(breaks=as.character(unique(dm3$variable)),labels=c("ACM(N=87)","ECM(N=104)","Soil saprotroph(N=104)","Plant pathogen(N=103)","Litter saprotroph(N=104)","Wood saprotroph(N=103)","Epiphyte(N=103)","Parasitic(N=98)"))+
 scale_x_discrete(breaks=as.character(unique(dm3$va)),labels = rev(c("Pla.rich", expression("Root"["cn"]), expression("Root"["c"]),  "d15N","d13C", expression("Root"["fmass"]), expression("Root"["cmass"]),  "Spei","Pre.WQ","Pre.seas.","MAP","MTWQ","Tem.seas.","MDR","MAT","Sand","SoilN","pH","Cec","SoilC","Plot.rich","Core.rich")))+
@@ -279,7 +279,6 @@ scale_x_discrete(breaks=as.character(unique(dm3$va)),labels = rev(c("Pla.rich", 
         axis.text.y  = element_text(size=15,color="black"),
         plot.margin = margin(b=-0.8, unit="cm"),
         plot.title=element_text(hjust=0.5,face="bold",size=18),
-        axis.text.x  = element_blank(),
         axis.ticks =element_blank())+
         xlab("")+
        ylab("")+
@@ -330,7 +329,7 @@ effect_best_root_value$pva[effect_best_root_value$pva>0.05]=""
 
 # plots
 
-P2=ggplot(effect_best_root_value, aes(x = X1, y = X2, fill = value)) +
+ggplot(effect_best_root_value, aes(x = X1, y = X2, fill = value)) +
   geom_tile(color = "white", lwd = 1,linetype = 1)+
   geom_text(aes(x =X1, y = X2, label =pva))+
   scale_fill_gradient2("Eeffect size",low = "#075AFF", mid = "#FFFFCC", high = "#FF0000")+
