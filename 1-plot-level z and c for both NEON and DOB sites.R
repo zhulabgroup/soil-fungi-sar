@@ -30,7 +30,7 @@ a1= sample_data(d)# the unique plotID, we have 476 plots
 a1=unique(a1$plotIDM)
 
 set.seed(1010)
-times=30
+times=10
 power.z <- vector("list", length(a1))
 
 for (i in 1:length(a1))
@@ -53,7 +53,7 @@ for (i in 1:length(a1))
         species[j] <- sum(otu_table(temp)["TRUE"] > 0)
       }
       ex <- as.data.frame(cbind("A"=c(1:dim1[1]),species))
-      temp<- summary(lm(log(species)~log(A),ex))[["coefficients"]]# extract the estimated c and z values
+      temp<- summary(lm(species~A,ex))[["coefficients"]]# extract the estimated c and z values
       return(c(temp[2,1], temp[1,1]))
     }
     stopCluster(cl)
