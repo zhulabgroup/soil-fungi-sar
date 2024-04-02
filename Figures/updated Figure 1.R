@@ -244,7 +244,7 @@ pv2=ggplot(dk)+
 
 
 
-p02 <- ggplot() +
+ggplot() +
   geom_point(
     data = effect_CSP, aes(x = Estimate, y = 1:dim(effect_CSP)[1]),
     color = rev(c("seagreen1", "royalblue1", "royalblue1", "royalblue1", "royalblue1", "royalblue1", "royalblue1", "royalblue1", "royalblue1", "peru", "peru", "peru", "peru", "purple", "purple")), size = 3
