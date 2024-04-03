@@ -4,6 +4,7 @@ library(phyloseq)
 library(tidyverse)
 library(doParallel)
 library(permute)
+load("~/.../rare_all.Rdata")
 ft <- read.csv("FungalTraits_1.2_ver_16Dec_2020.csv", sep = ",", header = T)
 ft <- ft[, c("GENUS", "primary_lifestyle")]
 # get the genus name of all the taxa in the full dataset
@@ -24,7 +25,7 @@ rare_all <- merge_phyloseq(rare_all, d)
 guild <- tax_table(rare_all)
 guild <- data.frame(guild)
 guild <- unique(guild$ta2)
-guild <- guild[c(1, 3:24, 26:29)] # removed two categories of "" and 'NA'
+guild <- guild[c(1, 3:28)] # removed two categories of "" and 'NA'
 
 b <- vector("list", length(guild))
 for (i in 1:length(guild))
@@ -189,7 +190,7 @@ for (i in 1:length(a1)) {
 }
 
 plapat_z <- data.frame(a1, plapat_z)
-write.csv(plapat_z, "plapat_z.ranall.csv")
+write.csv(plapat_z, "plapat_z.ranall_check.csv")#to see how this differ from the initial one
 
 plapat_c <- matrix(nrow = length(a1), ncol = 30) # get the 30 simulated c values for the neon site
 for (i in 1:length(a1)) {
@@ -197,7 +198,7 @@ for (i in 1:length(a1)) {
 }
 
 plapat_c <- data.frame(a1, plapat_c)
-write.csv(plapat_c, "plapat_c.ranall.csv")
+write.csv(plapat_c, "plapat_c.ranall_check.csv")
 
 3. # for the ECM guild
 
@@ -724,6 +725,19 @@ for (i in 1:length(a1)) {
 
 epiphy_z <- data.frame(a1, epiphy_z)
 write.csv(epiphy_z, "epiphy_z.ranall.csv")
+write.csv(epiphy_z, "epiphy_z.ranall_check.csv")
+# this updated was added to the initial data(com_guild)
+
+epi=data.frame(plotID=rep(epiphy_z$a1,times=30),va=melt(epiphy_z[,2:31]))
+epi=epi[,c(1,3)]
+epi=cbind(epi,guild=rep("epiphy",times=dim(epi)[1]))
+names(epi)[2]="z"
+
+com_guild=subset(com_guild,guild!="epiphy")
+
+com_guild=rbind(com_guild,epi)
+
+save(com_guild,file="com_guild_updated.RData")
 
 epiphy_c <- matrix(nrow = length(a1), ncol = 30) # get the 30 simulated c values for the neon site
 for (i in 1:length(a1)) {
