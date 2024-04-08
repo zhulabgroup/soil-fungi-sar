@@ -830,6 +830,66 @@ richness_40plot=data.frame(a4,richness)%>%data.frame()
 
 names(richness_40plot)[1]="plotID"
 
+# if we included a number of cores in each plot
+
+set.seed=10023
+
+times=30
+a4=sample_data(a1)
+a4=unique(a4$plotIDM)
+richness <- vector("list", length(a4))
+
+for (i in 1:length(a4))
+{
+  cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
+  data_sub <- subset_samples(a1, plotIDM==a4[i])
+  dim1=dim(sample_data(data_sub))[1]
+
+  if(dim1>=10)
+    {
+    cl <- makeCluster(3)
+    registerDoParallel(cl)
+    richness[[i]] <- foreach(i = 1:times, .combine = "cbind", .packages = c("phyloseq","dplyr")) %dopar%{
+      species <- vector(length = dim1[1]) # create a vector to save diversity
+      for (j in 1:10) 
+      { 
+        # randomly sample j samples in the plot
+        flag <- rep(FALSE, dim1[1])
+        flag[sample(1:dim1[1], 10)] <- TRUE
+        temp <- merge_samples(data_sub, flag, function(x) mean(x, na.rm = TRUE)) # the j samples aggregated by mean
+        species[j] <- sum(otu_table(temp)["TRUE"] > 0)
+        return(species[j])
+      }
+      }
+    stopCluster(cl)
+    }
+    else{
+      richness[[i]]=table(colSums(otu_table(data_sub))>0)["TRUE"]%>%as.numeric()
+ }
+}
+
+mean_per=matrix(ncol=1,nrow=472)
+for (i in 1:472)
+{
+  
+  mean_per[i,]=mean(richness[[i]])
+}
+
+richness_40plot_mean_permu=cbind(plotID=a4,rep(1600,472),mean_per)%>%data.frame()
+richness_40plot_mean_permu$V3=as.numeric(richness_40plot_mean_permu$V3)
+names(richness_40plot_mean_permu)=c("plotID","area","richness")
+# combing the richness at different scales
+
+richness_five_scale_morethan7_permu=rbind(subset(richness_five_scale_morethan7,area!=1600),richness_40plot_mean_permu)
+
+
+
+richness_40plot=data.frame(a4,richness)%>%data.frame()
+names(richness_40plot)[1]="plotID"
+
+
+
+
 ##combing richness at across different spatial scales
 richness_40plot=cbind(richness_40plot,area=rep(1600,472))
 
@@ -903,6 +963,65 @@ for (i in 1:472)
   ft=lm(log(value)~log(area),data=df1)%>%summary()
   zvalue[i]=ft$coefficients[2,1]
   pvalue[i]=ft$coefficients[1,4]
+}
+
+
+# select the plots with all the five richness available
+
+table(richness_five_scale_morethan7_permu$plotID)
+morethanfive=table(richness_five_scale_morethan7_permu$plotID)>4
+morethanfive[!morethanfive]=NA
+
+morethanfiveplot=morethanfiveplot=morethanfive%>%data.frame()%>%filter(!is.na(.))
+
+
+for (i in 1:dim(richness_five_scale_morethan7_permu)[1])
+{
+  data_subb <- subset(richness_five_scale_morethan7_permu, plotID==unique(richness_five_scale_morethan7_permu$plotID)[i])
+  
+  fit <-sar_power(data_subb[,2:3] )
+  plot=plot(fit)
+  
+  # Print the plot
+  print(plot)
+  
+}
+
+# for the complete data, to get the estimated z values
+zva=numeric()
+pva=numeric()
+for (i in 1:dim(num_points_five)[1])
+{
+  cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
+  data_subb <- subset(richness_five_scale_morethan7_permu, plotID==num_points_five$Var1[i])
+  
+  fit <-sar_power(data_subb[,2:3] )%>%summary()
+ 
+  zva[i]=fit$Parameters[2,1]
+  pva[i]=fit$Parameters[2,4]
+}
+
+
+table(richness_five_scale_morethan7_permu$plotID)%>%data.frame()->num_points
+
+num_points_five=subset(num_points,Freq>=5)
+
+num_points_three=subset(num_points,Freq>=3&num_points$Freq<4)
+num_points_four=subset(num_points,Freq>=4&num_points$Freq<5)
+num_points_three=subset(num_points,Freq>=3&num_points$Freq<4)
+
+# look at the fit with data with four points
+
+for (i in 1:dim(num_points_four)[1])
+{
+  data_subb <- subset(richness_five_scale_morethan7_permu, plotID==unique(num_points_four$Var1)[i])
+  
+  fit <-sar_power(data_subb[,2:3] )
+  plot=plot(fit)
+  
+  # Print the plot
+  print(plot)
+  
 }
 
 
