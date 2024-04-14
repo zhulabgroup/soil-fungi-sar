@@ -157,6 +157,24 @@ richness_sd_subplot5=aggregate(richness~plotid,data=richness_subplot5_neon,FUN=s
 
 3. #at the 10 by 10 plot ,we can also do a permutation.
 
+
+
+data_sub <- sample_data(a1)%>%data.frame()
+
+subplot=strsplit(data_sub$geneticSampleID,"-")
+subplot_matrix=matrix(ncol=6,nrow=dim(data_sub)[1])
+for(i in 1:dim(data_sub)[1]){
+  subplot_matrix[i,]=subplot[[i]]
+}
+subplot_matrix%>%data.frame()->subplot_ID
+
+subplot_ID=subplot_ID[,3:4]
+
+
+names(subplot_ID)=c("gx","gy")
+
+
+
 # Define the dimensions of the plot area
 plot_width <- 40
 plot_height <- 40
@@ -164,7 +182,7 @@ plot_height <- 40
 # at the 5 by 5 m spatial scales
 
 # Define the dimensions of each grid cell
-grid_cell_size <- 20
+grid_cell_size <- 10
 
 # Create grid boundaries
 x_breaks <- seq(0, plot_width, by = grid_cell_size)
