@@ -1,4 +1,5 @@
 # step 2 extracts the plot-level soil variables, climate variables. The resluting outputs were saved locally.
+library(phyloseq)
 
 neon_dob <- readRDS("/Users/luowenqi/Desktop/sar/phylo_V3.1.RDS")
 neon_dob <- subset_samples(neon_dob, get_variable(neon_dob, "horizon") != "AH")
@@ -66,12 +67,13 @@ names(plot_loca_all_soil) <- c("plotIDD", "lon", "lat", "geneticSampleID", "Proj
 write.csv(plot_loca_all_soil, "plot_loca_all_soil.csv")
 
 # get the climate data of all the plots
-r <- getData("worldclim", var = "bio", res = 10)
+r <- raster::getData("worldclim", var = "bio", res = 10)
 points <- SpatialPoints(plot_loca_all[, 2:3], proj4string = r@crs)
 values <- extract(r, points)
 df <- cbind.data.frame(coordinates(points), values)
 # select the seven climate variables that do not show colinearity
 ##
+ggcorrplot::ggcorrplot(cor(df[,c(3:21)]), hc.order = TRUE, type = "lower", lab = TRUE)
 
 # select the seven climate variables
 neon_dob_climate <- df[, c("bio2", "bio8", "bio18", "bio4", "bio12", "bio15", "bio1")]
