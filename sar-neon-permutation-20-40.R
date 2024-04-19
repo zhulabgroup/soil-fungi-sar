@@ -589,6 +589,46 @@ for (i in 1:length(a4))
 }
 
 
+
+
+
+## to see how many cores are there for one site
+
+
+a4=sample_data(a1)
+a4=unique(a4$siteID)
+
+con_40 <-numeric()
+
+for (i in 1:length(a4))
+{
+  cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
+  data_sub <- subset_samples(a1, siteID==a4[i])
+  con_40[i]=dim(sample_data(data_sub))[1]
+  
+}
+
+
+# how many plot per site
+
+a4=sample_data(a1)
+a4=unique(a4$siteID)
+
+plot_number_persite <-numeric()
+
+for (i in 1:length(a4))
+{
+  cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
+  data_sub <- subset_samples(a1, siteID==a4[i])
+  
+  plot_number_persite[i]=dim(data.frame(sample_data(data_sub))["plotIDM"]%>%unique())[1]
+  
+}
+plot_number_persite=data.frame(plot_number_persite,a4)
+
+names(plot_number_persite)=c("plotN","a")
+
+
 richness_subplot40_neon=matrix(ncol=1,nrow=472)
 for (i in 1:472)
 {
@@ -616,6 +656,407 @@ sar_neon_permutation=rbind(richness_mean_subplot5_neon,richness_mean_subplot10_n
 
 
 save(sar_neon_permutation,file="sar_neon_permutation.RData")
+
+
+
+# get the site level richness
+# for each site we randomly select 100 cores
+
+set.seed=(5800)
+times=30
+a4=sample_data(a1)
+a4=unique(a4$siteID)
+richness <- vector("list", length(a4))
+
+for (i in 1:length(a4))
+{
+  cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
+  data_sub <- subset_samples(a1, siteID==a4[i])
+  dim1=dim(sample_data(data_sub))[1]
+  
+  if(dim1>=100)
+  {
+    cl <- makeCluster(3)
+    registerDoParallel(cl)
+    richness[[i]] <- foreach(i = 1:times, .combine = "cbind", .packages = c("phyloseq","dplyr")) %dopar%{
+      species <- vector(length = dim1[1]) # create a vector to save diversity
+      for (j in 1:100) 
+      { 
+        # randomly sample j samples in the plot
+        flag <- rep(FALSE, dim1[1])
+        flag[sample(1:dim1[1], 100)] <- TRUE
+        temp <- merge_samples(data_sub, flag, function(x) mean(x, na.rm = TRUE)) # the j samples aggregated by mean
+        species[j] <- sum(otu_table(temp)["TRUE"] > 0)
+        return(species[j])
+      }
+    }
+    stopCluster(cl)
+  }
+  else{
+    richness[[i]]=NA
+  }
+}
+
+
+richness_site_neon=data.frame(nrow=length(a4),ncol=3)# the mean indiactes the mean value for the cores within the same subplot
+for (i in 1:length(a4))
+{
+  
+  if(is.null(dim(richness[[i]])[1]))
+  {
+    richness_site_neon[i,1]=richness[[i]] 
+    richness_site_neon[i,2]=a4[i]
+    richness_site_neon[i,3]=0
+  }
+  
+  else
+  {
+    richness_site_neon[i,1]=mean(richness[[i]])
+    richness_site_neon[i,2]=a4[i]
+    richness_site_neon[i,3]=sd(richness[[i]])
+  }
+}
+
+names(richness_site_neon)=c("richness_mean","a","richness_sd")
+
+# get the richness predicted for these sites based on the SAR function
+
+
+zvalue=numeric()
+pvalue=numeric()
+c=numeric()
+a5=unique(point_number_three_neon$Var1)
+for (i in 1:length(a5))
+{
+  df1=subset(sar_neon_permutation,plotid==a5[i])
+  if(dim(df1)[1]<3){
+    zvalue[i]=NA
+    pvalue[i]=NA
+    c[i]=NA
+  }
+  else{
+    ft=lm(log(richness)~log(area),data=df1)%>%summary()
+    zvalue[i]=ft$coefficients[2,1]
+    pvalue[i]=ft$coefficients[1,4]
+    c[i]=ft$coefficients[1]
+  }
+  
+}
+
+df=cbind(data.frame(a5),zvalue,c)
+
+df$zvalue=as.numeric(df$zvalue)
+
+names(df)=c("plotid","zvalue","logc")
+
+df=mutate(df,a=substr(plotid,1,4))
+
+# all the z values determined with more than three dots 
+
+names(point_number_neon)[1]="plotid"
+df=merge(df,point_number_neon,by="plotid")
+z_neon=df
+# to get the mean value of each log and z for each site
+
+site_pred_rich_sd=aggregate( pre_rich~a,data=z_neon,FUN=sd)
+site_pred_rich_mean=aggregate( pre_rich~a,data=z_neon,FUN=mean)
+
+data.frame(table(z_neon$a))
+
+site_area_10=site_area_10[,-c(11:14)]
+
+# add the observed richness to the data
+
+site_area_10=merge(site_area_10,richness_site_neon,by="a")
+
+site_pred_rich_mean=cbind(site_pred_rich_mean,site_pred_rich_sd)
+site_pred_rich_mean=site_pred_rich_mean[,-3]
+names(site_pred_rich_mean)=c("a","pred_richness","pred_sd")
+
+site_area_10=merge(site_area_10,site_pred_rich_mean,by="a")
+
+site_area_10[,-c("richness")]
+
+save(site_area_10,file="site_area_10.RData")
+
+p1=ggplot()+
+  geom_segment(data=site_area_10,color="gray",aes(x=pred_richness,y=log(richness_mean)-log(richness_sd/10),yend=log(richness_mean)+log(richness_sd/10),xend=pred_richness))+
+
+geom_segment(data=site_area_10,color="gray",aes(y=log(richness_mean),yend=log(richness_mean),x=pred_richness-pred_sd, xend=pred_richness+pred_sd))+
+  xlab("Predicted site-level richness")+
+  ylab("Observed site-level richness")+
+  theme(legend.position ="right", 
+        legend.key.size = unit(0.15, "inches"),
+        guides(color = guide_legend(nrow = 2, byrow = TRUE)),
+        legend.title = element_text(size=8),
+        text = element_text(size = 18), 
+        legend.text = element_text(size=8),
+        plot.title = element_text(size = 15, hjust = 0.5), 
+        axis.text.y = element_text(hjust = 0), 
+        
+        axis.title.y = element_text(size = 18), 
+        axis.title.x = element_text(size = 18),
+        axis.ticks.x = element_blank(), 
+        panel.background = element_rect(fill = "NA"), 
+        panel.border = element_rect(color = "black", size = 1.5, fill = NA))+
+  geom_smooth(data=site_area_10,aes(x=pred_richness,y=log(richness_mean)),method="lm")+
+  geom_point(data=site_area_10,pch=21,alpha=0.8,color="black",aes(x=pred_richness,y=log(richness_mean),fill=a),size=4)+
+  scale_fill_manual("Sites",breaks=site_area_10$a,values=custom_colors)+
+  annotate("text",x=7.25,y=11.5,label=expression(italic(R^2)*"=77%***"),size=6)+
+  guides(fill="none")
+
+  
+  # if we just use the mean of the logc and the mean z value for a site
+meanz=aggregate(zvalue~a,data=z_neon,FUN=mean)
+meanc=aggregate(logc~a,data=z_neon,FUN=mean)
+
+mean_z_c=cbind(meanz,meanc)[,-3]
+names(mean_z_c)=c("a","meanz","meanc")
+
+
+p2=ggplot()+
+  geom_point(data=site_area_10,pch=21,aes(x=pred_rich2,y=log(richness_mean),fill=a),size=4)+
+  geom_segment(data=site_area_10,color="gray",aes(x=pred_rich2,y=log(richness_mean)-log(richness_sd/10),yend=log(richness_mean)+log(richness_sd/10),xend=pred_rich2))+
+  scale_fill_manual("Sites",breaks=site_area_10$a,values=custom_colors)+
+  geom_smooth(data=site_area_10,pch=21,aes(x=pred_rich2,y=log(richness_mean)),method="lm")+
+  
+  xlab("Predicted site-level richness")+
+  ylab("")+
+  theme(legend.position ="right", 
+        legend.key.size = unit(0.15, "inches"),
+        guides(color = guide_legend(nrow = 2, byrow = TRUE)),
+        legend.title = element_text(size=8),
+        text = element_text(size = 18), 
+        legend.text = element_text(size=8),
+        plot.title = element_text(size = 15, hjust = 0.5), 
+        axis.text.y = element_text(hjust = 0), 
+        
+        axis.title.y = element_text(size = 18), 
+        axis.title.x = element_text(size = 18),
+        axis.ticks.x = element_blank(), 
+        panel.background = element_rect(fill = "NA"), 
+        panel.border = element_rect(color = "black", size = 1.5, fill = NA))+
+  annotate("text",x=9.5,y=11.5,label=expression(italic(R^2)*"=47%**"),size=6)+
+  guides(fill="none")
+  
+  
+
+###
+library(RColorBrewer)
+
+custom_colors <- c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#FF7F00",
+                                   "#FFFF33", "#A65628", "#F781BF", "#999999", "#66C2A5",
+                                   "#FC8D62", "#8DA0CB", "#E78AC3", "#A6D854", "#FFD92F",
+                                   "#E5C494", "#B3B3B3", "#8DD3C7")
+
+p3=ggplot()+
+  geom_point(data=site_area_10,pch=21,aes(x=pred_rich2,y=log(obrich),fill=a),size=4)+
+  scale_fill_manual("Sites",breaks=site_area_10$a,values=custom_colors)+
+  geom_smooth(data=site_area_10,pch=21,aes(x=pred_rich2,y=log(richness_mean)),method="lm")+
+  
+  xlab("Predicted site-level richness")+
+  ylab("")+
+  theme(legend.position ="right", 
+        legend.key.size = unit(0.15, "inches"),
+        guides(color = guide_legend(nrow = 2, byrow = TRUE)),
+        legend.title = element_text(size=8),
+        text = element_text(size = 18), 
+        legend.text = element_text(size=8),
+        plot.title = element_text(size = 15, hjust = 0.5), 
+        axis.text.y = element_text(hjust = 0), 
+        
+        axis.title.y = element_text(size = 18), 
+        axis.title.x = element_text(size = 18),
+        axis.ticks.x = element_blank(), 
+        panel.background = element_rect(fill = "NA"), 
+        panel.border = element_rect(color = "black", size = 1.5, fill = NA))+
+  annotate("text",x=10,y=9.5,label=expression(italic(R^2)*"=42%**"),size=6)
+
+
+
+
+# to see how many plots are there in a site
+
+# to get the richness at the site level and all the cores were selected
+
+set.seed=(6900)
+times=30
+
+a4=sample_data(a1)
+a4=unique(a4$siteID)
+
+richness <- matrix(nrow=length(a4),ncol=2)
+for (i in 1:length(a4))
+{
+  cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
+  data_sub <- subset_samples(a1, siteID==a4[i])
+  
+  df=data.frame(t(colSums(otu_table(data_sub))))
+  # Step 2: Estimate Chao1 diversity
+  abundance_matrix <- as.matrix(df[,1:ncol(df)])
+  
+  chao1_estimate <- estimateR(abundance_matrix, method = "chao1")
+  
+  richness[i,1]=chao1_estimate[1,]
+  richness[i,2]=chao1_estimate[2,]
+  }
+  # if we convert all the value into 0-1
+
+rar_richness=cbind(a4,richness)%>%data.frame()
+
+names(rar_richness)=c("a","obrich","chao1")
+
+
+a4=sample_data(a1)
+a4=unique(a4$siteID)
+
+richness <- matrix(nrow=length(a4),ncol=2)
+for (i in 1:length(a4))
+{
+  cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
+  data_sub <- subset_samples(a1, siteID==a4[i])
+  
+  df=data.frame(t(colSums(otu_table(data_sub))))
+  df[df>0]=1
+  # Step 2: Estimate Chao1 diversity
+  abundance_matrix <- as.matrix(df[,1:ncol(df)])
+  
+  chao1_estimate <- estimateR(abundance_matrix, method = "chao1")
+  
+  richness[i,1]=chao1_estimate[1,]
+  richness[i,2]=chao1_estimate[2,]
+}
+  
+ 
+  
+  
+  
+  
+  dmm=data.frame(t(dmm))
+  rownames(dmm)="try"
+  
+  tax_table1=tax_table(dmm)
+  
+  samp=matrix(ncol=5,nrow=1,1:5)%>%data.frame()
+  
+  sampdf=sample_data(samp)
+  
+  abundance_matrix <- as.matrix(dmm[,1:ncol(dmm)])
+  
+  physeq <- phyloseq(otu_table(abundance_matrix, taxa_are_rows = TRUE),
+                     tax_table1,
+                     sampdf)
+    
+
+    richness[[i]]=estimate_richness(data_sub,measures=c("Observed", "InvSimpson", "Shannon", "Chao1"))
+  }
+
+
+
+richness_site_neon_rarify=data.frame(nrow=length(a4),ncol=3)# the mean indiactes the mean value for the cores within the same subplot
+for (i in 1:length(a4))
+{
+  
+  if(is.null(dim(richness[[i]])[1]))
+  {
+    richness_site_neon[i,1]=richness[[i]] 
+    richness_site_neon[i,2]=a4[i]
+    richness_site_neon[i,3]=0
+  }
+  
+  else
+  {
+    richness_site_neon[i,1]=mean(richness[[i]])
+    richness_site_neon[i,2]=a4[i]
+    richness_site_neon[i,3]=sd(richness[[i]])
+  }
+}
+
+names(richness_site_neon)=c("richness_mean","a","richness_sd")
+
+
+
+
+
+
+
+
+
+
+# Nested method for the NEON site,which means that the prior sites were included when adding the new ones
+
+
+
+
+a2= sample_data(a1)# the unique of the plotID, we have 476 plots
+a2=unique(a2$siteID)
+
+
+species <- vector("list", length(a2))
+
+for (i in 1:length(a2))
+{
+  cat('\r',paste(paste0(rep("*", round(i/ 1, 0)), collapse = ''), i, collapse = ''))# informs the processing
+  neon_sub <- subset_samples(a1, siteID==a2[i])
+  dim1 <- dim(sample_data(neon_sub )) # the number of samples in one site
+  
+      species <- vector(length = dim1[1]) # create a vector to save diversity
+      for (j in 1:dim1[1]) # 
+      { 
+      
+        sample_seq <- shuffle(c(1:dim1[1]))
+        # take out otu_tab for each site
+        otu_tab <- otu_table(neon_sub)
+        otu_tab <- matrix(otu_tab, nrow = dim1[1], ncol=67769,byrow  = TRUE)#
+        species[1] <- sum(otu_tab[sample_seq[1],] > 0)
+        
+        for (j in 2:(dim1[1]))
+        { 
+          cat('\r',paste(paste0(rep("*", round(j/ 1, 0)), collapse = ''), j, collapse = ''))# inf
+          # take out samples as the sequence in sample_seq
+          temp <- colSums(otu_tab[c(sample_seq[1:j]),])
+          # count species
+          species[j] <- sum(temp > 0)
+        }
+      }
+      
+      return(c(temp[2,1], temp[1,1],temp[2,4],temp[1,4]))
+    }
+   
+  }
+  
+
+
+
+
+
+neon_z=matrix(nrow=length(a1),ncol=30)# get the 30 simulated z values for the neon site
+for(i in 1:length(a1)){
+  neon_z[i,]=power.z[[i]][1,]
+}
+
+neon_z=data.frame(a1,neon_z)
+write.csv(neon_z,"neon_z.nest30.csv")
+
+neon_c=matrix(nrow=length(a1),ncol=30)# get the 30 simulated c values for the neon site
+for(i in 1:length(a1)){
+  neon_c[i,]=power.z[[i]][2,]
+}
+
+neon_c=data.frame(a1,neon_c)
+write.csv(neon_c,"neon_c.nest30.csv")
+
+neon_z_mean_nest=apply(neon_z[,2:31],1,mean)# get the mean value of the estimated z and c
+neon_c_mean_nest=apply(neon_c[,2:31],1,mean)# get the mean value of the estimated z and c
+
+neon_z_mean_nest=data.frame(neon_z["a1"],neon_z_mean_nest)
+neon_c_mean_nest=data.frame(neon_c["a1"],neon_c_mean_nest)
+
+plot_level_zc_nest=cbind(neon_z_mean_nest,neon_c_mean_nest)
+
+write.csv(plot_level_zc,"plot_level_zc_nest.csv")
+
+
 
 
 # create a plot for the HARV_037 plot for an example
@@ -663,6 +1104,29 @@ b=ggplot(sar_dob_permutation)+geom_point(data=sar_dob_permutation,aes(x=log(area
         axis.ticks.x = element_blank(), 
         panel.background = element_rect(fill = "NA"), 
         panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+
+###
+
+ggplot(sar_dob_permutation)+geom_point(data=sar_dob_permutation,aes(x=log(area),y=log(richness),color=plotid))+
+  geom_smooth(data=sar_dob_permutation,aes(x=log(area),y=log(richness),color=plotid),se=FALSE,method="lm")+
+  guides(color="none")+
+  xlab("Log(Area)")+
+  ylab("Log(Richness)")+
+  theme(legend.position = c(0.5,0.8), 
+        legend.key.size = unit(0.15, "inches"),
+        guides(color = guide_legend(nrow = 2, byrow = TRUE)),
+        legend.title = element_text(size=8),
+        text = element_text(size = 18), 
+        legend.text = element_text(size=8),
+        plot.title = element_text(size = 15, hjust = 0.5), 
+        axis.text.y = element_text(hjust = 0), 
+        axis.text.x = element_blank(), 
+        axis.title.y = element_text(size = 18), 
+        axis.title.x = element_text(size = 18),
+        axis.ticks.x = element_blank(), 
+        panel.background = element_rect(fill = "NA"), 
+        panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+
   
   
 
