@@ -11,6 +11,8 @@ library(rasterVis)
 library(doParallel)
 library(rnaturalearth)
 library(phyloseq)
+library(ggcorrplot)
+library(glmnet)
 
 # to see the fit for the neon sites
 
@@ -18,7 +20,7 @@ table(sar_neon_permutation$plotid)
 
 point_number_neon=table(sar_neon_permutation$plotid)%>%data.frame()
 
-point_number_five_neon=subset(point_number,Freq>4)
+point_number_five_neon=subset(point_number_neon,Freq>4)
 point_number_four_neon=subset(point_number_neon,Freq>3)
 
 point_number_three_neon=subset(point_number_neon,Freq>2)
@@ -37,9 +39,9 @@ for (i in 1:dim(point_number_five)[1])
   
 }
 
-for (i in 1:dim(point_number_five)[1])
+for (i in 1:dim(point_number_five_neon)[1])
 {
-  data_subb <- subset(sar_neon_permutation,plotid==unique(point_number_five$Var1)[i])
+  data_subb <- subset(sar_neon_permutation,plotid==unique(point_number_five_neon$Var1)[i])
   
   fit <-plot(log(area)~log(richness),data=data_subb[,3:2] )
  
@@ -55,19 +57,50 @@ for (i in 1:dim(point_number_three_neon)[1])
   data_subb <- subset(sar_neon_permutation,plotid==unique(point_number_three$Var1)[i])
   
   fit <-plot(log(area)~log(richness),data=data_subb[,3:2] )
-  
-  
   # Print the plot
   print(fit)
   
 }
+# to create some plots to show the relationship between richness and area
 
-## estimate the z value
+
+pp <- vector('list', length=9)# location of the plots within a site
+for (i in c(21,  4, 29, 23, 42,  3, 18, 17, 19))
+{
+
+  data_subb <- subset(sar_neon_permutation,plotid==unique(point_number_five_neon$Var1)[i])
+  
+  pp[[i]]=ggplot()+
+    geom_point(data=data_subb,aes(x=log(richness),y=log(area)),color="black",size=3)+
+    theme(legend.key.size = unit(0.15, "inches"),
+          guides(color = guide_legend(nrow = 2, byrow = TRUE)),
+          legend.title = element_text(size=8),
+          text = element_text(size = 18), 
+          legend.text = element_text(size=8),
+          plot.title = element_text(size = 15, hjust = 0.5), 
+          axis.text.y = element_text(hjust = 0), 
+          
+          axis.title.y = element_text(size = 18), 
+          axis.title.x = element_text(size = 18),
+          axis.ticks.x = element_blank(), 
+          panel.background = element_rect(fill = "NA"), 
+          panel.border = element_rect(color = "black", size = 1.5, fill = NA))+
+    xlab("Log(A)")+
+    ylab("Log(S)")+
+    xlim(4.5,7.5)+
+    ylim(1,8)+
+    geom_smooth(data=data_subb,aes(x=log(richness),y=log(area)),method="lm")
+    
+}
+
+plot_grid(pp[[21]],pp[[4]],pp[[29]],pp[[23]],pp[[42]],pp[[3]],pp[[18]],pp[[17]],pp[[19]],ncol=3)
 
 
+## estimate the z value with
 
 zvalue=numeric()
 pvalue=numeric()
+c=numeric()
 a5=unique(point_number_three_neon$Var1)
 for (i in 1:length(a5))
 {
@@ -75,37 +108,45 @@ for (i in 1:length(a5))
   if(dim(df1)[1]<3){
     zvalue[i]=NA
     pvalue[i]=NA
+    c[i]=NA
   }
   else{
     ft=lm(log(richness)~log(area),data=df1)%>%summary()
     zvalue[i]=ft$coefficients[2,1]
     pvalue[i]=ft$coefficients[1,4]
+    c[i]=ft$coefficients[1]
   }
   
 }
 
-df=cbind(data.frame(a5),zvalue)
+df=cbind(data.frame(a5),zvalue,c)
 
 df$zvalue=as.numeric(df$zvalue)
-names(df)[1]="plotid"
+
+names(df)=c("plotid","zvalue","logc")
+
+df=mutate(df,a=substr(plotid,1,4))
+
 # all the z values determined with more than three dots 
 
-names(point_number)[1]="plotid"
-
-df=merge(df,point_number,by="plotid")
+names(point_number_neon)[1]="plotid"
+df=merge(df,point_number_neon,by="plotid")
 z_neon=df
+
+
+
+
 # when 4 and 5 points were included, there is no relation between core numbers and the estimated the z values
 
 sar_dob_permutation$richness=as.numeric(sar_dob_permutation$richness)
-
 
 table(sar_dob_permutation$plotid)
 
 point_number_dob=table(sar_dob_permutation$plotid)%>%data.frame()
 
-point_number_five=subset(point_number,Freq>=4)
-point_number_four=subset(point_number,Freq==4)
-point_number_three=subset(point_number,Freq>2)
+point_number_five_dob=subset(point_number_dob,Freq>=4)
+point_number_four_dob=subset(point_number_dob,Freq==4)
+point_number_three_dob=subset(point_number_dob,Freq>2)
 
 
 
@@ -115,8 +156,7 @@ for (i in 1:dim(point_number_five)[1])
   data_subb <- subset(sar_dob_permutation,plotid==unique(point_number_five$Var1)[i])
   
   fit <-plot(log(richness)~log(area),data=data_subb[,3:2] )
-  
-  
+
   # Print the plot
   print(fit)
   
@@ -124,9 +164,12 @@ for (i in 1:dim(point_number_five)[1])
 
 # to estimate the z values of the dob sites
 
+
+##
+
 zvalue=numeric()
 pvalue=numeric()
-a6=unique(point_number_three$Var1)
+a6=unique(point_number_three_dob$Var1)
 for (i in 1:length(a6))
 {
   df1=subset(sar_dob_permutation,plotid==a6[i])
@@ -134,53 +177,220 @@ for (i in 1:length(a6))
   zvalue[i]=ft$coefficients[2,1]
   pvalue[i]=ft$coefficients[1,4]
 }
+
 dob_z=cbind(data.frame(a6),zvalue)%>%data.frame()
 
 names(dob_z)[1]="plotid"
 names(point_number_dob)[1]="plotid"
 df=merge(dob_z,point_number_dob,by="plotid")
 
-# combind the two datasets for modeling
+# combine the two datasets for modeling
 
-zvalue_all=rbind(z_neon,dob_z)
+zvalue_all=rbind(z_neon[,1:2],z_dob[,1:2])# the former data has several columns for additional analyses
+
 names(zvalue_all)[1]="plotID"
 
 # get the environmental variables
+zvalue_all=zvalue_all_env[,1:4]
 
 # plot-level variables
+model_var$bio1=model_var$bio1/10
+model_var$bio4=model_var$bio1/1000
 
 plot_env=model_var[,c(1:16)]
 plot_env=unique(plot_env)
 
 zvalue_all_env=merge(zvalue_all,plot_env,by="plotID")
 
-zvalue_all_env=zvalue_all_env[,c(1,3,2,4:17)]
+zvalue_all_env=zvalue_all_env[,c(1,2,4,3,5:18)]
 
-zvalue_all_env[,3:17]=apply(zvalue_all_env[,3:17],2,range01)
-# to see the coorelation among variables
+save(zvalue_all_env,file="zvalue_all_env.RData")
 
-ggcorrplot(cor(zvalue_all_env[,c(3:17)]), hc.order = TRUE, type = "lower", lab = TRUE)
+zvalue_all_env[,4:18]=apply(zvalue_all_env[,4:18],2,range01)
+
+# to see the correlation among variables
+
+ggcorrplot(cor(zvalue_all_env[,c(4:18)]), hc.order = TRUE, type = "lower", lab = TRUE)
+
+# bio1-bio4
+#bold-organic
+#
+# add the ID to each plot
+
+dm=dk$plotID
+siteid=matrix(ncol=1,nrow=dim(dk)[1])
+for (i in 1:dim(dk)[1])
+{
+  dk=dm[i]
+  if(nchar(dk)<4)
+  {
+    siteid[i,1]="dob"
+  }
+  else{
+    siteid[i,1]="neon"
+  }
+  
+}
+dk=cbind(siteid,dk)
+
+dk=model_data[,c(1,3)]
+dk=unique(dk)
+dk=aggregate(z~plotID,data=dk,FUN=mean)
+dk=merge(dk,zvalue_all,by="plotID")
+
+dk=cbind(siteid,dk)
+
+
+ggplot(dk)+
+  geom_point(data=dk,aes(x=z,y=zvalue,color=siteid))+
+  geom_smooth(data=dk,aes(x=z,y=zvalue,color=siteid),method="lm")+
+  xlab("Core-based")+
+  ylab("Area-based")+
+theme(legend.position = c(0.25,0.8), 
+      legend.key.size = unit(0.15, "inches"),
+      guides(color = guide_legend(nrow = 2, byrow = TRUE)),
+      legend.title = element_text(size=8),
+      text = element_text(size = 18), 
+      legend.text = element_text(size=8),
+      plot.title = element_text(size = 15, hjust = 0.5), 
+      axis.text.y = element_text(hjust = 0), 
+      
+      axis.title.y = element_text(size = 18), 
+      axis.title.x = element_text(size = 18),
+      axis.ticks.x = element_blank(), 
+      panel.background = element_rect(fill = "NA"), 
+      panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+
+
+model_var$sand=model_var$sand/100
+
+zvalue_all_env=merge(zvalue_all,model_var[,c(1,3:16)],by="plotID")
+
+dm=zvalue_all_env$siteIDD
+siteid=matrix(ncol=1,nrow=dim(zvalue_all_env)[1])
+for (i in 1:dim(zvalue_all_env)[1])
+{
+  dk=dm[i]
+  if(nchar(dk)<4)
+  {
+    siteid[i,1]=substr(dk,1,2)
+  }
+  else{
+    siteid[i,1]=substr(dk,1,4) 
+  }
+  
+}
+
+zvalue_all_env=cbind(siteid,zvalue_all_env)
+
+zvalue_all_env[,5:dim(zvalue_all_env)[2]]=apply(zvalue_all_env[,5:dim(zvalue_all_env)[2]],2,range01)
+
+# bold was removed to avoid collinearity
 
 
 mod=lmer(zvalue~organicCPercent  +  ph  +  nitrogen   +   cec +    sand+ bio1+ bio2+bio4 +bio8+ bio12+ bio15+ bio18  +    spei+(1|siteid),data= zvalue_all_env)
 
 mod_best=lmer(zvalue ~ organicCPercent + ph + bio2 + bio15 + spei + (1 | siteid),data=zvalue_all_env)
 
-la.eq <- glmnet( zvalue_all_env[,5:18], zvalue_all_env[,"zvalue"],lambda=0.006607138, family='gaussian', intercept = F, alpha=1)
+## to get the train and test data
 
-mod_cv <- cv.glmnet( as.matrix(zvalue_all_env[,5:18]), zvalue_all_env[,"zvalue"], family='gaussian', intercept = F, alpha=1)
+set.seed(66771)
+train_set <- sample(c(TRUE, FALSE), size=dim(zvalue_all_env)[1],
+                    prob=c(0.70, 0.30), replace=TRUE)
 
-plot(mod_cv)
+test_set=!train_set
 
-best_lambda=mod_cv$lambda.min
+train_set[!train_set]=NA
+mm=train_set
 
-best_lambda=mod_cv$lambda.1se# will have less variables selected
+which(!is.na(mm))
+
+train_data=zvalue_all_env[which(!is.na(mm)),]
+
+## for the test data
+test_set[!test_set]=NA
+mmt=test_set
+
+which(!is.na(mmt))
+test_data=zvalue_all_env[which(!is.na(mmt)),]
 
 
-best_model <- glmnet( zvalue_all_env[,c("ph","nitrogen","cec","sand","bio1","bio2","bio4","bio12")], zvalue_all_env[,"zvalue"], family='gaussian', intercept = F, alpha=1,lambda = 0.006607138,final.re=TRUE)
+set.seed(56885)
+dd=matrix(ncol=2,nrow=2000)
+for (i in 1:2000){
+  cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
 
-coef(best_model )
+  mod_cv <- cv.glmnet( as.matrix(train_data[,c(5,6,8:17)]), train_data[,"zvalue"], family='gaussian', intercept = F, alpha=1)
 
+dd[i,1]=mod_cv$lambda.min
+dd[i,2]=mod_cv$lambda.1se
+}
+dd=data.frame(dd)
+
+head(dd)
+
+# will have less variables selected
+# the best lambda is somewhat variable
+
+
+
+
+lam=unique(dd$X1)
+R=numeric()
+term=list()
+for (i in 1:length(lam)){
+
+la.eq <- glmnet( train_data[,c(5,6,8:17)], train_data[,"zvalue"],lambda=lam[i], family='gaussian', intercept = F, alpha=1)
+matrix(coef(la.eq ))[2:13,]
+terms=matrix(nrow=12,ncol=2)
+terms[,1]=colnames(train_data[,c(5,6,8:17)])
+terms[,2]=coef(la.eq )[2:13,]
+terms=data.frame(terms)
+best_model <- glmnet( train_data[,c(subset(terms,X2!=0)[,"X1"])], train_data[,"zvalue"], 
+                      family='gaussian', intercept = F, alpha=1,lambda = lam[i],final.re=TRUE)
+pre_zvalue=predict(best_model,lambda = lam[i],newx=as.matrix(test_data[,c(subset(terms,X2!=0)[,"X1"])]))
+
+a4=summary(lm(pre_zvalue~test_data[,"zvalue"]))
+R[i]=a4$adj.r.squared
+term[[i]]=terms
+}
+# the best lamda is  0.002165107
+
+
+
+  
+la.eq <- glmnet( train_data[,c(5,6,8:17)], train_data[,"zvalue"],lambda=0.0005886034, family='gaussian', intercept = F, alpha=1)
+  
+  matrix(coef(la.eq ))[2:13,]
+  terms=matrix(nrow=12,ncol=2)
+  terms[,1]=colnames(train_data[,c(5,6,8:17)])
+  terms[,2]=coef(la.eq )[2:13,]
+  terms=data.frame(terms)
+  
+  best_model <- glmnet( train_data[,c(subset(terms,X2!=0)[,"X1"])], train_data[,"zvalue"], 
+                        family='gaussian', intercept = F, alpha=1,lambda = 0.0005886034,final.re=TRUE)
+  
+  pre_zvalue=predict(best_model,lambda = 0.0005886034,newx=as.matrix(test_data[,c(subset(terms,X2!=0)[,"X1"])]))
+  
+  a4=summary(lm(pre_zvalue~test_data[,"zvalue"]))
+  R[i]=a4$adj.r.squared
+}
+# the best lamda is  0.0005886034
+
+
+
+
+
+
+effect_size=coef(best_model )[2:10]%>%data.frame()
+var_select=c("organicCPercent","ph", "nitrogen" ,"sand","bio1","bio4","bio12","bio15","bio18")
+effect_size=cbind(effect_size,var_select)
+
+# to validate the model with the test data
+
+
+
+# the model explaines 18% of the observed patterns
 ## map the current z value based on the best-selected model
 # the variables include ph, nitrogen, cec, sand, bio1,bio2,bio4,bio12
 
@@ -191,18 +401,19 @@ newdata=no_na_prediction[,1:2]
 # create the map
 
 
-r_present <- getData("worldclim",var="bio",res=10)
-r_present <- r_present[[c(1,2,4,12)]]
-names(r_present) <- c("mat_celsius","MDR", "temp_seasonality","map_mm")
+r_present <- raster::getData("worldclim",var="bio",res=10)
+
+r_present <- r_present[[c(1,2,4,12,15,18)]]
+names(r_present) <- c("mat_celsius","MDR", "temp_seasonality","map_mm","pre_seas","pre_wq")
 
 # Run necessary transformations on wordclim-provided temperature data
 r_present$mat_celsius <- r_present$mat_celsius/10
-r_present$temp_seasonality <- r_present$temp_seasonality/1000
+r_present$temp_seasonality <- r_present$temp_seasonality/1000# no need for further transformation
 
 # Crop climate data to study region
 # Let's use North America between 18 and 72 degrees North, excluding Greenland
-north_america <- ne_countries(continent="North America")
 
+north_america <- ne_countries(continent="North America")
 st_is_valid(north_america, reason = TRUE)[!st_is_valid(north_america)]
 library(sf)
 sf_use_s2(use_s2 = FALSE)
@@ -234,7 +445,7 @@ r_present_northam <- clipOutPoly(r_present_northam, greatlakes)# the map based o
 
 ### to devide the map into grids and get the centroid of each
 
-us_extent <- extent(-170,-55,18,72)
+us_extent <- extent(-170,-55,18,72)# need to check
 
 raster_layer <- raster(ext = us_extent, res = 1/6)
 
@@ -258,6 +469,16 @@ r_ph_reproj <- projectRaster(r_ph, crs = crs(r_present_northam))
 r_ph_northam <- raster::mask(raster::crop(r_ph_reproj, north_america_cropped), north_america_cropped)
 r_ph_northam_resample <- raster::resample(r_ph_northam, r_present_northam)
 r_present_northam <- addLayer(r_present_northam, r_ph_northam_resample / 10) # need to know why 10 but all variables would be standardized
+
+# for the soil soc
+
+r_soc <- raster("soc_5-15cm_mean_5000.tif")
+r_soc_reproj <- projectRaster(r_soc, crs = crs(r_present_northam))
+r_soc_northam <- raster::mask(raster::crop(r_soc_reproj, north_america_cropped), north_america_cropped)
+r_soc_northam_resample <- raster::resample(r_soc_northam, r_present_northam)
+r_present_northam <- addLayer(r_present_northam, r_soc_northam_resample / 10) # need to know why 10 but all variables would be standardized
+
+
 
 
 
@@ -288,49 +509,44 @@ r_sand_northam <- raster::mask(raster::crop(r_sand_reproj, north_america_cropped
 r_sand_northam_resample <- raster::resample(r_sand_northam, r_present_northam)
 r_present_northam <- addLayer(r_present_northam, r_sand_northam_resample / 10) # need to know why 10 but all variables would be standardized
 
-names(r_present_northam) <- c("mat_celsius","MDR", "temp_seasonality","map_mm","nitrogen","cec","ph","sand")
+names(r_present_northam) <- c("mat_celsius","MDR", "temp_seasonality","map_mm","pre_seas","pre_wq","soc",  "nitrogen","cec", "sand")
 
 
 
 
 # extract the six soil variables based on the coordinates of the plots
-cl <- c("nitrogen", "cec", "ph", "sand")
+cl <- c("mat_celsius" ,  "MDR" ,  "temp_seasonality", "map_mm" ,    "pre_seas"  ,  "pre_wq", "soc",  "nitrogen", "cec", "sand"  )
 
 climate <- list()
-for (i in 1:4) {
+for (i in 1:10) {
   climate[[i]] <- raster::extract(r_present_northam[[cl[i]]], newdata[, 1:2])
 }
-plot_loca_all_soil <- cbind(newdata, climate[[1]], climate[[2]], climate[[3]], climate[[4]])
-names(plot_loca_all_soil) <- c("lon", "lat",  "nitrogen", "cec", "ph",  "sand")
+
+plot_loca_all_soil <- cbind(newdata[,1:2], climate[[1]], climate[[2]],climate[[3]],climate[[4]],climate[[5]],climate[[6]],climate[[7]],climate[[8]],climate[[9]],climate[[10]])
+
+names(plot_loca_all_soil) <- c("lon", "lat",  "bio1" ,  "bio2" ,  "bio4", "bio12" ,    "bio15"  , "bio18" ,"soc" ,  "nitrogen"  ,"cec",  "sand")
 
 
-# get the climate data of all the plots
-r <- getData("worldclim", var = "bio", res = 10)
-points <- SpatialPoints(newdata[, 1:2], proj4string = r@crs)
-values <- extract(r, points)
-df <- cbind.data.frame(coordinates(points), values)
-
-df=df[,c("lon","lat","bio1","bio2","bio4","bio12")]
+newdata=plot_loca_all_soil
 
 
-newdata=cbind(plot_loca_all_soil,df)
-
-newdata=newdata[,-c(7,8)]
 
 newdata=newdata[which(complete.cases(newdata)),]
 
-newdata[,3:10]=apply(newdata[,3:10],2,range01)
-newdata=newdata[,]
+newdata[,3:12]=apply(newdata[,3:12],2,range01)
+
+
 # make predictions
 
 
-pre_value=predict(best_model,newx=as.matrix(newdata[,3:10]))
+pre_value=predict(best_model,lambda=0.0005886034, newx=as.matrix(newdata[,3:12]))
 
 pre_value=cbind(newdata[,1:2],pre_value)
+names(pre_value)[3]="z"
 
-ggplot(pre_value) +
-  geom_point(data=pre_value,pch=15,aes(x=lon, y=lat,color=s0), size=0.275)+
-  scale_color_gradient(expression(Present *italic( z)* value),low = "blue", high = "yellow")+
+ggplot(kk) +
+  geom_point(data=kk,pch=15,aes(x=lon, y=lat,color=z), size=0.275)+
+  scale_color_gradient(expression(italic( z)* value),low = "blue", high = "yellow")+
   theme(legend.position =c(0.2,0.35), 
         legend.key.size = unit(0.15, "inches"),
         guides(color = guide_legend(nrow = 2, byrow = TRUE)),
@@ -346,7 +562,8 @@ ggplot(pre_value) +
         panel.background = element_rect(fill = "NA"), 
         panel.border = element_rect(color = "black", size = 1.5, fill = NA))+
   xlab("")+
-  ylab("")
+  ylab("")+
+  xlim(-180,-42)
   
 
 
@@ -391,12 +608,8 @@ richness_predic=cbind(richness,no_na_prediction[,1:2])
 
 
 
-# select the seven climate variables that do not show colinearity
+# select the seven climate variables that do not show co linearity
 ##
-
-
-
-
 
 
 
@@ -405,13 +618,7 @@ predict(best_model, s = best_lambda, newx = new)
 
 # with another approach
 zvalue_all_env$siteIDD=as.factor(zvalue_all_env$siteIDD)
-
-
 model <- glmmLasso(zvalue~organicCPercent  +  ph  +  nitrogen  +cec +sand+ bio1+ bio2+bio4 +bio8+ bio12+ bio15+ bio18  +spei, rnd = list(siteid=~1),family=gaussian(link = "identity"),final.re=TRUE,data = zvalue_all_env,lambda = 1.068678)
-
-
-
-
 
 mod1 <- cv.glmmLasso(fix = zvalue~organicCPercent  +  ph  +  nitrogen  +cec +sand+ bio1+ bio2+bio4 +bio8+ bio12+ bio15+ bio18  +spei, rnd = list(siteid=~1),data = zvalue_all_env, 
                      family = gaussian(link = "identity"), kfold = 10, lambda.final = 'lambda.1se')
@@ -566,21 +773,83 @@ cv.glmmLasso= function(fix, rnd, data,
 
 ## to make predictions
 
-# add the ID to each plot
-dm=zvalue_all_env$siteIDD
 
-siteid=matrix(ncol=1,nrow=dim(zvalue_all_env)[1])
-for (i in 1:dim(zvalue_all_env)[1])
-{
-  dk=dm[i]
-  if(nchar(dk)<4)
-    {
-    siteid[i,1]=substr(dk,1,2)
-  }
-  else{
-    siteid[i,1]=substr(dk,1,4) 
-  }
-  
-}
+library(stars)      # To process the raster data
+library(sf)         # To work with vector data
+library(ggplot2)    # For plotting
+library(patchwork)
+##
+path = "/Users/luowenqi/soil-sar/plot-sar-permutation"
+getData(name = 'CMIP5', var = 'bio', res = 10,
+                rcp = 45, model = 'IP', year = 70,
+                path = "/Users/luowenqi/soil-sar/plot-sar-permutation")
 
-zvalue_all_env=cbind(siteid,zvalue_all_env)
+bio1_70 <- stars::read_stars("cmip5/10m/ip45bi701.tif")
+bio1_70 <- bio1_70/10
+bio1_70_pred <- st_extract(bio1_70 , as.matrix(newdata[,1:2]))# should be in the format of matrix
+
+
+bio4_70 <- stars::read_stars("cmip5/10m/ip45bi704.tif")
+bio4_70 <- bio4_70/10
+bio4_70_pred <- st_extract(bio4_70 , as.matrix(newdata[,1:2]))# should be in the format of matrix
+
+bio12_70 <- stars::read_stars("cmip5/10m/ip45bi7012.tif")
+bio12_70 <- bio12_70/10
+bio12_70_pred <- st_extract(bio12_70 , as.matrix(newdata[,1:2]))# should be in the format of matrix
+
+bio15_70 <- stars::read_stars("cmip5/10m/ip45bi7015.tif")
+bio15_70 <- bio15_70/10
+bio15_70_pred <- st_extract(bio15_70 , as.matrix(newdata[,1:2]))# should be in the format of matrix
+
+bio18_70 <- stars::read_stars("cmip5/10m/ip45bi7018.tif")
+bio18_70 <- bio18_70/10
+bio18_70_pred <- st_extract(bio18_70 , as.matrix(newdata[,1:2]))# should be in the format of matrix
+
+future_climate=cbind(bio1_70_pred ,bio4_70_pred ,bio12_70_pred ,bio15_70_pred ,bio18_70_pred )
+
+names(future_climate)=c("bio1","bio4","bio12","bio15","bio18")
+
+newdata_future=cbind(newdata[,c("sand","nitrogen")],future_climate)
+
+newdata_future[,3:7]=apply(newdata_future[,3:7],2,FUN=range01)
+
+pred_future=predict(best_model, newx=newdata_future)
+
+pre_value_future=predict(best_model,lambda=0.01102326, newx=as.matrix(newdata_future))
+
+pre_value_future=cbind(newdata[,1:2],pre_value_future)
+names(pre_value)[3]="z"
+
+
+
+ggplot(pre_value_future) +
+  geom_point(data=pre_value_future,pch=15,aes(x=lon, y=lat,color=z), size=0.275)+
+  scale_color_gradient(expression(italic( z)* value),low = "blue", high = "yellow",limits=c(0,0.6))+
+  theme(legend.position =c(0.2,0.35), 
+        legend.key.size = unit(0.15, "inches"),
+        guides(color = guide_legend(nrow = 2, byrow = TRUE)),
+        legend.title = element_text(size=8),
+        text = element_text(size = 18), 
+        legend.text = element_text(size=8),
+        plot.title = element_text(size = 15, hjust = 0.5), 
+        axis.text.y = element_text(hjust = 0), 
+        
+        axis.title.y = element_text(size = 18), 
+        axis.title.x = element_text(size = 18),
+        axis.ticks.x = element_blank(), 
+        panel.background = element_rect(fill = "NA"), 
+        panel.border = element_rect(color = "black", size = 1.5, fill = NA))+
+  xlab("")+
+  ylab("")+
+  xlim(-180,-42)
+
+## to look at their current values
+
+points <- SpatialPoints(newdata[, 1:2], proj4string = r@crs)
+values <- extract(r, points)
+df <- cbind.data.frame(coordinates(points), values)
+
+df=df[,c("lon","lat","bio1","bio4","bio12","bio15","bio18")]
+
+
+
