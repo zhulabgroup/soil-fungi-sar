@@ -205,4 +205,12 @@ for (i in 1:length(lam)){
 
 # the best 
 
+## add the coordinates to the data
 
+coordinate=sample_data(d)[,c("plotIDM","lon","lat")]%>%data.frame()
+
+coordinate=aggregate(coordinate[,2:3],by=list(coordinate$plotIDM),FUN=mean)
+
+names(coordinate)[1]="plotID"
+
+obs=merge(obs,coordinate,by="plotID")
