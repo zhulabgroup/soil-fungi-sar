@@ -127,17 +127,6 @@ RK.GLM.SOC<-rasterFromXYZ(as.data.frame(grid.xy)[, c("x", "y", "RK.GLM")])
 
 
 
-glm1<-ggR(GLM, geom_raster = TRUE) +
-  scale_fill_gradientn("", colours = c("orange", "yellow", "green",  "sky blue","blue"))+
-  theme_bw()+
-  theme(axis.title.x=element_blank(),
-        axis.text.x=element_blank(),
-        axis.ticks.x=element_blank(),
-        axis.title.y=element_blank(),
-        axis.text.y=element_blank(),
-        axis.ticks.y=element_blank())+
-  ggtitle("GLM Predicted (BoxCox)")+
-  theme(plot.title = element_text(hjust = 0.5))
 
 
 
