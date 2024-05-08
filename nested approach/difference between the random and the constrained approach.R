@@ -122,10 +122,23 @@ com_ran[[i]]=mutate(two_appp,area=rep(c(1:(dim(two_appp)[1]/2)),times=2))
 
 p1=ggplot()+
   geom_point(data=com_ran[[1]],aes(x=area,y=value,color=as.factor(X2)))+
-  
   scale_color_manual("",breaks=c(1,2),labels=c("Random","constrained"),values = c("blue","red"))+
   ylab("Log(Richness)")+
-  xlab("log(Area) m^2")
+  xlab(expression("Log(Area)"))+
+  theme(legend.position =c(0.7,0.35), 
+        legend.key.size = unit(0.15, "inches"),
+        guides(color = guide_legend(nrow = 2, byrow = TRUE)),
+        legend.title = element_text(size=8),
+        text = element_text(size = 18), 
+        legend.text = element_text(size=12),
+        plot.title = element_text(size = 15, hjust = 0.5), 
+        axis.text.y = element_text(hjust = 0), 
+        axis.title.y = element_text(size = 18), 
+        axis.title.x = element_text(size = 18),
+        axis.ticks.x = element_blank(), 
+        panel.background = element_rect(fill = "NA"), 
+        panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+  
 
 
 p2=ggplot()+
@@ -133,8 +146,22 @@ p2=ggplot()+
   geom_smooth(data=com_ran[[1]],aes(x=log(area),y=log(value),color=as.factor(X2)),method="lm")+
   scale_color_manual("",breaks=c(1,2),labels=c("Random","constrained"),values = c("blue","red"))+
   ylab("Log(Richness)")+
-  xlab("log(Area) m^2")+
-  guides(color="none")
+  xlab("log(Area)")+
+  guides(color="none")+
+  theme(legend.position =c(0.7,0.35), 
+        legend.key.size = unit(0.15, "inches"),
+        guides(color = guide_legend(nrow = 2, byrow = TRUE)),
+        legend.title = element_text(size=8),
+        text = element_text(size = 18), 
+        legend.text = element_text(size=12),
+        plot.title = element_text(size = 15, hjust = 0.5), 
+        axis.text.y = element_text(hjust = 0), 
+        axis.title.y = element_text(size = 18), 
+        axis.title.x = element_text(size = 18),
+        axis.ticks.x = element_blank(), 
+        panel.background = element_rect(fill = "NA"), 
+        panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+
 
 
 
@@ -144,8 +171,22 @@ p3=ggplot()+
   
   scale_color_manual("",breaks=c(1,2),labels=c("Random","constrained"),values = c("blue","red"))+
   ylab("Log(Richness)")+
-  xlab("log(Area) m^2")+
-  guides(color="none")
+  xlab("log(Area)")+
+  guides(color="none")+
+  theme(legend.position =c(0.7,0.35), 
+        legend.key.size = unit(0.15, "inches"),
+        guides(color = guide_legend(nrow = 2, byrow = TRUE)),
+        legend.title = element_text(size=8),
+        text = element_text(size = 18), 
+        legend.text = element_text(size=12),
+        plot.title = element_text(size = 15, hjust = 0.5), 
+        axis.text.y = element_text(hjust = 0), 
+        axis.title.y = element_text(size = 18), 
+        axis.title.x = element_text(size = 18),
+        axis.ticks.x = element_blank(), 
+        panel.background = element_rect(fill = "NA"), 
+        panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+
 
 
 p4=ggplot()+
@@ -153,17 +194,54 @@ p4=ggplot()+
   geom_smooth(data=com_ran[[2]],aes(x=log(area),y=log(value),color=as.factor(X2)),method="lm")+
   scale_color_manual("",breaks=c(1,2),labels=c("Random","constrained"),values = c("blue","red"))+
   ylab("Log(Richness)")+
-  xlab("log(Area) m^2")+
-  guides(color="none")
+  xlab("log(Area)")+
+  guides(color="none")+
+  theme(legend.position =c(0.7,0.35), 
+        legend.key.size = unit(0.15, "inches"),
+        guides(color = guide_legend(nrow = 2, byrow = TRUE)),
+        legend.title = element_text(size=8),
+        text = element_text(size = 18), 
+        legend.text = element_text(size=12),
+        plot.title = element_text(size = 15, hjust = 0.5), 
+        axis.text.y = element_text(hjust = 0), 
+        axis.title.y = element_text(size = 18), 
+        axis.title.x = element_text(size = 18),
+        axis.ticks.x = element_blank(), 
+        panel.background = element_rect(fill = "NA"), 
+        panel.border = element_rect(color = "black", size = 1.5, fill = NA))
 
+p1=ggplotGrob(p1)
+p2=ggplotGrob(p2)
+p3=ggplotGrob(p3)
+p4=ggplotGrob(p4)
+p5=ggplotGrob(p5)
+p6=ggplotGrob(p6)
+
+p1$widths=p2$widths
+p3$widths=p4$widths
+p5$widths=p6$widths
 
 p5=ggplot()+
   geom_point(data=com_ran[[3]],aes(x=area,y=value,color=as.factor(X2)))+
   
   scale_color_manual("",breaks=c(1,2),labels=c("Random","constrained"),values = c("blue","red"))+
   ylab("Log(Richness)")+
-  xlab("log(Area) m^2")+
-  guides(color="none")
+  xlab("log(Area)")+
+  guides(color="none")+
+  theme(legend.position =c(0.7,0.35), 
+        legend.key.size = unit(0.15, "inches"),
+        guides(color = guide_legend(nrow = 2, byrow = TRUE)),
+        legend.title = element_text(size=8),
+        text = element_text(size = 18), 
+        legend.text = element_text(size=12),
+        plot.title = element_text(size = 15, hjust = 0.5), 
+        axis.text.y = element_text(hjust = 0), 
+        axis.title.y = element_text(size = 18), 
+        axis.title.x = element_text(size = 18),
+        axis.ticks.x = element_blank(), 
+        panel.background = element_rect(fill = "NA"), 
+        panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+
 
 
 p6=ggplot()+
@@ -171,8 +249,22 @@ p6=ggplot()+
   geom_smooth(data=com_ran[[3]],aes(x=log(area),y=log(value),color=as.factor(X2)),method="lm")+
   scale_color_manual("",breaks=c(1,2),labels=c("Random","constrained"),values = c("blue","red"))+
   ylab("Log(Richness)")+
-  xlab("log(Area) m^2")+
-  guides(color="none")
+  xlab("log(Area)")+
+  guides(color="none")+
+  theme(legend.position =c(0.7,0.35), 
+        legend.key.size = unit(0.15, "inches"),
+        guides(color = guide_legend(nrow = 2, byrow = TRUE)),
+        legend.title = element_text(size=8),
+        text = element_text(size = 18), 
+        legend.text = element_text(size=12),
+        plot.title = element_text(size = 15, hjust = 0.5), 
+        axis.text.y = element_text(hjust = 0), 
+        axis.title.y = element_text(size = 18), 
+        axis.title.x = element_text(size = 18),
+        axis.ticks.x = element_blank(), 
+        panel.background = element_rect(fill = "NA"), 
+        panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+
 
 
 p7=ggplot()+
@@ -377,4 +469,15 @@ sp1 <- specaccum(ot, method = 'collector')
 plot(sp1, ci.type = 'poly', col = 'blue', lwd = 2, ci.lty = 0, ci.col = 'lightblue')
 
 boxplot(sp1, col = 'yellow', add = TRUE, pch = '+')
+kk=matrix(ncol=1,nrow=483)
+for (i in 1:483){
+  dk=obs$plotID[i]
+  if(nchar(dk)<4)
+    kk[i,]=dk
+  else{
+    kk[i,]=substr(dk,1,4)
+  }
+  
+}
+
 
