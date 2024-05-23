@@ -1,8 +1,11 @@
 # changes in the land cover types
+library(ncdf4)
 
 setwd("/Users/luowenqi/soil-sar/plot-sar-permutation")
 1# get the changes in land use types between 2020 and 2100 year
 # for the present land use types
+
+nc_file <- nc_open("GCAM_Demeter_LU_ssp1_rcp26_hadgem_2100.nc")
 
 raster1 <-  rast("GCAM_Demeter_LU_ssp1_rcp26_hadgem_2020.nc")
 ext(raster1)=c(-90,90,-180,180)
@@ -92,9 +95,6 @@ data_future=data_future[complete.cases(data_future),]
 
 data_mean_future=aggregate(data_future[,c(1,2,7:38)],by=list(data_future$grid),FUN=mean)%>%data.frame()# aggregate the value within a larger grid
 
-
-
-
 save(data_mean,file="data_mean_present.RData")
 save(data_mean_future,file="data_mean_future.RData")
 
@@ -142,7 +142,7 @@ save(species_change,file="species_change.RData")
 
 df=species_change[,c("rich","change","ratio_rich","future_rich","change_rich","change_rate")]
 
-dff=matrix(ncol=6,nrow=93669)
+dff=matrix(ncol=6,nrow=96693)
 for (i in 1:dim(df)[1])
   {
   cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
@@ -172,9 +172,9 @@ save(pred_zvalue,file="predict_zvalue.RData")
 
 # changes in the land cover of interest
 
-ggplot(data_mean) +
-  geom_point(data=data_mean,pch=15,aes(x=lon, y=-lat,color=X8), size=0.275)+
-  scale_color_gradient(expression("Cover %"),low = "blue", high = "yellow")+
+p1=ggplot(data_mean) +
+  geom_point(data=data_mean,pch=15,aes(x=lon, y=-lat,color=PFT14), size=0.275)+
+  scale_color_gradient(expression("Cover %"),low = "gray", high = "purple")+
   theme(legend.position =c(0.2,0.35), 
         legend.key.size = unit(0.15, "inches"),
         guides(color = guide_legend(nrow = 2, byrow = TRUE)),
@@ -188,16 +188,16 @@ ggplot(data_mean) +
         axis.ticks.x = element_blank(), 
         panel.background = element_rect(fill = "NA"), 
         panel.border = element_rect(color = "black", size = 1.5, fill = NA))+
-  xlab("Predicted changes in PFT15")+
+  xlab("PFT14 in 2020")+
   ylab("")+
   xlim(-175,-42)
 # get the coordinates for the new locations
 
 ###
 
-ggplot(data_mean_future) +
-  geom_point(data=data_mean_future,pch=15,aes(x=lon, y=-lat,color=X8), size=0.275)+
-  scale_color_gradient(expression("Cover %"),low = "blue", high = "yellow")+
+p2=ggplot(data_mean_future) +
+  geom_point(data=data_mean_future,pch=15,aes(x=lon, y=-lat,color=PFT14), size=0.275)+
+  scale_color_gradient(expression("Cover %"),low = "gray", high = "purple",limit=c(0,100))+
   theme(legend.position =c(0.2,0.35), 
         legend.key.size = unit(0.15, "inches"),
         guides(color = guide_legend(nrow = 2, byrow = TRUE)),
@@ -211,15 +211,15 @@ ggplot(data_mean_future) +
         axis.ticks.x = element_blank(), 
         panel.background = element_rect(fill = "NA"), 
         panel.border = element_rect(color = "black", size = 1.5, fill = NA))+
-  xlab("Predicted changes in PFT15")+
+  xlab("PFT14 in 2100")+
   ylab("")+
   xlim(-175,-42)
 # get the coordinates for the new locations
 
 # changes in the richness
-ggplot(species_change) +
-  geom_point(data=species_change,pch=15,aes(x=lon, y=lat,color=change_rate), size=0.275)+
-  scale_color_gradient(expression("Species change %"),low = "purple", high = "seagreen1",limits = c(-1, 8))+
+ggplot(species_change1) +
+  geom_point(data=species_change,pch=15,aes(x=lon, y=lat,color=change_rate1), size=0.275)+
+  scale_color_gradient(expression("Species change %"),low = "seagreen1", high = "purple",na.value = "yellow")+
   theme(legend.position =c(0.2,0.35), 
         legend.key.size = unit(0.15, "inches"),
         guides(color = guide_legend(nrow = 2, byrow = TRUE)),
@@ -241,8 +241,8 @@ ggplot(species_change) +
 # mapping the richness
 
 ggplot(species_change) +
-  geom_point(data=species_change,pch=15,aes(x=lon, y=lat,color=future_rich), size=0.275)+
-  scale_color_gradient(expression("Species change %"),low = "purple", high = "seagreen1")+
+  geom_point(data=species_change,pch=15,aes(x=lon, y=lat,color=change1), size=0.275)+
+  scale_color_gradient(expression("Species change %"),low = "blue", high = "purple")+
   theme(legend.position =c(0.2,0.35), 
         legend.key.size = unit(0.15, "inches"),
         guides(color = guide_legend(nrow = 2, byrow = TRUE)),
@@ -260,4 +260,51 @@ ggplot(species_change) +
   ylab("")+
   xlim(-175,-42)
 # get the coordinates for the new locations
+
+ggplot(species_change1) +
+  geom_point(data=species_change1,pch=15,aes(x=lon, y=lat,color=change1), size=0.275)+
+  scale_color_gradient(expression("Species change %"),low = "blue", high = "purple")+
+  theme(legend.position =c(0.2,0.35), 
+        legend.key.size = unit(0.15, "inches"),
+        guides(color = guide_legend(nrow = 2, byrow = TRUE)),
+        legend.title = element_text(size=8),
+        text = element_text(size = 18), 
+        legend.text = element_text(size=8),
+        plot.title = element_text(size = 15, hjust = 0.5), 
+        axis.text.y = element_text(hjust = 0), 
+        axis.title.y = element_text(size = 18), 
+        axis.title.x = element_text(size = 18),
+        axis.ticks.x = element_blank(), 
+        panel.background = element_rect(fill = "NA"), 
+        panel.border = element_rect(color = "black", size = 1.5, fill = NA))+
+  xlab("Predicted species changes")+
+  ylab("")+
+  xlim(-175,-42)
+# get the coordinates for the new locations
+
+dd=cbind(species_change[,2:3],dff[,2])
+
+ggplot(dd) +
+  geom_point(data=dd,pch=15,aes(x=lon, y=lat,color=change), size=0.275)+
+  scale_color_gradient(expression(""),low = "gray", high = "purple")+
+  theme(legend.position =c(0.2,0.35), 
+        legend.key.size = unit(0.15, "inches"),
+        guides(color = guide_legend(nrow = 2, byrow = TRUE)),
+        legend.title = element_text(size=8),
+        text = element_text(size = 18), 
+        legend.text = element_text(size=8),
+        plot.title = element_text(size = 15, hjust = 0.5), 
+        axis.text.y = element_text(hjust = 0), 
+        axis.title.y = element_text(size = 18), 
+        axis.title.x = element_text(size = 18),
+        axis.ticks.x = element_blank(), 
+        panel.background = element_rect(fill = "NA"), 
+        panel.border = element_rect(color = "black", size = 1.5, fill = NA))+
+  xlab("Predicted land cover changes")+
+  ylab("")+
+  xlim(-175,-42)
+# get the coordinates for the new locations
+
+
+
 
