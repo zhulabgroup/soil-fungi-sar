@@ -131,7 +131,7 @@ richness_dob=cbind(dob_plot,richness_dob)%>%data.frame()
 3.# add the area to the data frame
 
 richness_dob[,2:6]=lapply(richness_dob[,2:6], as.numeric)
-richness_dob=melt(richness_dob)
+richness_dob=reshape::melt(richness_dob)
 area=rep(c(0.0036,25,100,400,1600),each=43)
 richness_dob=cbind(richness_dob,area)
 
@@ -165,12 +165,38 @@ for (i in 1:length(dob_plot))
 {
   cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
   data_subb <- subset(richness_dob,dob_plot==dob_plot [i])
-  fit <-sar_power(data_subb[,c(4,3)] )%>%summary()
   
-  zva[i]=fit$Parameters[2,1]
-  pva[i]=fit$Parameters[2,4]
+  data_subb$value=log(data_subb$value)
+  data_subb$area=log(data_subb$area)
+  
+  fit <-lm(data_subb[2:dim(data_subb)[1],c(3,4)] )%>%summary()
+  
+  zva[i]=fit$coefficients[2,1]
+  pva[i]=fit$coefficients[2,4]
 }
 
+op=cbind(dob_plot,zva)%>%data.frame()
+
+op$zva=as.numeric(op$zva)
+
+names(op)[1]="plotID"
+
+plot_level_zc_nest_mean$meanz=as.numeric(plot_level_zc_nest_mean$meanz)
+plot_level_zc_nest_mean$meanc=as.numeric(plot_level_zc_nest_mean$meanc)
+
+dk=merge(op,plot_level_zc_nest_mean,by="plotID")
+# to see how it is related to the random approach
+
+
+df=model_data[,c(1,3)]
+
+head(df)
+
+df=aggregate(z~plotID,data=df,FUN=mean)
+
+df=merge(op,df,by="plotID")
+
+df=merge(plot_level_zc_nest_mean,df,by="plotID")
 
 ggplot()+geom_point(data=dk,aes(x=lon,y=lat),size=1)+
   geom_text(data=dk,aes(x=lon,y=lat),size=3,label=substr(dk$geneticSampleID,1,7))
