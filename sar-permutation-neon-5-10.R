@@ -1,7 +1,27 @@
 
 0# Generate an subplot ID for each subplot at different scales
 
+
+
+d=sample_data(rare_all)
+# select the NEON SITE
+table(d$Project)# the first 908 rows are dob sites with the remaining 5470 being NEON sites
+d1=data.frame(d[,c("geneticSampleID","Site")])
+plotID=substr(d1$geneticSampleID,1,8)
+d1=cbind(d1,plotID)
+iddob=d1$Site[1:908]#a site correspondes to a plot
+idneon=d1$plotID[909:6378]# an unique plotID corresponds to a plot
+plotIDM=data.frame(c(iddob,idneon))
+names(plotIDM)="plotIDM"# the plot id used for the SAR
+row.names(plotIDM)=row.names(d)
+plotIDM=sample_data(plotIDM)
+d<- merge_phyloseq(rare_all, plotIDM)# merge the new plotid with the initial data 
+# select an unique plot and build a SAR within the plot
+
+a1= subset_samples(d,Project=="NEON")# the unique plotID, we have 476 plots
+
 data_sub <- sample_data(a1)%>%data.frame()
+
 
 
 0. # add the subplot ID to the phyloseq object
@@ -153,7 +173,7 @@ names(richness_subplot5_neon)[1]="richness"
 
 richness_mean_subplot5_neon=aggregate(richness~plotid,data=richness_subplot5_neon,FUN=mean)
 
-richness_sd_subplot5=aggregate(richness~plotid,data=richness_subplot5_neon,FUN=sd)
+richness_sd_subplot5_neon=aggregate(richness~plotid,data=richness_subplot5_neon,FUN=sd)
 
 3. #at the 10 by 10 plot ,we can also do a permutation.
 
@@ -179,7 +199,7 @@ names(subplot_ID)=c("gx","gy")
 plot_width <- 40
 plot_height <- 40
 
-# at the 5 by 5 m spatial scales
+# at the 10 by 10 m spatial scales
 
 # Define the dimensions of each grid cell
 grid_cell_size <- 10
@@ -219,12 +239,7 @@ subplotID10=sample_data(subplotID10)
 
 a1=merge_phyloseq(a1,subplotID10)
 
-
-
-
 #
-
-
 
 set.seed=(3202)
 times=30
@@ -296,6 +311,6 @@ names(richness_subplot10_neon)[1]="richness"
 
 richness_mean_subplot10_neon=aggregate(richness~plotid,data=richness_subplot10_neon,FUN=mean,na.rm=TRUE)
 
-richness_sd_subplo10_neon=aggregate(richness~plotid,data=richness_subplot10_neon,FUN=sd,na.rm=TRUE)
+richness_sd_subplot10_neon=aggregate(richness~plotid,data=richness_subplot10_neon,FUN=sd,na.rm=TRUE)
 
 
