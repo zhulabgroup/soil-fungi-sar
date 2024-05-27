@@ -1,3 +1,5 @@
+
+
 set.seed=(989)
 times=30
 a4=sample_data(data_littersap)
@@ -481,4 +483,50 @@ richness_mean_subplot30_neon_littersap=rbind(richness_subplot30A_neon_littersap,
 
 save(richness_mean_subplot30_neon_littersap,file="richness_mean_subplot30_neon_littersap.RData")
 
-# 
+## at the 40 by 40 m scale
+set.seed=(5677)
+times=30
+a4=sample_data(data_littersap)
+a4=unique(a4$plotIDM)
+richness <- vector("list", length(a4))
+
+for (i in 1:length(a4))
+{
+  cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
+  data_sub <- subset_samples(data_littersap, plotIDM==a4[i])
+  dim1=dim(sample_data(data_sub))[1]
+  
+  if(dim1>=10)
+  {
+    cl <- makeCluster(3)
+    registerDoParallel(cl)
+    richness[[i]] <- foreach(i = 1:times, .combine = "cbind", .packages = c("phyloseq","dplyr")) %dopar%{
+      species <- vector(length = dim1[1]) # create a vector to save diversity
+      for (j in 1:10) 
+      { 
+        # randomly sample j samples in the plot
+        flag <- rep(FALSE, dim1[1])
+        flag[sample(1:dim1[1], 10)] <- TRUE
+        tlittersapp <- merge_samples(data_sub, flag, function(x) mean(x, na.rm = TRUE)) # the j samples aggregated by mean
+        species[j] <- sum(otu_table(tlittersapp)["TRUE"] > 0)
+        return(species[j])
+      }
+    }
+    stopCluster(cl)
+  }
+  else{
+    richness[[i]]=NA
+  }
+}
+
+richness_subplot40_neon_littersap=matrix(ncol=1,nrow=length(a4))
+for (i in 1:length(a4))
+{
+  
+  richness_subplot40_neon_littersap[i,]=mean(richness[[i]])
+}
+
+richness_subplot40_mean_neon_littersap=richness_subplot40_neon_littersap%>%data.frame()%>%mutate(plotid=a4,area=rep(1600,length(a4)))
+
+save(richness_subplot40_mean_neon_littersap,file="richness_subplot40_mean_neon_littersap.RData")
+
