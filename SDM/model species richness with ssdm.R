@@ -97,7 +97,7 @@ r_present_northam <- addLayer(r_present_northam, map_2) # need to know why 10 bu
 names(r_present_northam) <- c("mat_celsius", "temp_seasonality", "map_mm", "soilInCaClpH", "organicCPercent", "mat_celsius_2", "map_mm_2")
 
 
-# (2). construct SDMs based on current climates with 128 operational sites and then got the richness within each grid cell
+# (2). construct SDMs based on current climate with 128 operational sites and then got the richness within each grid cell
 
 
 agg_data <- readRDS("~/soil-sar/SDM/neon_dob_prevalent_v4.1.Rds")
@@ -151,9 +151,9 @@ save(occurrence_data, file = "occurrence_data.RData")
 save(r_present_northam, file = "r_present_northam.RData")
 
 
-# (3)## read in the data and quantify the total richness for each grid cell######
-# the coordinates of each cell should be based on the land-use change data
-# get the coordinates for each grid with the land-use change data in 2020
+# (3). read in the data and quantify the total richness for each grid cell
+# the coordinates of each cell was based on the land-use change data
+# get the coordinates for each grid cell with the land-use change data in 2020
 
 
 raster1 <- rast("GCAM_Demeter_LU_ssp1_rcp26_hadgem_2020.nc")
@@ -166,7 +166,7 @@ coarser_raster <- aggregate(raster1, fact = 3, fun = mean) # convert it to a coa
 save(coarser_raster, file = "coarser_raster_2020.RData")
 
 
-# (4)#. read in the species distribution data to get the total richness within each cell
+# (4). read in the species distribution data to get the total richness in each grid cell
 
 setwd("/Users/luowenqi/soil-sar/SDM")
 
@@ -193,12 +193,12 @@ richness_present <- cbind(coords_present, d) %>%
   rename(lon = x, lat = y, richness = d)
 
 
-# (5). model species distribution under climate change
+# (5). model species distribution under climate change with SDM
 # get the future climate variables
 # https://bedatablog.netlify.app/post/download-and-illustrate-current-and-projected-climate-in-r/
 
 
-future_data <- raster::getData(name = "CMIP5", var = "bio", res = 10, rcp = 45, model = "IP", year = 70)
+# future_data <- raster::getData(name = "CMIP5", var = "bio", res = 10, rcp = 45, model = "IP", year = 70)
 
 future_data <- geodata::cmip6_world(model = "ACCESS-ESM1-5", ssp = "245", time = "2061-2080", var = "bioc", download = F, res = 10, path = "/Users/luowenqi/soil-sar/SDM")
 future_data <- as(future_data, "Raster")
@@ -320,30 +320,27 @@ species_change_climate <- cbind(richness_present, richness_future[, 3]) %>%
   mutate(change = future_rich - present_rich, rate = change / present_rich)
 save(species_change_climate, file = "species_change_climate.RData")
 
-# just look at the cell with species loss
+# just look at the cell with species loss, cells with increased richness were assigned to 0
 species_change_climate1 <- cbind(richness_present, richness_future[, 3]) %>%
   rename_all(~ paste0(c("lon", "lat", "present_rich", "future_rich"))) %>%
   mutate(change = future_rich - present_rich, rate = change / present_rich) %>%
   mutate(rate = ifelse(rate > 0, 0, rate))
 
-# just look at the cell with species increase
+# just look at the cell with species increase, cells with decreased richness were assigned to 0
 species_change_climate2 <- cbind(richness_present, richness_future[, 3]) %>%
   rename_all(~ paste0(c("lon", "lat", "present_rich", "future_rich"))) %>%
   mutate(change = future_rich - present_rich, rate = change / present_rich) %>%
   mutate(rate = ifelse(rate < 0, 0, rate))
 
-# (7). look at land-use change-induced species change
+# (7). look at land-use change-induced richness change
 
 # for the year of 2020
 
 PFT_2020 <- matrix(nrow = 275760, ncol = 33)
 for (i in 1:33) {
   cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
-
   cropped_raster_2020 <- crop(flip(coarser_raster[[i]]), b)
-
   coords_present <- xyFromCell(cropped_raster_2020, cell = 1:ncell(cropped_raster_2020)) # get the coordinates
-
   cell_values <- extract(cropped_raster_2020, coords_present) %>% as.matrix()
   PFT_2020[, i] <- cell_values
 }
@@ -363,28 +360,41 @@ crs(raster2) <- "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
 b <- as(extent(-72, -18, -170, -55), "SpatialPolygons")
 
 coarser_raster_2100 <- aggregate(raster2, fact = 3, fun = mean) # convert it to a coarse resolution
-
 save(coarser_raster_2100, file = "coarser_raster_2100.RData")
 
 PFT_2100 <- matrix(nrow = 275760, ncol = 33)
 for (i in 1:33) {
   cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
-
   cropped_raster_2100 <- crop(flip(coarser_raster_2100[[i]]), b)
-
   coords_present <- xyFromCell(cropped_raster_2100, cell = 1:ncell(cropped_raster_2100)) # get the coordinates
-
   cell_values <- extract(cropped_raster_2100, coords_present) %>% as.matrix()
   PFT_2100[, i] <- cell_values
 }
+###
 
+
+
+PFT_fine <- matrix(nrow = 2484000, ncol = 33)
+for (i in 1:33) {
+  cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
+  cropped<- crop(flip(raster1[[i]]), b)
+  coords_present <- xyFromCell(cropped, cell = 1:ncell(cropped)) # get the coordinates
+  cell_values <- extract(cropped, coords_present) %>% as.matrix()
+  PFT_fine[, i] <- cell_values
+}
+## to see the total cover of non-crop data
+
+PFT_fine%>%data.frame()%>%bind_cols(coords_present)%>%rename_all(~paste0(c(names(raster1),"lon","lat")))%>%mutate(nocrop = rowSums(across(PFT1:PFT14)))->PFT_fine
+
+ggplot()+
+  geom_point(data=PFT_fine,aes(x=lon,y=lat,color=nocrop/100))
 
 PFT_2100 <- cbind(coords_present, PFT_2100) %>%
   data.frame() %>%
   rename_all(~ paste0(c("lon", "lat", names(raster2)))) %>%
   mutate(nocrop = rowSums(across(PFT1:PFT14)))
 
-# (8). to see changes in different land-use types between the two time points (2020 vs 2100).
+# (8). changes in different land-use types between the two time points (2020 vs 2100).
 
 land_use_change <- matrix(nrow = dim(PFT_2020[1]), ncol = 36)
 for (i in 1:dim(PFT_2020)[2])
@@ -397,7 +407,7 @@ bind_cols(PFT_2020[, 1:2], land_use_change[, 3:36]) %>% dplyr::rename_all(~ past
 
 
 
-## to look at species changes
+## to look at species richness changes
 
 load("~/soil-sar/SDM/richness_present_RF.RData")
 
@@ -405,11 +415,10 @@ land_use_change <- land_use_change %>% rename(lat = lon, lon = lat)
 
 land_use_change$lat <- -1 * land_use_change$lat
 
-# look at different change in the land
+
 # look at the changes in richness caused by land-use conversion
 # we used the mean value of 0.3877299 for z across all cells
-
-k <- cbind(PFT_2020$nocrop, PFT_2100$nocrop, land_use_change$nocrop)
+# k <- cbind(PFT_2020$nocrop, PFT_2100$nocrop, land_use_change$nocrop)
 
 kk <- richness_present %>%
   mutate(future_rich = land_use_change$nocrop^0.3877299 * richness) %>%
@@ -429,9 +438,8 @@ save(land_use_change_rich, file = "land_use_change_rich.RData")
 # 3. cells that have land-use data increased from 0 to some value (Inf)
 # 4. in these cases, future richness will be the same as it's current richness
 # 5. some cells will have very high value of richness because of a high land cover change ratio
-
+# these codes were run on the server and loaded the output
 land_use_change_rich_nona <- subset(land_use_change_rich, richness > 0) # select cells with richness data
-
 df <- land_use_change_rich_nona[, (3:7)]
 dff <- matrix(ncol = 5, nrow = dim(land_use_change_rich_nona)[1])
 for (i in 1:119607)
@@ -519,8 +527,6 @@ dff %>% mutate(rich_change_rate = ifelse(rich_change_rate < 0, 0, rich_change_ra
 
 
 # (10) create maps for species distribution
-
-
 
 
 ggplot(species_change_climate1) +
@@ -680,6 +686,7 @@ p2 <- ggplot(species_change_climate) +
   ylab("") +
   ggtitle("Climate-change-induced")
 
+# the converted data was used to create the map
 p3 <- ggplot(land_use_change_rich_nona_conver3) +
   geom_point(data = land_use_change_rich_nona_conver3, aes(x = lon, y = lat, color = future_rich), size = 0.275) +
   scale_color_gradient2(expression("Richness"), low = "seagreen3", mid = "yellow", high = "gray", midpoint = 4000, na.value = "red", limits = c(0, 8000)) +
@@ -704,6 +711,7 @@ p3 <- ggplot(land_use_change_rich_nona_conver3) +
 
 head(PFT_2020)
 
+##changes in the land-use cover data
 
 p1 <- ggplot(PFT_2020) +
   geom_point(data = PFT_2020, pch = 15, aes(y = -1 * lon, x = lat, color = nocrop), size = 0.275) +
@@ -751,54 +759,13 @@ p2 <- ggplot(PFT_2100) +
 ###
 
 
-ggplot(dff_cover1) +
-  geom_point(data = dff_cover1, pch = 15, aes(x = lon, y = lat, color = rich_change_rate * 100), size = 0.275) +
-  scale_color_gradient2(expression("Species change rate %"), low = "brown", mid = "yellow", high = "gray95", na.value = "black", midpoint = -50) +
-  theme(
-    legend.position = c(0.2, 0.35),
-    legend.key.size = unit(0.15, "inches"),
-    guides(color = guide_legend(nrow = 2, byrow = TRUE)),
-    legend.title = element_text(size = 8),
-    text = element_text(size = 18),
-    legend.text = element_text(size = 8),
-    plot.title = element_text(size = 15, hjust = 0.5),
-    axis.text.y = element_text(hjust = 0),
-    axis.title.y = element_text(size = 18),
-    axis.title.x = element_text(size = 18),
-    axis.ticks.x = element_blank(),
-    panel.background = element_rect(fill = "NA"),
-    panel.border = element_rect(color = "black", size = 1.5, fill = NA)
-  ) +
-  xlab("Predicted species changes") +
-  ylab("")
 
-
-ggplot(dff_cover2) +
-  geom_point(data = dff_cover2, pch = 15, aes(x = lon, y = lat, color = rich_change_rate * 100), size = 0.275) +
-  scale_color_gradient2(expression("Species change rate %"), low = "gray", mid = "yellow", high = "brown", na.value = "black", midpoint = 600, limits = c(0, 0.05)) +
-  theme(
-    legend.position = c(0.2, 0.35),
-    legend.key.size = unit(0.15, "inches"),
-    guides(color = guide_legend(nrow = 2, byrow = TRUE)),
-    legend.title = element_text(size = 8),
-    text = element_text(size = 18),
-    legend.text = element_text(size = 8),
-    plot.title = element_text(size = 15, hjust = 0.5),
-    axis.text.y = element_text(hjust = 0),
-    axis.title.y = element_text(size = 18),
-    axis.title.x = element_text(size = 18),
-    axis.ticks.x = element_blank(),
-    panel.background = element_rect(fill = "NA"),
-    panel.border = element_rect(color = "black", size = 1.5, fill = NA)
-  ) +
-  xlab("Predicted species changes") +
-  ylab("")
 
 
 
 ggplot(dff) +
-  geom_point(data = dff, pch = 15, aes(x = lon, y = lat, color = rich_change_rate * 100), size = 0.275) +
-  scale_color_gradient(expression("Species change rate %"), low = "gray", high = "brown", na.value = "blue", limits = c(0, 100)) +
+  geom_point(data = dff%>%filter(land_change_ratio <1), pch = 15, aes(x = lon, y = lat, color = land_change_ratio), size = 0.275) +
+  scale_color_gradient(expression("Land-use change"), high = "gray", low = "purple",na.value = "red") +
   theme(
     legend.position = c(0.2, 0.35),
     legend.key.size = unit(0.15, "inches"),
@@ -816,7 +783,10 @@ ggplot(dff) +
   ) +
   xlab("Predicted species changes") +
   ylab("")
-### to see the matching of the two climate change scenarios
+
+### to see the spatial matching of richness loss caused by either by climate change and land use conversion
+# cells with increased richness were assigned with 0 for better visualization
+# threshold = -0.1; arbitrary, the loss of 10% of species was considered as high degree of species loss
 
 land_use_loss <- dff %>% mutate(rich_change_rate = ifelse(rich_change_rate > 0, 0, rich_change_rate)) # range of 0-1
 
@@ -824,11 +794,11 @@ land_use_loss <- dff %>% mutate(rich_change_rate = ifelse(rich_change_rate > 0, 
 
 land_use_loss %>% mutate(new_column = case_when(is.na(rich_change_rate) ~ NA_character_, rich_change_rate < threshold ~ "high", TRUE ~ "low")) -> land_loss_degree
 
-# for the climate induced richness changes
+# for the climate induced richness change
 
 species_change_climate1 %>% mutate(new_column = case_when(is.na(rate) ~ NA_character_, rate < threshold ~ "high", TRUE ~ "low")) -> climate_loss_degree
 
-## need to bind the two data.frames to show the impact of global change factors
+## need to bind the two data.frames to show the impact of global change factors on richness
 
 land_loss_degree %>% mutate(location = paste(lon, "*", lat)) -> land_loss_degree
 
@@ -865,3 +835,49 @@ ggplot(land_climate_loss_degree) +
   xlab("Predicted species changes") +
   ylab("") +
   geom_point(x = -160, y = 40, color = "red")
+
+
+
+ggplot(dff) +
+  geom_point(data = dff%>%filter(is.na(land_change_ratio)), pch = 15, aes(x = lon, y = lat, color = land_change_ratio), size = 0.275) +
+  scale_color_gradient(expression("Land-use change"), high = "gray", low = "purple",na.value = "purple") +
+  theme(
+    legend.position = c(0.2, 0.35),
+    legend.key.size = unit(0.15, "inches"),
+    guides(color = guide_legend(nrow = 2, byrow = TRUE)),
+    legend.title = element_text(size = 8),
+    text = element_text(size = 18),
+    legend.text = element_text(size = 8),
+    plot.title = element_text(size = 15, hjust = 0.5),
+    axis.text.y = element_text(hjust = 0),
+    axis.title.y = element_text(size = 18),
+    axis.title.x = element_text(size = 18),
+    axis.ticks.x = element_blank(),
+    panel.background = element_rect(fill = "NA"),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA)
+  ) +
+  xlab("Predicted species changes") +
+  ylab("")
+
+ggplot()+
+  geom_point(data=PFT_fine,aes(y=-1*lon,x=lat,color=nocrop/100))+
+  scale_color_gradient(expression("Land-use cover"), low = "gray", high = "purple",na.value = "white") +
+  theme(
+    legend.position = c(0.2, 0.35),
+    legend.key.size = unit(0.15, "inches"),
+    guides(color = guide_legend(nrow = 2, byrow = TRUE)),
+    legend.title = element_text(size = 8),
+    text = element_text(size = 18),
+    legend.text = element_text(size = 8),
+    plot.title = element_text(size = 15, hjust = 0.5),
+    axis.text.y = element_text(hjust = 0),
+    axis.title.y = element_text(size = 18),
+    axis.title.x = element_text(size = 18),
+    axis.ticks.x = element_blank(),
+    panel.background = element_rect(fill = "NA"),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA)
+  ) +
+  xlab("") +
+  ylab("")
+  
+
