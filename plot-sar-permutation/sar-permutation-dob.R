@@ -1,22 +1,9 @@
 
 # get the dob data
 
-d=sample_data(rare_all)
-# select the NEON SITE
-table(d$Project)# the first 908 rows are dob sites with the remaining 5470 being NEON sites
-d1=data.frame(d[,c("geneticSampleID","Site")])
-plotID=substr(d1$geneticSampleID,1,8)
-d1=cbind(d1,plotID)
-iddob=d1$Site[1:908]#a site correspondes to a plot
-idneon=d1$plotID[909:6378]# an unique plotID corresponds to a plot
-plotIDM=data.frame(c(iddob,idneon))
-names(plotIDM)="plotIDM"# the plot id used for the SAR
-row.names(plotIDM)=row.names(d)
-plotIDM=sample_data(plotIDM)
-d<- merge_phyloseq(rare_all, plotIDM)# merge the new plotid with the initial data 
-# select an unique plot and build a SAR within the plot
+library(stringr)
 
-dob= subset_samples(d,Project=="DoB")# 
+dob= subset_samples(rare_all,Project=="DoB")# 
 
 ########
 subplot_ID=sample_data(dob)%>%data.frame()
@@ -37,7 +24,6 @@ for (i in 1:908)
     
   }
   
-  
   else if(str_detect(sub_sample,"A10"))
   {
     assign_ID[[i]]=c(0,10)
@@ -54,42 +40,45 @@ for (i in 1:908)
   }
   else if(str_detect(sub_sample,"B05|B5"))
   {
-    assign_ID[[i]]=c(5,0)
+    assign_ID[[i]]=c(5,5)
     
   }
   else if(str_detect(sub_sample,"B10"))
   {
-    assign_ID[[i]]=c(10,0)
+    assign_ID[[i]]=c(10,10)
   }
   else if(str_detect(sub_sample,"B20"))
   {
-    assign_ID[[i]]=c(20,0)
+    assign_ID[[i]]=c(20,20)
   }
   
   else if(str_detect(sub_sample,"B40"))
   {
-    assign_ID[[i]]=c(40,0)
+    assign_ID[[i]]=c(40,40)
   }
   
-  else if(str_detect(sub_sample,"C05|C5"))
+  else if(str_detect(sub_sample,"C05|C5")&!str_detect(sub_sample,"BC5"))# done
   {
-    assign_ID[[i]]=c(5,5)
+    assign_ID[[i]]=c(5,0)
   }
   
   else if(str_detect(sub_sample,"C10"))
   {
-    assign_ID[[i]]=c(10,10)
+    assign_ID[[i]]=c(10,0)
   }
   
   else if(str_detect(sub_sample,"C20"))
   {
-    assign_ID[[i]]=c(20,20)
+    assign_ID[[i]]=c(20,0)
   }
   else if(str_detect(sub_sample,"C40"))
   {
-    assign_ID[[i]]=c(40,40)
+    assign_ID[[i]]=c(40,0)
   }
-  
+  else if(str_detect(sub_sample,"BC5.C5."))# done
+    {
+    assign_ID[[i]]=c(5,5)
+  }
   else
   {
     assign_ID[[i]]=c(15,15)
@@ -108,13 +97,12 @@ coord_dob=matrix(nrow=908,ncol=2)
 # to add a ID to the data set for the dob sites
 
 coord_dob=data.frame(coord_dob)
-
 row.names(coord_dob)=row.names(sample_data(dob))
 coord_dob=sample_data(coord_dob)
 
 dob=merge_phyloseq(dob,coord_dob)
 
-# devide the plot into subplots at the 5 by 5 m spatial scales
+# divide the plot into subplots at the 5 by 5 m spatial scales
 
 subplot_ID=sample_data(dob)%>%data.frame()
 subplot_ID=subplot_ID[,c("X1","X2")]
@@ -142,22 +130,22 @@ head(subplot_ID)
 
 names(subplot_ID)=c("gx","gy")
 
-sample_data(dob)
 
-# add the plot ID to the subplot ID
+# add subplot ID to the phyloseq data
 
 plotIDM=sample_data(dob)
 plotIDM=plotIDM$plotIDM
 
 subplotID5=paste(plotIDM,"*",paste(subplot_ID$gx,"*",subplot_ID$gy))%>%data.frame()
 
-# add thi ID to the phyloseq
+# add the ID to the phyloseq
+
 names(subplotID5)="subplotID5"
 row.names(subplotID5)=row.names(sample_data(dob))
-
 subplotID5=sample_data(subplotID5)
 dob=merge_phyloseq(dob,subplotID5)
-## get the sample at the 5 by 5 scale for the dob site
+
+## get the samples at the 5 by 5 scale for the dob site
 
 set.seed=(2201)
 times=30
@@ -195,7 +183,7 @@ for (i in 1:length(a4))
     richness[[i]]=table(colSums(otu_table(data_sub))>0)["TRUE"]%>%as.numeric()
   }
 }
-# get the number of species within each 5 by plots
+# get the number of species within each 5 by 5 subplots
 
 richness_subplot5_dob=data.frame(nrow=length(a4),ncol=2)# the mean indiactes the mean value for the cores within the same subplot
 for (i in 1:length(a4))
@@ -234,10 +222,6 @@ subplot_ID=subplot_ID[,c("X1","X2")]
 # Define the dimensions of the plot area
 plot_width <- 40
 plot_height <- 40
-
-# at the 5 by 5 m spatial scales
-
-# Define the dimensions of each grid cell
 grid_cell_size <- 10
 
 # Create grid boundaries
@@ -248,10 +232,6 @@ y_breaks <- seq(0, plot_height, by = grid_cell_size)
 
 subplot_ID$X1 <- cut(subplot_ID$X1, breaks = x_breaks, labels = FALSE,include.lowest = TRUE)
 subplot_ID$X2 <- cut(subplot_ID$X2, breaks = y_breaks, labels = FALSE,include.lowest = TRUE)
-
-# Display the result
-head(subplot_ID)
-
 names(subplot_ID)=c("gx","gy")
 
 # add the plot ID to the subplot ID
@@ -261,7 +241,7 @@ plotIDM=plotIDM$plotIDM
 
 subplotID10=paste(plotIDM,"*",paste(subplot_ID$gx,"*",subplot_ID$gy))%>%data.frame()
 
-# add thi ID to the phyloseq
+# add the ID to the phyloseq
 names(subplotID10)="subplotID10"
 row.names(subplotID10)=row.names(sample_data(dob))
 
@@ -270,17 +250,7 @@ dob=merge_phyloseq(dob,subplotID10)
 
 ###
 
-plotIDM=sample_data(dob)
-plotIDM=plotIDM$plotIDM
 
-subplotID10new=paste(plotIDM,"*",paste(subplot_ID$gx,"*",subplot_ID$gy))%>%data.frame()
-
-# add thi ID to the phyloseq
-names(subplotID10new)="subplotID10new"
-row.names(subplotID10new)=row.names(sample_data(dob))
-
-subplotID10new=sample_data(subplotID10new)
-dob=merge_phyloseq(dob,subplotID10new)
 
 ## get the sample at the 10 by 10 scale for the dob site
 
@@ -869,9 +839,7 @@ richness_sd_subplo30D_dob=aggregate(richness~plotid,data=richness_subplot30D_dob
 
 ### rbind all the estimates based on the four different approaches
 
-richness_mean_subplotABCD_dob=rbind(richness_mean_subplot30A_dob,richness_mean_subplot30B_dob,richness_mean_subplot30C_dob,richness_mean_subplot30D_dob)
-
-richness_mean_subplotABCD_dob=aggregate(richness~plotid,data=richness_mean_subplotABCD_dob,FUN=mean)
+bind_rows(richness_mean_subplot30A_dob,richness_mean_subplot30B_dob,richness_mean_subplot30C_dob,richness_mean_subplot30D_dob)%>%group_by(plotid)%>%dplyr::summarise(mean_value=mean(mean_value,na.rm = TRUE),sd_value = sd(sd_value,na.rm = TRUE))->richness_mean_subplotABCD_dob
 
 # at the 40 by 40 scale
 
