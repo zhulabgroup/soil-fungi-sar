@@ -90,7 +90,7 @@ for (i in 1:length(a4))
 # get the mean value for each subplot
 
 richness_subplot5_neon_EM%>%mutate(plotid=substr(richness_subplot5_neon_EM$ncol,1,8))%>%dplyr::rename(richness=nrow)%>%
-  group_by(plotid)%>%summarise(mean_value=mean(richness),sd_value = sd(richness))->richness_subplot5_neon_EM
+  group_by(plotid)%>%summarise(mean_value=mean(richness,na.rm = TRUE),sd_value = sd(richness,na.rm = TRUE))->richness_subplot5_neon_EM
 
 save(richness_subplot5_neon_EM,file="richness_subplot5_neon_EM.RData")
 
