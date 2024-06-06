@@ -521,6 +521,7 @@ for (i in 1:43)
 
 richness_mean_subplot40_dob_AM=cbind(plotid=a4,richness=richness_mean_subplot40_dob_AM,rep(1600,43))%>%data.frame()%>%rename_all(~paste0(c("plotid","richness","area")))
 
+save(richness_mean_subplot40_dob_AM,file="richness_mean_subplot40_dob_AM.RData")
 ## 
 
 
