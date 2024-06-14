@@ -5,8 +5,22 @@ library(dplyr)
 library(phyloseq)
 
 0# Generate an subplot ID for each subplot at different scales
-load("rare_all.RData")
-a1= subset_samples(rare_all,Project=="NEON")# the unique plotID, we have 476 plots
+load("~/soil-sar/plot-sar-permutation/rare_all.Rdata")
+
+d=sample_data(rare_all)
+table(d$Project)# the first 908 rows are dob sites with the remaining 5470 being NEON sites
+d1=data.frame(d[,c("geneticSampleID","Site")])
+plotID=substr(d1$geneticSampleID,1,8)
+d1=cbind(d1,plotID)
+iddob=d1$Site[1:908]#a site correspondes to a plot
+idneon=d1$plotID[909:6378]# an unique plotID corresponds to a plot
+plotIDM=data.frame(c(iddob,idneon))
+names(plotIDM)="plotIDM"# the plot id used for the SAR
+row.names(plotIDM)=row.names(d)
+plotIDM=sample_data(plotIDM)
+d<- merge_phyloseq(rare_all, plotIDM)
+
+a1= subset_samples(d,Project=="NEON")# the unique plotID, we have 476 plots
 data_sub <- sample_data(a1)%>%data.frame()
 
 subplot=strsplit(data_sub$geneticSampleID,"-")
@@ -18,9 +32,14 @@ subplot_matrix%>%data.frame()->subplot_ID
 subplot_ID=subplot_ID[,3:4]
 names(subplot_ID)=c("gx","gy")
 
+subplot_ID$gx=as.numeric(subplot_ID$gx)
+subplot_ID$gy=as.numeric(subplot_ID$gy)
+
 row.names(subplot_ID)=row.names(sample_data(a1))# need to be the same with the sample data
 subplot_ID=sample_data(subplot_ID)
 a1=merge_phyloseq(a1,subplot_ID)
+
+
 
 # Define the dimensions of the plot area
 plot_width <- 40
@@ -343,6 +362,7 @@ richness_sd_subplo20_neon=aggregate(richness~plotid,data=richness_subplot20_neon
 subplot_ID=sample_data(a1)%>%data.frame()
 subplot_ID=subplot_ID[,c("gx","gy")]
 
+
 # the first approach
 
 point_assign1=numeric()
@@ -405,13 +425,16 @@ for(i in 1:dim(subplot_ID)[1])
   }
 }
 
-point_assign1=paste(plotIDM,"*",point_assign1)
-point_assign2=paste(plotIDM,"*",point_assign2)
-point_assign3=paste(plotIDM,"*",point_assign3)
-point_assign4=paste(plotIDM,"*",point_assign4)
+plotIDM=sample_data(a1)%>%data.frame()%>%select(plotIDM)
 
-four_assign=cbind(point_assign1,point_assign2,point_assign3,point_assign4)%>%data.frame()
-names(four_assign)=c("subplot_ID_30_A","subplot_ID_30_B","subplot_ID_30_C","subplot_ID_30_D")
+point_assign1=paste(plotIDM$plotIDM,"*",point_assign1)
+point_assign2=paste(plotIDM$plotIDM,"*",point_assign2)
+point_assign3=paste(plotIDM$plotIDM,"*",point_assign3)
+point_assign4=paste(plotIDM$plotIDM,"*",point_assign4)
+
+four_assign=cbind(point_assign1,point_assign2,point_assign3,point_assign4)%>%data.frame()%>%rename_all(~paste0(c("subplot_ID_30_A","subplot_ID_30_B","subplot_ID_30_C","subplot_ID_30_D")))
+
+
 row.names(four_assign)=row.names(sample_data(a1))
 four_assign=sample_data(four_assign)
 
