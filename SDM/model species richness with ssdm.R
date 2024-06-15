@@ -446,9 +446,15 @@ cbind(PFT_2020[,36:39],PFT_2100[,36:39],land_use_change_explict[,36:39])->temp
 names(temp)=c("crop2020","tree2020","shrub2020","grass2020","crop2100","tree2100","shrup2100","grass2100","crop_ratio","tree_ratio","shrub_ratio","grass_ratio")
 
 
-temp%>%filter(tree_ratio==1)%>%dim()/dim(temp)[1]
-temp%>%filter(shrub_ratio==1)%>%dim()/dim(temp)[1]
-temp%>%filter(grass_ratio==1)%>%dim()/dim(temp)[1]
+temp%>%filter(tree_ratio<1)%>%dim()/dim(temp)[1]
+temp%>%filter(shrub_ratio<1)%>%dim()/dim(temp)[1]
+temp%>%filter(grass_ratio<1)%>%dim()/dim(temp)[1]
+# most change were caused by forest 
+
+temp%>%filter(tree_ratio>1)%>%dim()/dim(temp)[1]#2%
+temp%>%filter(shrub_ratio>1)%>%dim()/dim(temp)[1]
+temp%>%filter(grass_ratio>1)%>%dim()/dim(temp)[1]#5%
+
 # most change were caused by forest 
 
 temp%>%filter(tree_ratio==1&shrub_ratio==1&grass_ratio<1)%>%dim()
