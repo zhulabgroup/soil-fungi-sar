@@ -936,6 +936,67 @@ save(richness_subplot40_dob_standar_woodsap,file="richness_subplot40_dob_standar
 
 ## for different guilds
 
+set.seed=(989)
+times=30
+a4=sample_data(data_para)
+a4=unique(a4$subplotID10)
+richness <- vector("list", length(a4))
+for (i in 1:length(a4))
+{
+  cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
+  data_sub <- subset_samples(data_para, subplotID10==a4[i])
+  dim1=dim(sample_data(data_sub))[1]
+  if(dim1>=2)
+  {
+    cl <- makeCluster(3)
+    registerDoParallel(cl)
+    richness[[i]] <- foreach(i = 1:times, .combine = "cbind", .packages = c("phyloseq","dplyr")) %dopar%{
+      species <- vector(length = dim1[1]) # create a vector to save diversity
+      for (j in 1:1) 
+      { 
+        # randomly sample j samples in the plot
+        flag <- rep(FALSE, dim1[1])
+        flag[sample(1:dim1[1], 1)] <- TRUE
+        tEMp <- merge_samples(data_sub, flag, function(x) mean(x, na.rm = TRUE)) # the j samples aggregated by mean
+        species[j] <- sum(otu_table(tEMp)["TRUE"] > 0)
+        return(species[j])
+      }
+    }
+    stopCluster(cl)
+  }
+  else{
+    richness[[i]]=table(colSums(otu_table(data_sub))>0)["TRUE"]%>%as.numeric()
+  }
+}
+
+
+
+richness_subplot10_dob_para=data.frame(nrow=length(a4),ncol=2)# the mean indicates the mean value for the cores within the same subplot
+for (i in 1:length(a4))
+{
+  ak=dim(richness[[i]])[1]
+  
+  if(is.null(ak))
+  {
+    richness_subplot10_dob_para[i,1]=a4[i]
+    richness_subplot10_dob_para[i,2]=richness[[i]] 
+    
+  }
+  else
+  {
+    
+    richness_subplot10_dob_para[i,1]=a4[i]
+    richness_subplot10_dob_para[i,2]=mean(richness[[i]])
+  }
+}
+
+
+# get the mean value for each subplot
+
+richness_subplot10_dob_para%>%mutate(plotid=substr(richness_subplot10_dob_para$nrow,1,3))%>%dplyr::rename(richness=ncol)%>%dplyr::group_by(plotid)%>%dplyr::summarise(mean_value=mean(richness,na.rm=TRUE),sd_value = sd(richness,na.rm=TRUE))->richness_subplot10_dob_standar_para
+
+save(richness_subplot10_dob_standar_para,file="richness_subplot10_dob_standar_para.RData")
+###
 pp=sample_data(data_para)%>%data.frame()
 pp=unique(pp$plotIDM)
 ori=expand.grid(x=seq(0,10,0.5),y=seq(0,10,0.5))
@@ -1044,6 +1105,67 @@ save(richness_subplot40_dob_standar_para,file="richness_subplot40_dob_standar_pa
 
 
 ## for different guilds
+
+###
+set.seed=(989)
+times=30
+a4=sample_data(data_epiphy)
+a4=unique(a4$subplotID10)
+richness <- vector("list", length(a4))
+for (i in 1:length(a4))
+{
+  cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
+  data_sub <- subset_samples(data_epiphy, subplotID10==a4[i])
+  dim1=dim(sample_data(data_sub))[1]
+  if(dim1>=2)
+  {
+    cl <- makeCluster(3)
+    registerDoParallel(cl)
+    richness[[i]] <- foreach(i = 1:times, .combine = "cbind", .packages = c("phyloseq","dplyr")) %dopar%{
+      species <- vector(length = dim1[1]) # create a vector to save diversity
+      for (j in 1:1) 
+      { 
+        # randomly sample j samples in the plot
+        flag <- rep(FALSE, dim1[1])
+        flag[sample(1:dim1[1], 1)] <- TRUE
+        tEMp <- merge_samples(data_sub, flag, function(x) mean(x, na.rm = TRUE)) # the j samples aggregated by mean
+        species[j] <- sum(otu_table(tEMp)["TRUE"] > 0)
+        return(species[j])
+      }
+    }
+    stopCluster(cl)
+  }
+  else{
+    richness[[i]]=table(colSums(otu_table(data_sub))>0)["TRUE"]%>%as.numeric()
+  }
+}
+
+
+richness_subplot10_dob_epiphy=data.frame(nrow=length(a4),ncol=2)# the mean indicates the mean value for the cores within the same subplot
+for (i in 1:length(a4))
+{
+  ak=dim(richness[[i]])[1]
+  
+  if(is.null(ak))
+  {
+    richness_subplot10_dob_epiphy[i,1]=a4[i]
+    richness_subplot10_dob_epiphy[i,2]=richness[[i]] 
+  }
+  else
+  {
+    richness_subplot10_dob_epiphy[i,1]=a4[i]
+    richness_subplot10_dob_epiphy[i,2]=mean(richness[[i]])
+  }
+}
+
+# get the mean value for each subplot
+
+richness_subplot10_dob_epiphy%>%mutate(plotid=substr(richness_subplot10_dob_epiphy$nrow,1,3))%>%dplyr::rename(richness=ncol)%>%dplyr::group_by(plotid)%>%dplyr::summarise(mean_value=mean(richness,na.rm=TRUE),sd_value = sd(richness,na.rm=TRUE))->richness_subplot10_dob_standar_epiphy
+
+save(richness_subplot10_dob_standar_epiphy,file="richness_subplot10_dob_standar_epiphy.RData")
+
+
+###
 
 pp=sample_data(data_epiphy)%>%data.frame()
 pp=unique(pp$plotIDM)
