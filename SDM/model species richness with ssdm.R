@@ -26,6 +26,7 @@ library(patchwork)
 
 
 r_present <- raster::getData("worldclim", var = "bio", res = 10)
+
 r_present <- r_present[[c(1, 4, 12)]]
 
 # Run necessary transformations on wordclim-provided temperature data
