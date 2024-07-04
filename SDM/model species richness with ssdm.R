@@ -181,8 +181,9 @@ for (i in 1:8597) {
   df <- readRDS(paste0("result_", i, ".rds"))
   data[, i] <- raster::extract(df@binary, coords_present)
 }
+# did not use the two model
 
-save(data, file = "presence_present.RData") # 0-1 data for 8597 species
+save(data, file = "presence_present.RData") # 0-1 data for 8597 species(can not find this data, perhaps, it was not saved)
 
 # get the richness map for the current distribution
 
@@ -193,12 +194,11 @@ d <- rowSums(data) # the total richness for each grid cell
 richness_present <- cbind(coords_present, d) %>%
   data.frame() %>%
   rename(lon = x, lat = y, richness = d)
-
+#this data should have been saved at great
 
 # (5). model species distribution under climate change with SDM
 # get the future climate variables
 # https://bedatablog.netlify.app/post/download-and-illustrate-current-and-projected-climate-in-r/
-
 
 # future_data <- raster::getData(name = "CMIP5", var = "bio", res = 10, rcp = 45, model = "IP", year = 70)
 
@@ -285,6 +285,8 @@ names(r_future_northam) <- c("mat_celsius", "temp_seasonality", "map_mm", "mat_c
 setwd("/Users/luowenqi/soil-sar/SDM")
 save(r_future_northam, file = "r_future_northam.RData")
 
+
+
 # (6). model each species' presence and get the total richness in each cell under future climate scenarios
 
 sdm <- list()
@@ -299,7 +301,7 @@ for (i in 1:8597) {
 stopImplicitCluster()
 
 # read in the data and get the total richness for each cell for future climate scenarios
-
+# this is based on 
 data <- matrix(ncol = 8597, nrow = 275760)
 for (i in 1:8597) {
   cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
@@ -322,7 +324,7 @@ species_change_climate <- cbind(richness_present, richness_future[, 3]) %>%
   mutate(change = future_rich - present_rich, rate = change / present_rich)
 save(species_change_climate, file = "species_change_climate.RData")
 
-load("~/soil-sar/SDM/richness_present_RF.RData")
+load("~/soil-sar/SDM/richness_present_RF.RData")# the stored data is richness_present
 
 # just look at the cell with species loss, cells with increased richness were assigned to 0
 species_change_climate1 <- cbind(richness_present, richness_future[, 3]) %>%
