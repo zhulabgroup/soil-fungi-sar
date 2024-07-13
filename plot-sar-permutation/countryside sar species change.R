@@ -1,4 +1,4 @@
-## contryside SAR model
+## countryside SAR model
 
 load("~/soil-sar/plot-sar-permutation/PFT_2100_ssp245.RData")
 
