@@ -915,4 +915,111 @@ save(dob_permutation,file="dob_permutation.RData")
 save(sar_dob_permutation,file="sar_dob_permutation.RData")
 
 
+### the new approach to estimate the richness at the 30 by 30 m scale
+
+
+## to determine the richness at the 30 by 30 square
+
+##
+## select the first point and to see how many cores are selected within
+
+## the orig of the square
+plot_ID=sample_data(dob_permutation)%>%data.frame()
+
+plot_ID=unique(plot_ID$plotIDM)
+
+ori=expand.grid(x=seq(0,10,0.5),y=seq(0,10,0.5))
+
+# the maximum number of soil cores included in the 30 by 30 plot
+
+max_number=numeric()
+for(j in 1:length(plot_ID))
+{
+  cat("\r", paste(paste0(rep("*", round(j / 1, 0)), collapse = ""), j, collapse = "")) # informs the processing
+  
+  kk=numeric()
+  for(i in 1:dim(ori)[1])
+  {
+    d=sample_data(dob_permutation)%>%data.frame()%>%select(X1,X2,plotIDM)%>%filter(plotIDM==plot_ID[j])
+    d$gx=as.numeric(d$gx)
+    d$gy=as.numeric(d$gy)
+    kk[i]=subset(d,gx>=ori$x[i]&gx<=ori$x[i]+30 &gy<=ori$y[i]+30&gy>=ori$y[i])%>%summarize(row_count = n())%>%as.numeric()
+  }
+  
+  max_number[j]=kk%>%max()
+}
+
+ggplot()+
+  geom_point(data=d,aes(y=gy,x=gx))+
+  xlim(0,40)+
+  ylim(0,40)
+
+
+
+## for each plot, we can select the origin that lead to more number of cores included
+
+richness_plot_permu=list()
+for (p in 1:30)
+{
+  cat("\r", paste(paste0(rep("*", round(p / 1, 0)), collapse = ""), p, collapse = "")) # informs the processing
+
+richness_plot_dob=numeric()
+for(k in 1:length(plot_ID))
+{
+  
+  core_number=numeric()
+  for(i in 1:dim(ori)[1])
+  {
+    d=sample_data(dob_permutation)%>%data.frame()%>%select(X1,X2,plotIDM)%>%filter(plotIDM==plot_ID[k])
+    
+    core_number[i]=subset(d,X1>=ori$x[i]&X1<=ori$x[i]+30 &X2<=ori$y[i]+30&X2>=ori$y[i])%>%summarize(row_count = n())%>%as.numeric()
+  }
+  core_number_8=core_number>8
+  core_number_8[!core_number_8]=NA
+      richness=numeric()
+      for(j in c(which(!is.na(core_number_8))))# only select the locations that over 9 cores can be sampled/81 cores
+      {
+        # informs the processing
+        sub_samp=subset(d,X1>=ori$x[j]&X1<=ori$x[j]+30 &X2<=ori$y[j]+30&X2>=ori$y[j])
+        sub_samp=sample(rownames(sub_samp),9)# select only nine cores
+        kk=subset_samples(dob_permutation,sample_names(dob_permutation)%in%sub_samp)
+        richness[j]=table(colSums(otu_table(kk))>0)["TRUE"]%>%as.numeric()
+      } 
+    
+  richness_plot_dob[k]=richness%>%mean(na.rm = TRUE)
+}
+richness_plot_permu[[p]]=richness_plot_dob
+}
+
+# get the mean for the 30 permutations
+
+mean_permu=matrix(ncol=length(plot_ID),nrow=30)
+for(p in 1:30)
+  {
+  mean_permu[p,] =richness_plot_permu[[p]]
+}
+
+richness_subplot30_dob_standar=mean_permu%>%data.frame()%>%t()%>%data.frame()%>%rowwise()%>% summarise(mean_value = mean(c_across(everything()), na.rm = TRUE))%>%mutate(plotID=plot_ID,area=rep(900,length.out=n))%>%select( plotID,mean_value,area)
+
+save(richness_subplot30_dob_standar,file="richness_subplot30_dob_standar")
+
+# for the estimation of the z and  c value
+
+
+a=unique(richness_data_neon_sar$plotid)
+para_estimate=data.frame(ncol=3,nrow=length(a))
+for (i in 1:length(a))
+{
+  mod=lm(formula = log(mean_value) ~log(area), data =richness_data_neon%>%filter(plotid==a[i])) 
+  para_estimate[i,1]=a[i]
+  para_estimate[i,2]=coef(mod)[1]
+  para_estimate[i,3]=coef(mod)[2]
+  
+}
+para_estimate= para_estimate%>%rename_all(~paste0(c("plotID","logc","z")))
+
+richness_data_neon_sar%>%rename(plotID=plotid)%>%left_join(para_estimate,by="plotID")->tem
+
+## good to thing that number of points does not affect the estimated z
+
 
