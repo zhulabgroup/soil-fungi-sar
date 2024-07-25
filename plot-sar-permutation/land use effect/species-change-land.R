@@ -203,7 +203,23 @@ ggplot() +
   geom_sf(data=biomes, aes(fill=LABEL))+
   #geom_point(data=model_data_SAR%>%dplyr::select(lon,lat)%>%distinct(),aes(x=lon,y=lat))+
   guides(position="bottom")+
-  geom_text(data=full_parameter_data%>%dplyr::select(lon,lat,plotID)%>%distinct(),aes(x=lon,y=lat,label=plotID),size=1)
+  geom_point(data=full_parameter_data%>%dplyr::select(lon,lat,plotID)%>%distinct(),aes(x=lon,y=lat),size=1)+
+  theme(legend.position = "right",
+        legend.text = element_text(size=8),
+        legend.title  = element_text(size=10),
+        text = element_text(size = 18),
+        plot.title = element_text(size = 15, hjust = 0.5), 
+        axis.text.y = element_text(hjust = 0), 
+        axis.text.x = element_text(hjust = 1), 
+        axis.title.y = element_text(size = 18), 
+        axis.title.x = element_text(size = 18), 
+        axis.ticks.x = element_blank(), 
+        legend.key.size = unit(0.3, "cm"),
+        panel.background = element_rect(fill = "NA"),
+        panel.border = element_rect(color = "black", size = 1, fill = NA))+
+  xlab("")+
+  ylab("")
+  
 
 
 ggplot() +
@@ -574,15 +590,14 @@ plot(north_america_cropped)
 r_present_northam <- raster::mask(raster::crop(r_present, north_america_cropped), north_america_cropped)
 
 
-
 p1=ggplot(change_richness_rcp245) +
-  geom_point(data = change_richness_rcp245, pch = 15, aes(x = lon, y = lat, color = 100*value), size = 0.275) +
-  scale_color_gradient2(expression("Change %"), low = "blue", high="red",mid = "gray", na.value = "white")+ 
+  geom_point(data = change_richness_rcp245, pch=21,aes(x = lon, y = lat, color = value), size = 0.275) +
+  scale_color_gradient2(expression("Change %"), low = "seagreen", mid="yellow",high = "purple", na.value = "white")+ 
   xlab("Predicted species loss") +
   ylab("")+
   theme(legend.position = "bottom",
         legend.margin = margin(t = -15, r = -5, b = 5, l = 0),
-        legend.text = element_text(size=8),
+        legend.text = element_text(size=8,angle=90),
         legend.title  = element_text(size=10),
         text = element_text(size = 18),
         plot.title = element_text(size = 15, hjust = 0.5), 
@@ -592,12 +607,12 @@ p1=ggplot(change_richness_rcp245) +
         axis.title.x = element_text(size = 18), 
         axis.ticks.x = element_blank(), 
         axis.ticks.y = element_blank(),
-        plot.margin = unit(c(0.5, -0.5, 0.5, 0.5), "cm"),
+        plot.margin = unit(c(0.3, -0.5, 0.5, 0.5), "cm"),
         panel.background = element_rect(fill = "NA"),
         panel.border = element_blank())+
   xlab("")+
-  ylab("")+
-  ggtitle("RCP4.5 & SSP2")+
+  ylab("Land-use impact")+
+  #ggtitle("RCP4.5 & SSP2")+
   geom_sf(data=st_as_sf(north_america_cropped),size=0.1, col="black", fill=alpha("gray80", 0.2),linetype = "solid")+
   scale_size(range = c(0.5, 2))
 
@@ -617,9 +632,6 @@ rcp245_richness=richness_2100%>%bind_cols(coords_present)%>%dplyr::select(lon,la
 present_richness$all_normalized <- rescale(present_richness$all, to = c(0, 1), na.rm = TRUE)
 
 rcp245_richness$all_normalized <- rescale(rcp245_richness$all, to = c(0, 1), na.rm = TRUE)
-
-
-
 
 
 summary_data_richness_sar_present <- present_richness%>% group_by(lat) %>%
@@ -657,8 +669,31 @@ ggplot()+
   coord_flip()
 
 
-ggplot()+geom_point(data=richness_2015%>%bind_cols(coords_present),aes(x=lon,y=lat,color=all),size=0.275)+
-  scale_color_gradient2(low = "white", mid = "gray", high = "purple", na.value = "white" )
+ggplot()+
+  geom_point(data=present_richness,aes(x=lon,y=lat,color=all_normalized),size=0.275)+
+  scale_color_gradient2("Relative\n richness", na.value = "white" )+
+  theme(legend.position = "right",
+        legend.margin = margin(t = -15, r = -5, b = 5, l = 0),
+        legend.text = element_text(size=8),
+        legend.title  = element_text(size=10),
+        text = element_text(size = 18),
+        plot.title = element_text(size = 15, hjust = 0.5), 
+        axis.text.y = element_blank(), 
+        axis.text.x = element_blank(), 
+        axis.title.y = element_text(size = 18), 
+        axis.title.x = element_text(size = 18), 
+        axis.ticks.x = element_blank(), 
+        axis.ticks.y = element_blank(),
+        plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "cm"),
+        panel.background = element_rect(fill = "NA"),
+        panel.border = element_blank())+
+  xlab("")+
+  ylab("")+
+  ggtitle("")+
+  geom_sf(data=st_as_sf(north_america_cropped),size=0.1, col="black", fill=alpha("white", 0.2),linetype = "solid")
+
+
+
 
 ggplot()+geom_point(data=richness_2100%>%bind_cols(coords_present),aes(x=lon,y=lat,color=all),size=0.275)+
   scale_color_gradient2(low = "white", mid = "gray", high = "purple", na.value = "white" )
@@ -670,7 +705,7 @@ ggplot()+geom_point(data=richness_2100%>%bind_cols(coords_present),aes(x=lon,y=l
   
 p2=ggplot()+
   geom_line(data = summary_data, aes(x = lat, y = mean_value), color = "blue", size = 0.5) +  # Mean trend line
-  geom_ribbon(data = summary_data, aes(x = lat, ymin = mean_value - sd_value, ymax = mean_value + sd_value), fill = "blue", alpha = 0.2)+
+  geom_ribbon(data = summary_data, aes(x = lat, ymin = mean_value - sd_value, ymax = mean_value +sd_value), fill = "blue", alpha = 0.2)+
   theme(legend.position = c(0.75,0.28),
         legend.text = element_text(size=8),
         legend.title  = element_text(size=10),
@@ -685,11 +720,11 @@ p2=ggplot()+
         panel.background = element_rect(fill = "NA"),
         panel.border = element_rect(color = "black", size = 1, fill = NA))+
   xlab("Latitude")+
-  ylab("Species change rate")+
+  ylab("")+
   ggtitle("RCP4.5 & SSP2")+
   coord_flip()+
   geom_hline(yintercept = 0,linetype="dashed")+
-  ylim(-0.1,0.1)
+  ylim(-0.08,0.08)
 
 
 
@@ -697,7 +732,7 @@ p2=ggplot()+
 tem_df_rcp245_land$variable=factor(tem_df_rcp245_land$variable,levels=guild_type)
 
 p3=ggplot(data=tem_df_rcp245_land,aes(fill=type,y=variable ,x=mean_value))+
-  geom_col(width = 0.6,color="black")+
+  geom_col(width = 0.5,color="black")+
   geom_errorbar(data=tem_df_rcp245_land, aes(xmin = mean_value- sd_value/sqrt(count), xmax = mean_value +sd_value/sqrt(count)),width=0.2)+
   scale_fill_manual("",breaks=c("Negative","Positive"),labels=c("Loss","Gain"),values=c("#8fd1e1","#fedc5e"))+
 theme(legend.position = c(0.8,0.87),
@@ -715,15 +750,16 @@ theme(legend.position = c(0.8,0.87),
       panel.border = element_rect(color = "black", size = 1, fill = NA))+
   geom_vline(xintercept =0,color="gray",linetype="dashed")+
   ylab("")+
-  xlab("Species change rate")+
+  xlab("")+
   scale_y_discrete(breaks=guild_type,position="right",labels=c("AM","EM","Soil sapro.","Litter sapro.","Wood sapro.","Plant patho.","Parasite","Epiphyte","All"))+
-  geom_segment(data=tem_df_rcp245_land,size=0.35,color="black",aes(x=overal_mean-overal_sd,xend=overal_mean+overal_sd,y=variable,yend=variable))+
-  geom_point(aes(y=variable,x=overal_mean),pch=23,color="black",size=2.5,fill="seagreen1")+
+  geom_segment(data=tem_df_rcp245_land,size=0.35,color="black",aes(x=overal_mean-low,xend=overal_mean+up,y=variable,yend=variable))+
+  geom_point(aes(y=variable,x=overal_mean),pch=23,color="black",size=2,fill="seagreen1",alpha=0.5)+
   geom_hline(yintercept = 8.5,color="red",size=1,alpha=0.3,linetype="dotted")+
   ggtitle("RCP4.5 & SSP2")+
+  xlim(-0.5,0.5)+
   geom_text(data=tem_df_rcp245_land,size=6,color="black",
-            aes(x=rep(c(0.0640385390, -0.0765014266, -0.0753516064,  0.0636994127, -0.0321197594057,  0.07649490386, -0.0421426806,
-                     -0.0754493784, -0.0314108882),each=2),y=variable),label="***")
+            aes(x=rep(c(0.120640385390, -0.1320765014266, -0.1420753516064,  0.1320636994127, -0.11321197594057,  0.127649490386, -0.12421426806,
+                     -0.132754493784, -0.10314108882),each=2),y=variable),label="***")
 
 
 p1=ggplotGrob(p1)
@@ -873,27 +909,20 @@ for (i in 1:9)
   T_test_result_rcp585[i,4]=meam_compare$p.value
 }
 
-T_test_result_rcp585%>%data.frame()%>%rename_all(~paste0(c("mean","low","up")))%>%mutate(variable=guild_type)->T_test_result_rcp585
+T_test_result_rcp585%>%data.frame()%>%rename_all(~paste0(c("mean","low","up","pva")))%>%mutate(variable=guild_type)->T_test_result_rcp585
 
 tem_df_rcp585_land%>%left_join(T_test_result_rcp585,by="variable")->tem_df_rcp585_land
 
 
 
-
-
-
-
-
-
-
 p4=ggplot(change_richness_rcp585) +
   geom_point(data = change_richness_rcp585, pch = 15, aes(x = lon, y = lat, color = 100*value), size = 0.275) +
-  scale_color_gradient2(expression("Change %"), low = "blue", mid = "gray", high = "purple", na.value = "white")+ 
+  scale_color_gradient2(expression("Change %"), low = "seagreen", mid = "yellow", high = "purple", na.value = "white")+ 
   xlab("Predicted species loss") +
   ylab("")+
   theme(legend.position ="bottom",
         legend.margin = margin(t = -15, r = -5, b = 5, l = 0),
-        legend.text = element_text(size=8),
+        legend.text = element_text(size=8,angle=90),
         legend.title  = element_text(size=10),
         text = element_text(size = 18),
         plot.title = element_text(size = 15, hjust = 0.5), 
@@ -901,14 +930,14 @@ p4=ggplot(change_richness_rcp585) +
         axis.text.x = element_blank(), 
         axis.title.y = element_text(size = 18), 
         axis.title.x = element_text(size = 18), 
-        plot.margin = unit(c(0.5, -0.5, 0.5, 0.5), "cm"),
+        plot.margin = unit(c(0.3, -0.5, 0.5, 0.5), "cm"),
         axis.ticks.x = element_blank(), 
         axis.ticks.y = element_blank(),
         panel.background = element_rect(fill = "NA"),
         panel.border = element_blank())+
   xlab("")+
-  ylab("")+
-  ggtitle("RCP8.5 & SSP5")+
+  ylab("Land-use impact")+
+  #ggtitle("RCP8.5 & SSP5")+
   geom_sf(data=st_as_sf(north_america_cropped),size=0.1, col="black", fill=alpha("gray80", 0.2),linetype = "solid")
 
   
@@ -937,7 +966,7 @@ p5=ggplot()+
         panel.background = element_rect(fill = "NA"),
         panel.border = element_rect(color = "black", size = 1, fill = NA))+
   xlab("Latitude")+
-  ylab("Species change rate")+
+  ylab("")+
   ggtitle("RCP8.5 & SSP5")+
   coord_flip()+
   geom_hline(yintercept = 0,linetype="dashed")+
@@ -950,7 +979,7 @@ p5=ggplot()+
 tem_df_rcp585_land$variable=factor(tem_df_rcp585_land$variable,levels=guild_type)
 
 p6=ggplot(data=tem_df_rcp585_land,aes(fill=type,y=variable ,x=mean_value))+
-  geom_col(width = 0.6,color="black")+
+  geom_col(width = 0.5,color="black")+
   #geom_errorbar(data=tem_df_rcp585_land, aes(xmin = mean_value- sd_value/sqrt(count), xmax = mean_value +sd_value/sqrt(count)),width=0.2)+
   scale_fill_manual("",breaks=c("Negative","Positive"),labels=c("Loss","Gain"),values=c("#8fd1e1","#fedc5e"))+
   theme(legend.position = c(0.8,0.87),
@@ -969,12 +998,12 @@ p6=ggplot(data=tem_df_rcp585_land,aes(fill=type,y=variable ,x=mean_value))+
   geom_vline(xintercept =0,color="gray",linetype="dashed")+
   ylab("")+
 
-  geom_segment(data=tem_df_rcp585_land,size=0.25,color="black",aes(x=overal_mean-overal_sd,xend=overal_mean+overal_sd,y=variable,yend=variable)
+  geom_segment(data=tem_df_rcp585_land,size=0.35,color="black",aes(x=overal_mean-low,xend=overal_mean+up,y=variable,yend=variable)
   )+
-  geom_point(aes(y=variable,x=overal_mean),pch=23,color="black",size=2,fill="seagreen1")+
-  xlab("Species change rate")+
+  geom_point(aes(y=variable,x=overal_mean),pch=23,color="black",size=2,fill="seagreen1",alpha=0.5)+
+  xlab("")+
   scale_y_discrete(breaks=guild_type,position="right",labels=c("AM","EM","Soil sapro.","Litter sapro.","Wood sapro.","Plant patho.","Parasite","Epiphyte","All"))+
-  ggtitle("RCP 8.5 & SSP 5")+
+  ggtitle("RCP8.5 & SSP5")+
   geom_hline(yintercept = 8.5,color="red",size=1,alpha=0.3,linetype="dotted")+
   xlim(-0.15,0.15)+
   geom_text(data=tem_df_rcp585_land,size=6,color="black",
@@ -982,8 +1011,6 @@ p6=ggplot(data=tem_df_rcp585_land,aes(fill=type,y=variable ,x=mean_value))+
                          -0.03021995706, -0.03007214357),each=2),y=variable),label="***")
 
   
-
-
 ggplotGrob(p4)
 
 p5=ggplotGrob(p5)
@@ -995,6 +1022,8 @@ p5$heights=p6$heights
 p8=plot_grid(p4,p5,p6,ncol=3,rel_heights = c(1,0.6,0.6),rel_widths  = c(1,0.6,0.8))
 
 plot_grid(p7,p8,ncol=1)
+
+plot_grid(p4,p5,p6,ncol=3,rel_heights = c(1,1,1),rel_widths  = c(1,0.6,0.8))
   
   
 #d=p4+p5+p6+plot_layout(widths = c(2.2,0.7, 1),heights = c(2.5,1, 1))
@@ -1003,7 +1032,6 @@ plot_grid(p7,p8,ncol=1)
 
   d1&theme(plot.margin = unit(c(0.5, 2, -2, 0), "cm"))
  
-  
   
 # changes in the crop and non-crop land
   op=data.frame(df=PFT_2100$No_crop-PFT_2015$No_crop,coords_present)
