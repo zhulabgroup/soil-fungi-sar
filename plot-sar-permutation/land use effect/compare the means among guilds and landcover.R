@@ -12,12 +12,15 @@ library(dplyr)
 # to see the effect of guild and land cover type on the estimated z values
 # the land use type data for each plot
 
-load("~/soil-sar/plot-sar-permutation/model_data_SAR.RData")
+#load("~/soil-sar/plot-sar-permutation/model_data_SAR.RData")
+
+load("full_parameter_data.RData")
+
 load("~/soil-sar/data/comp_vege.RData")
 
 land_use=comp_vege%>%dplyr::select(plotID,type)%>%distinct()
 
-model_data_SAR%>%left_join(land_use,by="plotID")%>%mutate(type = ifelse(nchar(plotID)<4, "evergreenForest", type))->model_comp
+full_parameter_data%>%left_join(land_use,by="plotID")%>%mutate(type = ifelse(nchar(plotID)<4, "evergreenForest", type))->model_comp
 
 model_comp%>%filter(is.na(type))%>%filter(guild=="all")%>%distinct()%>%dplyr::select(lon,lat,plotID)->coordinates_temp
 
@@ -34,7 +37,7 @@ values=extract(raster_data,temp_coords)
 
 # there are still NA values for some points and we just find the nearest point to get the values
 
-values=bind_cols(values,coordinates)
+values=bind_cols(values,coordinates_temp)
 
 na_ind <- which(is.na(values$`NLCD Land Cover Class`))
 for(i in na_ind) {
@@ -45,7 +48,7 @@ for(i in na_ind) {
   values$`NLCD Land Cover Class`[i] <- values0["NLCD Land Cover Class"]
 }
 
-
+# the code does not work
 
 
 
@@ -58,6 +61,7 @@ values=values%>%rename(type="NLCD Land Cover Class")%>%
       type == "Deciduous Forest" ~ "deciduousForest",  
       type == "Deciduous Forest" ~ "deciduousForest",  
       type == "Shrub/Scrub" ~ "shrubScrub",  
+      type=="Cultivated Crops" ~"cultivatedCrops",
       TRUE ~ type          
     )
   )
@@ -119,7 +123,7 @@ guild_mean$guild <- factor(guild_mean$guild, levels = od$guild)
 
 p1=ggplot(guild_mean,aes(x=guild,y=zvalue,fill=guild),alpha=0.5)+
   sm_raincloud(size=0.1,point.params =list(size=2),sep_level=2)+
-  geom_boxplot(width = 0.1, color = "black", size=0.1,outlier.size = 1) +
+  geom_boxplot(width = 0.2, color = "black", size=0.1,outlier.size = 1)+ 
   
   theme(legend.position =c(0.5,0.153) ,
         plot.title = element_text(hjust = 0.5, vjust = 2),
@@ -136,27 +140,31 @@ p1=ggplot(guild_mean,aes(x=guild,y=zvalue,fill=guild),alpha=0.5)+
   guides(fill = guide_legend(nrow = 4, byrow = TRUE)) +
   ylab(expression(italic(Z)*" value")) +
   xlab("")+
-  geom_hline(yintercept = 0.703,color="red",linetype="dashed",size=0.8)+
-  annotate("text", x = 1, y = 1.4, label = "a", size = 6) +
-  annotate("text", x = 2, y = 1.1, label = "a", size = 6) +
-  annotate("text", x = 3, y = 1.1, label = "ab", size = 6) +
-  annotate("text", x = 4, y = 1.25, label = "b", size = 6) +
-  annotate("text", x = 5, y = 1.04, label = "b", size = 6) +
-  annotate("text", x = 6, y = 1.25, label = "c", size = 6) +
-  annotate("text", x = 7, y = 1, label = "d", size = 6) +
-  annotate("text", x = 8, y = 1.25, label = "d", size = 6) +
-  ylim(-0.5,2)+
+  geom_hline(yintercept = 0.71,color="red",linetype="dashed",size=0.8)+
+  annotate("text", x = 1, y = 1.1, label = "ab", size = 6) +
+  annotate("text", x = 2, y = 1.15, label = "a", size = 6) +
+  annotate("text", x = 3, y = 1.05, label = "b", size = 6) +
+  annotate("text", x = 4, y = 1.15, label = "b", size = 6) +
+  annotate("text", x = 5, y = 1.04, label = "c", size = 6) +
+  annotate("text", x = 6, y = 1.07, label = "e", size = 6) +
+  annotate("text", x = 7, y = 1.1, label = "d", size = 6) +
+  annotate("text", x = 8, y = 0.99, label = "d", size = 6) +
+  ylim(-0.12,1.3)+
 
   scale_fill_manual("", breaks = od$guild, values = c("chocolate1", "seagreen1", "cadetblue1", "greenyellow", "forestgreen", "purple","lavender", "tan"), 
-                    labels = c("ACM(N=280)",  "ECM(N=320)", "wood saprotroph(N=320)", "epiphyte(N=283)" , 
-                               "litter saprotroph(N=320)", 
-                               "plant pathogen(N=319)", "soil saprotroph(N=320)", "parasite(N=316)" 
+                    labels = c( "EM(N=415)", "AM(N=326)", "Wood saprotroph(N=401)", 
+                                "Epiphyte(N=337)" , 
+                               "Litter saprotroph(N=414)", 
+                               "Plant pathogen(N=403)", 
+                               "Parasite(N=391)","Soil saprotroph(N=416)"))
                                                                                                                                                              )) 
 
 
 ## for the forest types
+# just select some of types with more replicates
+model_comp%>%filter(guild=="all")%>%group_by(type)%>%summarise(n())%>%filter( `n()`>=10)->many_type
 
-model_comp%>%filter(guild=="all")%>%filter(!is.na(type)&type!="emergentHerbaceousWetlands")->type_mean
+model_comp%>%filter(guild=="all")%>%filter(!is.na(type)&type%in%many_type$type)->type_mean
 
 type_mean$type=as.factor(type_mean$type)
 
@@ -174,8 +182,8 @@ type_mean$type <- factor(type_mean$type, levels = od$type)
 
 p2=ggplot(data=type_mean,aes(x=type,y=zvalue,fill=type),alpha=0.5)+
   sm_raincloud(size=0.1,point.params =list(size=2),sep_level=2)+
-  geom_boxplot(width = 0.1, color = "black", size=0.1,outlier.size = 1) +
-  theme(legend.position =c(0.5,0.203), 
+  geom_boxplot(width = 0.2, color = "black", size=0.1,outlier.size = 1)+ 
+  theme(legend.position =c(0.5,0.174896203), 
         plot.title = element_text(hjust = 0.5, vjust = 2),
         legend.text = element_text(size = 14), 
         text = element_text(size = 15), 
@@ -191,19 +199,19 @@ p2=ggplot(data=type_mean,aes(x=type,y=zvalue,fill=type),alpha=0.5)+
   ylab(expression(italic(Z)*" value")) +
   xlab("")+
   geom_hline(yintercept = 0.706,color="red",linetype="dashed",size=0.8)+
-  annotate("text", x = 1, y = 0.9, label = "a", size = 6) +
-  annotate("text", x = 2, y = 0.9, label = "a", size = 6) +
-  annotate("text", x = 3, y = 0.9641879, label = "a", size = 6) +
-  annotate("text", x = 4, y = 0.86, label = "ab", size = 6) +
-  annotate("text", x = 5, y = 0.83, label = "ab", size = 6) +
-  annotate("text", x = 6, y = 0.9, label = "ab", size = 6) +
-  annotate("text", x = 7, y = 0.83179, label = "bc", size = 6) +
-  annotate("text", x = 8, y =0.707 , label = "c", size = 6)+ 
+  annotate("text", x = 1, y = 0.9, label = "d", size = 6) +
+  annotate("text", x = 2, y = 0.935, label = "cd", size = 6) +
+  annotate("text", x = 3, y = 1, label = "bd", size = 6) +
+  annotate("text", x = 4, y = 0.89, label = "bd", size = 6) +
+  annotate("text", x = 5, y = 0.85, label = "bc", size = 6) +
+  annotate("text", x = 6, y = 0.85, label = "acd", size = 6) +
+  annotate("text", x = 7, y = 0.95, label = "ab", size = 6) +
+  annotate("text", x = 8, y =0.86307 , label = "a", size = 6)+ 
   
   ylim(0.2,1)+
   scale_fill_manual("", breaks = od$type, 
                     values = c(  "orange", "tan", "greenyellow", "mediumseagreen", "wheat", "pink","lavender","mediumpurple"), 
-                    labels = c("mixedForest(N=17)", "deciduousForest(N=81)","evergreenForest(N=100)","grassland\nHerbaceous(N=51)","shrubScrub(N=26)", "woodyWetlands(N=16)","pastureHay(N=15)",  "cultivatedCrops(N=9)"))
+                    labels = c("MixedForest(N=23)", "DeciduousForest(N=100)","EvergreenForest(N=95)", "WoodyWetlands(N=30)","Grassland\nHerbaceous(N=71)","PastureHay(N=17)",  "CultivatedCrops(N=22)","ShrubScrub(N=56)"))
   
   
   
