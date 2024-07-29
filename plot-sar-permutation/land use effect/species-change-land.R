@@ -96,6 +96,8 @@ writeRaster(r,"/Users/luowenqi/soil-sar/plot-sar-permutation/biomes.tif",overwri
 # get the c and z values for different biomes
 # add the coordinates for each plot for the determination of the plot-level biomes
 
+load("~/soil-sar/plot-sar-permutation/rare_all_assign.RData")
+
 sample_data(rare_all_assign)%>%data.frame()%>%dplyr::select(plotIDM,lon,lat)%>%group_by(plotIDM)%>%
   summarise(lon=mean(lon),lat=mean(lat))%>%rename(plotID=plotIDM)->plot_coordinates
 
@@ -169,6 +171,17 @@ full_parameter_data%>%dplyr::select(logc,zvalue,plotID,guild)%>%
 
 # the richness among seven different guilds
 
+load("~/soil-sar/plot-sar-permutation/land use effect/land_rich_all_updated.RData")
+load("~/soil-sar/plot-sar-permutation/land use effect/land_rich_AM_updated.RData")
+load("~/soil-sar/plot-sar-permutation/land use effect/land_rich_EM_updated.RData")
+load("~/soil-sar/plot-sar-permutation/land use effect/land_rich_epiphy_updated.RData")
+load("~/soil-sar/plot-sar-permutation/land use effect/land_rich_littersap_updated.RData")
+load("~/soil-sar/plot-sar-permutation/land use effect/land_rich_para_updated.RData")
+load("~/soil-sar/plot-sar-permutation/land use effect/land_rich_plapat_updated.RData")
+load("~/soil-sar/plot-sar-permutation/land use effect/land_rich_plapt_updated.RData")
+load("~/soil-sar/plot-sar-permutation/land use effect/land_rich_soilsap_updated.RData")
+
+
 mean_richness_guild=bind_rows(land_rich_AM_updated%>%group_by(variable)%>%summarize(mean=mean(value,na.rm=TRUE)),
                               land_rich_EM_updated%>%group_by(variable)%>%summarize(mean=mean(value,na.rm=TRUE)),
                               land_rich_soilsap_updated%>%group_by(variable)%>%summarize(mean=mean(value,na.rm=TRUE)),
@@ -204,22 +217,27 @@ ggplot() +
   #geom_point(data=model_data_SAR%>%dplyr::select(lon,lat)%>%distinct(),aes(x=lon,y=lat))+
   guides(position="bottom")+
   geom_point(data=full_parameter_data%>%dplyr::select(lon,lat,plotID)%>%distinct(),aes(x=lon,y=lat),size=1)+
-  theme(legend.position = "right",
-        legend.text = element_text(size=8),
+  theme(legend.position = "bottom",
+        legend.margin = margin(t = -15, r = -5, b = 0, l = 0),
+        legend.text = element_text(size=10),
         legend.title  = element_text(size=10),
+        legend.key.size = unit(0.3, "cm"),
         text = element_text(size = 18),
         plot.title = element_text(size = 15, hjust = 0.5), 
-        axis.text.y = element_text(hjust = 0), 
-        axis.text.x = element_text(hjust = 1), 
+        axis.text.y = element_blank(), 
+        axis.text.x = element_blank(), 
         axis.title.y = element_text(size = 18), 
         axis.title.x = element_text(size = 18), 
         axis.ticks.x = element_blank(), 
-        legend.key.size = unit(0.3, "cm"),
+        axis.ticks.y = element_blank(),
+        plot.margin = unit(c(0.3,0, 0.2, 0), "cm"),
         panel.background = element_rect(fill = "NA"),
-        panel.border = element_rect(color = "black", size = 1, fill = NA))+
+        panel.border = element_blank())+
+  guides(fill = FALSE)+
   xlab("")+
   ylab("")
-  
+
+
 
 
 ggplot() +
@@ -227,6 +245,72 @@ ggplot() +
   #geom_point(data=plot_diversity_env_land%>%dplyr::select(lon,lat)%>%distinct(),aes(x=lon,y=lat))+
   guides(position="bottom")+
   geom_text(data=plot_diversity_env_land%>%dplyr::select(lon,lat,plotID)%>%distinct(),aes(x=lon,y=lat,label=plotID),size=3)
+
+# to create a map show the habitat affinity
+
+affinity_no_landuse%>%filter(guild=="soilsap")%>%dplyr::select(LABEL, mean_cvalue, mean_zvalue , affinity)%>%melt->habitat_affinity_map
+
+
+ggplot(habitat_affinity_map%>%filter(variable!="mean_cvalue"), aes(y =variable , x = LABEL, fill = value)) +
+  geom_tile(color = "white", lwd = 1,linetype = 1)+
+  scale_fill_gradient2("",low = "blue", mid = "#FFFFCC", high = "red",midpoint = 0.65)+
+  theme(axis.text.x = element_text(angle=90,size=12),
+        axis.text.y = element_text(size = 12))+
+  scale_y_discrete(breaks=c("affinity","mean_zvalue"),labels=c("Habitat affinity",expression("Mean "*italic(Z))))+
+  theme(legend.position = "right",
+        legend.text = element_text(size=8),
+        legend.title  = element_text(size=10),
+        text = element_text(size = 18),
+        plot.title = element_text(size = 15, hjust = 0.5), 
+        axis.text.y = element_text(hjust = 0), 
+        axis.text.x = element_text(hjust = 1,angle=90), 
+        axis.title.y = element_text(size = 18), 
+        axis.title.x = element_text(size = 18), 
+        axis.ticks.x = element_blank(), 
+        legend.key.size = unit(0.3, "cm"),
+        panel.background = element_rect(fill = "NA"),
+        panel.border = element_rect(color = "black", size = 1, fill = NA))
+
+  
+  
+  
+  
+ggplot(habitat_affinity_map%>%filter(variable=="mean_cvalue"), aes(y =variable , x = LABEL, fill = value)) +
+  geom_tile(color = "white", lwd = 1,linetype = 1)+
+  scale_fill_gradient2("",low = "blue", mid = "#FFFFCC", high = "red",midpoint = 0.7)+
+  theme(axis.text.x = element_text(angle=90,size=12),
+        axis.text.y = element_text(size = 12))+
+  scale_y_discrete(breaks=c("affinity","mean_zvalue"),labels=c("Habitat affinity",expression("Mean "*italic(Z))))
+
+  
+
+sensitivity%>%data.frame()%>%bind_cols(guild_type)%>%data.frame()%>%rename_all(~paste0(c("sensitivity","guild")))->sensitivity_guild
+
+sensitivity_guild$guild=factor(sensitivity_guild$guild,levels=c("plapat","AM","littersap","woodsap", "all","para", "EM","epiphy","soilsap"))
+
+ggplot(data=sensitivity_guild,aes(x=guild,y=sensitivity))+
+  geom_bar(stat = "identity",width=0.5)+
+  scale_x_discrete(breaks=c("all","AM","EM","epiphy","littersap","para","plapat","soilsap","woodsap"),
+                   labels=c("all","AM","EM","Epiphyte","Litter sprotroph","Parasite","Plant pathogen","Soil saprotroph","Wood saprotroph"))+
+  theme(legend.position = c(0.8,0.87),
+        legend.text = element_text(size=8),
+        legend.title  = element_text(size=10),
+        text = element_text(size = 18),
+        plot.title = element_text(size = 15, hjust = 0.5), 
+        axis.text.y = element_text(hjust = 0), 
+        axis.text.x = element_text(hjust = 1,angle=90), 
+        axis.title.y = element_text(size = 18), 
+        axis.title.x = element_text(size = 18), 
+        axis.ticks.x = element_blank(), 
+        legend.key.size = unit(0.3, "cm"),
+        panel.background = element_rect(fill = "NA"),
+        panel.border = element_rect(color = "black", size = 1, fill = NA))+
+  geom_vline(xintercept =0,color="gray",linetype="dashed")+
+  geom_hline(yintercept = 1,color="red",linetype="dashed",size=1.1)
+  
+  
+  
+  
 
 ## read the file and get the proportional data for each grid cell
 setwd("/Users/luowenqi/soil-sar/plot-sar-permutation/land use effect")
@@ -254,6 +338,8 @@ new_raster[[i]]=temp#each returns a transformed raster
 
 # make equal area projection for each raster and extract the values
 # need to convert the matrix into a data.frame for the coordinates
+
+load("~/soil-sar/plot-sar-permutation/land use effect/coords_present_new.RData")
 
 coords_present%>%data.frame()%>%rename_all(~paste0(c("lon","lat")))->coords_present
 
@@ -311,7 +397,7 @@ PFT_2015%>%bind_cols(biomes=grid_level_biomes%>%dplyr::select(LABEL))->PFT_2015
 
 
 guild_type=c("AM","EM","soilsap","littersap","woodsap","plapat","para","epiphy","all")
-# just based on the total area to determine the richness
+# just based on the total area to determine the richness， this was not included in in the analysis
 richness_2015_no_landuse=matrix(ncol=9,nrow=dim(PFT_2015)[1])
 for (i in 1:9)
 {
@@ -325,7 +411,6 @@ for (i in 1:9)
 
 # consider the land use composition to estimated the richness
 # note, the z should power on the total area rather than individual land area
-guild_type=c("AM","EM","soilsap","littersap","woodsap","plapat","para","epiphy","all")
 
 richness_2015=matrix(ncol=9,nrow=dim(PFT_2015)[1])
 for (i in 1:9)
@@ -382,7 +467,6 @@ for (i in 1:33)
 
 
 PFT_2100=coords_present%>%bind_cols(land_use_data_2100%>%data.frame()%>%rename_all(~paste0(names(raster2))))
-
 
 PFT_2100=PFT_2100%>%mutate(tree=PFT1+PFT2+PFT3+PFT4+PFT5+PFT6+PFT7+PFT8,shrup=PFT9+PFT10+PFT11,grass=PFT12+PFT13+PFT14,
                            crop=PFT15+PFT16+PFT17+PFT18+PFT19+PFT20+PFT21+PFT22+PFT23+PFT24+PFT25+PFT26+PFT27+PFT28+PFT29+PFT30)
@@ -520,8 +604,8 @@ species_change_land_rcp245%>%filter(variable=="all")%>%
 
 
 
-species_change_land_rcp245_no_landuse%>%melt()->species_change_land_rcp245_no_landuse
-species_change_land_rcp245_no_landuse%>%filter(variable=="all")%>%bind_cols(coords_present) ->change_richness_rcp245_no_landuse
+#species_change_land_rcp245_no_landuse%>%melt()->species_change_land_rcp245_no_landuse
+3species_change_land_rcp245_no_landuse%>%filter(variable=="all")%>%bind_cols(coords_present) ->change_richness_rcp245_no_landuse
 
 
 
@@ -564,20 +648,14 @@ tem_df_rcp245_land%>%left_join(T_test_result,by="variable")->tem_df_rcp245_land
 
 
 r_present <- raster::getData("worldclim", var = "bio", res = 10)
-
 r_present <- r_present[[c(1, 4, 12)]]
-
 # Run necessary transformations on wordclim-provided temperature data
 r_present$bio1 <- r_present$bio1 / 10
 r_present$bio4 <- r_present$bio4 / 1000 # no need for further transformation
-
 # Crop climate data to study region
 # Let's use North America between 18 and 72 degrees North, excluding Greenland
-
 north_america <- ne_countries(continent = "North America",type="map_units")
-
 # north_america<- subset(north_america, admin != "Canada" & admin != "Greenland")
-
 st_is_valid(north_america, reason = TRUE)[!st_is_valid(north_america)]
 sf_use_s2(use_s2 = FALSE)
 plot(north_america)
@@ -590,7 +668,11 @@ plot(north_america_cropped)
 r_present_northam <- raster::mask(raster::crop(r_present, north_america_cropped), north_america_cropped)
 
 
-p1=ggplot(change_richness_rcp245) +
+
+
+
+
+ggplot(change_richness_rcp245) +
   geom_point(data = change_richness_rcp245, pch=21,aes(x = lon, y = lat, color = value), size = 0.275) +
   scale_color_gradient2(expression("Change %"), low = "seagreen", mid="yellow",high = "purple", na.value = "white")+ 
   xlab("Predicted species loss") +
@@ -612,6 +694,7 @@ p1=ggplot(change_richness_rcp245) +
         panel.border = element_blank())+
   xlab("")+
   ylab("Land-use impact")+
+
   #ggtitle("RCP4.5 & SSP2")+
   geom_sf(data=st_as_sf(north_america_cropped),size=0.1, col="black", fill=alpha("gray80", 0.2),linetype = "solid")+
   scale_size(range = c(0.5, 2))
@@ -628,10 +711,15 @@ present_richness=richness_2015%>%bind_cols(coords_present)%>%dplyr::select(lon,l
 
 rcp245_richness=richness_2100%>%bind_cols(coords_present)%>%dplyr::select(lon,lat,all)
 
+rcp585_richness=richness_2100_rcp585%>%bind_cols(coords_present)%>%dplyr::select(lon,lat,all)
+
+
 
 present_richness$all_normalized <- rescale(present_richness$all, to = c(0, 1), na.rm = TRUE)
 
 rcp245_richness$all_normalized <- rescale(rcp245_richness$all, to = c(0, 1), na.rm = TRUE)
+rcp585_richness$all_normalized <- rescale(rcp585_richness$all, to = c(0, 1), na.rm = TRUE)
+
 
 
 summary_data_richness_sar_present <- present_richness%>% group_by(lat) %>%
@@ -640,27 +728,32 @@ summary_data_richness_sar_present <- present_richness%>% group_by(lat) %>%
 summary_data_richness_sar_rcp245 <- rcp245_richness%>% group_by(lat) %>%
   summarise(  mean_value = mean(all_normalized,na.rm=TRUE),sd_value = sd(all_normalized,na.rm=TRUE))
 
+summary_data_richness_sar_rcp585 <- rcp585_richness%>% group_by(lat) %>%
+  summarise(mean_value = mean(all_normalized,na.rm=TRUE),sd_value = sd(all_normalized,na.rm=TRUE))
 
-richness_change_curve=bind_rows(summary_data_richness_sar_present,summary_data_richness_sar_rcp245)%>%
-  mutate(type=rep(c("present","rcp245"),each=360))
 
-ggplot()+
-  geom_line(data = richness_change_curve, aes(x = lat, y = mean_value,color=type), size = 1) +  # Mean trend line
-  geom_ribbon(data =richness_change_curve, aes(x = lat, ymin = mean_value - sd_value, ymax = mean_value+ sd_value,fill=type), alpha = 0.2)+
+richness_change_trend_sar=bind_rows(summary_data_richness_sar_present,summary_data_richness_sar_rcp245,summary_data_richness_sar_rcp585)%>%
+  mutate(type=rep(c("present","rcp245","rcp585"),each=360))
+
+
+f=ggplot()+
+  geom_line(data = richness_change_trend_sar, aes(x = lat, y = mean_value,color=type), size = 0.5) +  # Mean trend line
+  geom_ribbon(data =richness_change_trend_sar, aes(x = lat, ymin = mean_value - sd_value, ymax = mean_value+ sd_value,fill=type), alpha = 0.2)+
   coord_flip()+
-  scale_color_manual("",breaks = c("present","rcp245"), labels = c("present","rcp245"),  values=c("blue","red"))+
-  scale_fill_manual("",breaks = c("present","rcp245"), labels = c("present","rcp245"),  values=c("blue","red"))+
-  theme(legend.position = "bottom",
+  scale_color_manual("",breaks = c("present","rcp245","rcp585"), labels = c("Present","RCP245","RCP585"),  values=c("blue","red","seagreen2"))+
+  scale_fill_manual("",breaks = c("present","rcp245","rcp585"), labels = c("Present","RCP245","RCP585"),  values=c("blue","red","seagreen2"))+
+  theme(legend.position = c(0.85,0.80),
         legend.text = element_text(size=8),
         legend.title  = element_text(size=10),
         text = element_text(size = 18),
         plot.title = element_text(size = 15, hjust = 0.5), 
-        axis.text.y = element_blank(), 
+        axis.text.y = element_text(), 
         axis.text.x = element_text(hjust = 1), 
-        axis.title.y = element_blank(), 
+        
         axis.title.x = element_text(size = 18), 
         axis.ticks.x = element_blank(), 
-        axis.ticks.y = element_blank(), 
+        axis.ticks.y = element_line(), 
+        plot.margin = unit(c(0.5, 0.5, 0.5, 0.1), "cm"),
         panel.background = element_rect(fill = "NA"),
         panel.border = element_rect(color = "black", size = 1, fill = NA))+
   xlab("Latitude")+
@@ -671,7 +764,7 @@ ggplot()+
 
 ggplot()+
   geom_point(data=present_richness,aes(x=lon,y=lat,color=all_normalized),size=0.275)+
-  scale_color_gradient2("Relative\n richness", na.value = "white" )+
+  scale_color_gradient2("Richness",low = "seagreen", mid = "yellow", high = "purple", na.value = "white",midpoint =0.545  )+
   theme(legend.position = "right",
         legend.margin = margin(t = -15, r = -5, b = 5, l = 0),
         legend.text = element_text(size=8),
@@ -701,9 +794,7 @@ ggplot()+geom_point(data=richness_2100%>%bind_cols(coords_present),aes(x=lon,y=l
 
 
 
-
-  
-p2=ggplot()+
+ggplot()+
   geom_line(data = summary_data, aes(x = lat, y = mean_value), color = "blue", size = 0.5) +  # Mean trend line
   geom_ribbon(data = summary_data, aes(x = lat, ymin = mean_value - sd_value, ymax = mean_value +sd_value), fill = "blue", alpha = 0.2)+
   theme(legend.position = c(0.75,0.28),
@@ -731,7 +822,7 @@ p2=ggplot()+
 
 tem_df_rcp245_land$variable=factor(tem_df_rcp245_land$variable,levels=guild_type)
 
-p3=ggplot(data=tem_df_rcp245_land,aes(fill=type,y=variable ,x=mean_value))+
+ggplot(data=tem_df_rcp245_land,aes(fill=type,y=variable ,x=mean_value))+
   geom_col(width = 0.5,color="black")+
   geom_errorbar(data=tem_df_rcp245_land, aes(xmin = mean_value- sd_value/sqrt(count), xmax = mean_value +sd_value/sqrt(count)),width=0.2)+
   scale_fill_manual("",breaks=c("Negative","Positive"),labels=c("Loss","Gain"),values=c("#8fd1e1","#fedc5e"))+
@@ -751,7 +842,7 @@ theme(legend.position = c(0.8,0.87),
   geom_vline(xintercept =0,color="gray",linetype="dashed")+
   ylab("")+
   xlab("")+
-  scale_y_discrete(breaks=guild_type,position="right",labels=c("AM","EM","Soil sapro.","Litter sapro.","Wood sapro.","Plant patho.","Parasite","Epiphyte","All"))+
+  scale_y_discrete(breaks=guild_type,position="right",labels=c("AM","EM","Soil saprotroph","Litter saprotroph","Wood saprotroph","Plant pathogen","Parasite","Epiphyte","All"))+
   geom_segment(data=tem_df_rcp245_land,size=0.35,color="black",aes(x=overal_mean-low,xend=overal_mean+up,y=variable,yend=variable))+
   geom_point(aes(y=variable,x=overal_mean),pch=23,color="black",size=2,fill="seagreen1",alpha=0.5)+
   geom_hline(yintercept = 8.5,color="red",size=1,alpha=0.3,linetype="dotted")+
@@ -787,10 +878,7 @@ crs(raster2) <- "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
 b <- as(extent (-72, -18, -170, -55), "SpatialPolygons")
 
 coarser_raster <- aggregate(raster2, fact = 3, fun = mean) # convert it to a coarse resolution
-
-
 cropped_raster<- crop(coarser_raster, b)
-
 cropped_raster=flip(t(cropped_raster),direction = "horizontal")# transpose the raster to a right position
 
 
@@ -819,8 +907,7 @@ for (i in 1:33)
   points_sf <- st_as_sf(coords_present, coords = c("lon", "lat"), crs = 4326) # CRS 4326 is WGS84
   
   coordinates_equal_area <- st_transform(points_sf, "EPSG:5070")
-  
-  
+
   extracted_values <- terra::extract(r_projected, coordinates_equal_area)%>%as.matrix()
   
   land_use_data_2100[,i]=extracted_values[,2]
@@ -1002,7 +1089,7 @@ p6=ggplot(data=tem_df_rcp585_land,aes(fill=type,y=variable ,x=mean_value))+
   )+
   geom_point(aes(y=variable,x=overal_mean),pch=23,color="black",size=2,fill="seagreen1",alpha=0.5)+
   xlab("")+
-  scale_y_discrete(breaks=guild_type,position="right",labels=c("AM","EM","Soil sapro.","Litter sapro.","Wood sapro.","Plant patho.","Parasite","Epiphyte","All"))+
+  scale_y_discrete(breaks=guild_type,position="right",labels=c("AM","EM","Soil saprotroph","Litter saprotroph","Wood saprotroph","Plant pathogen","Parasite","Epiphyte","All"))+
   ggtitle("RCP8.5 & SSP5")+
   geom_hline(yintercept = 8.5,color="red",size=1,alpha=0.3,linetype="dotted")+
   xlim(-0.15,0.15)+
@@ -1021,10 +1108,7 @@ p5$heights=p6$heights
 
 p8=plot_grid(p4,p5,p6,ncol=3,rel_heights = c(1,0.6,0.6),rel_widths  = c(1,0.6,0.8))
 
-plot_grid(p7,p8,ncol=1)
 
-plot_grid(p4,p5,p6,ncol=3,rel_heights = c(1,1,1),rel_widths  = c(1,0.6,0.8))
-  
   
 #d=p4+p5+p6+plot_layout(widths = c(2.2,0.7, 1),heights = c(2.5,1, 1))
 
