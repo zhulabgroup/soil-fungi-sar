@@ -1,9 +1,13 @@
 
+setwd("/Users/luowenqi/soil-sar/plot-sar-permutation/land use effect")
+
 library(phyloseq)
 library(reshape2)
 library(stringr)
 library(ggplot2)
 library(terra)
+library(raster)
+
 
 #(1)# determining the habitat affinity for each fungal guild and land use type
 
@@ -19,7 +23,7 @@ rare_all_guild=rare_all
 
 save(rare_all_guild,file="rare_all_guild.RData")
 
-#(2) add the land use type data to the whole dataset
+#(2) add the land use type data to the whole data set
 
 load("~/soil-sar/plot-sar-permutation/plot_diversity_env_land.RData")
 
@@ -72,35 +76,37 @@ plot_diversity_env_land%>%dplyr::select(plotID,type)->temp
 
 temp%>%mutate(type = ifelse(type == "pastureHay", "cultivatedCrops" , type))->temp
 
+#need to exclude the na
+temp=temp%>%filter(!is.na(type))
 
 #(3) get the guild-specific c and z values 
 
-model_data_SAR%>%dplyr::select(plotID,logc,zvalue,guild)%>%left_join(temp,by="plotID")%>%filter(!is.na(type))%>%
+full_parameter_data%>%dplyr::select(plotID,logc,zvalue,guild)%>%left_join(temp,by="plotID")%>%filter(!is.na(type))%>%
   group_by(guild)%>%summarise(mean_cvalue=mean(logc,na.rm=TRUE))%>%mutate(c=2.71828^mean_cvalue)->c_temp
-#guild     mean_cvalue      c
-#1 AM             -3.27  0.0382
-#2 EM             -0.696 0.499 
-#3 all             1.88  6.52  
-#4 epiphy         -3.02  0.0490
-#5 littersap      -1.09  0.336 
-#6 para           -1.40  0.246 
-#7 plapat         -1.60  0.201 
-#8 soilsap         0.324 1.38  
-#9 woodsap        -1.89  0.152 
+#AM             -3.15  0.0427
+#EM             -0.807 0.446 
+#all             1.84  6.32  
+#epiphy         -2.96  0.0520
+#littersap      -1.07  0.344 
+#para           -1.36  0.257 
+#plapat         -1.51  0.221 
+#soilsap         0.367 1.44  
+#woodsap        -1.88  0.152 
 
-model_data_SAR%>%dplyr::select(plotID,logc,zvalue,guild)%>%left_join(temp,by="plotID")%>%filter(!is.na(type))%>%
+
+full_parameter_data%>%dplyr::select(plotID,logc,zvalue,guild)%>%left_join(temp,by="plotID")%>%filter(!is.na(type))%>%
   group_by(guild)%>%summarise(mean_zvalue=mean(zvalue,na.rm=TRUE))->z_temp
 
 #guild     mean_zvalue
-#1 AM              0.763
-#2 EM              0.754
-#3 all             0.706
-#4 epiphy          0.730
-#5 littersap       0.717
-#6 para            0.654
-#7 plapat          0.693
-#8 soilsap         0.659
-#9 woodsap         0.741
+#AM              0.775
+#EM              0.771
+#all             0.714
+#epiphy          0.745
+#littersap       0.717
+#para            0.657
+#plapat          0.691
+#soilsap         0.653
+#woodsap         0.751
 
 
 #(4)# get the guild-specific habitat affinity with the formula of affinity=(S1/S2)^1/z
@@ -110,20 +116,15 @@ model_data_SAR%>%dplyr::select(plotID,logc,zvalue,guild)%>%left_join(temp,by="pl
 # split the data into different guilds
 
 data_EM <- subset_taxa(rare_all_guild, primary_lifestyle == "ectomycorrhizal")
-
 data_AM <- subset_taxa(rare_all_guild, primary_lifestyle == "arbuscular_mycorrhizal")
 data_soilsap <- subset_taxa(rare_all_guild, primary_lifestyle == "soil_saprotroph")
 data_littersap <- subset_taxa(rare_all_guild, primary_lifestyle == "litter_saprotroph")
-
 data_plapat <- subset_taxa(rare_all_guild, primary_lifestyle == "plant_pathogen")
-
 data_woodsap <- subset_taxa(rare_all_guild, primary_lifestyle == "wood_saprotroph")
 data_para <- subset_taxa(rare_all_guild, primary_lifestyle%in%c("protistan_parasite","lichen_parasite","algal_parasite","mycoparasite","animal_parasite"))
 data_epiphy <- subset_taxa(rare_all_guild, primary_lifestyle == "epiphyte")
 
 ### write a function to manipulate all the data sets
-
-
 
 
 ###
@@ -422,31 +423,32 @@ mean_richness_guild=bind_rows(land_rich_AM_updated%>%group_by(variable)%>%summar
 
 guild_type=c("AM","EM","soilsap","littersap","woodsap","plapat","para","epiphy","all")
 
-affinity=numeric()
+# determining the sensitivity for different guilds
+sensitivity=numeric()
 for (i in 1:9)
 {
   df=mean_richness_guild%>%filter(guild==guild_type[i])
-  affinity[i]=df[1,2]/df[2:7,2] %>%mean()
+  sensitivity[i]=df[1,2]/df[2:7,2] %>%mean()
 }
 
 
 
-affinity%>%data.frame()%>%bind_cols(guild_type)%>%data.frame()%>%rename_all(~paste0(c("sensitivity","guild")))%>%
+sensitivity%>%data.frame()%>%bind_cols(guild_type)%>%data.frame()%>%rename_all(~paste0(c("sensitivity","guild")))%>%
   left_join(z_temp,by="guild")%>%mutate(affinity=sensitivity^(1/mean_zvalue))%>%left_join(c_temp,by="guild")->parameters
 
 #sensitivity     guild mean_zvalue  affinity mean_cvalue          c
-#1   1.1558572        AM   0.7627419 1.2091247  -3.2654048 0.03818156
-#2   0.6982490        EM   0.7541218 0.6210843  -0.6956156 0.49876755
-#3   0.6899942   soilsap   0.6588153 0.5693605   0.3238652 1.38246063
-#4   1.1260563 littersap   0.7171882 1.1800272  -1.0910826 0.33585294
-#5   0.9118643   woodsap   0.7414621 0.8829954  -1.8857109 0.15172135
-#6   1.1898728    plapat   0.6928434 1.2852038  -1.6036925 0.20115262
-#7   0.8387798      para   0.6540632 0.7643021  -1.4019191 0.24612441
-#8   0.6773579    epiphy   0.7304279 0.5866511  -3.0156364 0.04901473
-#9   0.8797784       all   0.7064055 0.8341686   1.8750299 6.52100604
+#1   1.2114232        AM   0.7747318 1.2809016  -3.1526586 0.04273844
+#2   0.7160444        EM   0.7713955 0.6485615  -0.8067486 0.44630710
+#3   0.7202833   soilsap   0.6533710 0.6052092   0.3667578 1.44304802
+#4   1.1929157 littersap   0.7174158 1.2787501  -1.0679487 0.34371309
+#5   0.9605541   woodsap   0.7507297 0.9478037  -1.8844469 0.15191325
+#6   1.2578671    plapat   0.6912454 1.3935997  -1.5114489 0.22059035
+#7   0.8884922      para   0.6571817 0.8353507  -1.3579871 0.25717818
+#8   0.7177464    epiphy   0.7449075 0.6406908  -2.9560207 0.05202563
+#9   0.9266827       all   0.7143864 0.8988971   1.8441516 6.32272547
 
 save(parameters,file="parameters.RData")
-
+# replace the prior parameters
 
 # guild specific richness change caused by land use change
 # use the 2015 land use change data as the baseline
@@ -727,9 +729,6 @@ for (i in 1: 9)
 # make some changes for the species change ratio
 
 
-
-
-
 #present_future_richness%>%bind_cols(df_rcp585%>%melt())->species_change_temp
 
 present_future_richness%>%bind_cols(df_rcp245_land%>%melt())->species_change_land_rcp245
@@ -770,7 +769,7 @@ for (i in 1:33) {
   coords_present <- xyFromCell(new_raster, cell = 1:ncell(new_raster)) 
   
   # get the coordinates
-  # the coordinates are not in the right format and should be converted for extracting othere data
+  # the coordinates are not in the right format and should be converted for extracting other data
   cell_values <- raster::extract(new_raster, coords_present) %>% as.matrix()
   PFT_2100[, i] <- cell_values
 }
