@@ -216,8 +216,8 @@ ggplot() +
   geom_sf(data=biomes, aes(fill=LABEL))+
   #geom_point(data=model_data_SAR%>%dplyr::select(lon,lat)%>%distinct(),aes(x=lon,y=lat))+
   guides(position="bottom")+
-  geom_point(data=full_parameter_data%>%dplyr::select(lon,lat,plotID)%>%distinct(),aes(x=lon,y=lat),size=1)+
-  theme(legend.position = "bottom",
+  #geom_point(data=full_parameter_data%>%dplyr::select(lon,lat,plotID)%>%distinct(),aes(x=lon,y=lat),size=1)+
+  theme(legend.position = "right",
         legend.margin = margin(t = -15, r = -5, b = 0, l = 0),
         legend.text = element_text(size=10),
         legend.title  = element_text(size=10),
@@ -233,9 +233,9 @@ ggplot() +
         plot.margin = unit(c(0.3,0, 0.2, 0), "cm"),
         panel.background = element_rect(fill = "NA"),
         panel.border = element_blank())+
-  guides(fill = FALSE)+
   xlab("")+
-  ylab("")
+  ylab("")+
+  geom_point(data=d,aes(x=lon,y=lat),color="black")
 
 
 
@@ -291,7 +291,7 @@ sensitivity_guild$guild=factor(sensitivity_guild$guild,levels=c("plapat","AM","l
 ggplot(data=sensitivity_guild,aes(x=guild,y=sensitivity))+
   geom_bar(stat = "identity",width=0.5)+
   scale_x_discrete(breaks=c("all","AM","EM","epiphy","littersap","para","plapat","soilsap","woodsap"),
-                   labels=c("all","AM","EM","Epiphyte","Litter sprotroph","Parasite","Plant pathogen","Soil saprotroph","Wood saprotroph"))+
+                   labels=c("All","AM","EM","Epiphyte","Litter sprotroph","Parasite","Plant pathogen","Soil saprotroph","Wood saprotroph"))+
   theme(legend.position = c(0.8,0.87),
         legend.text = element_text(size=8),
         legend.title  = element_text(size=10),
@@ -306,7 +306,9 @@ ggplot(data=sensitivity_guild,aes(x=guild,y=sensitivity))+
         panel.background = element_rect(fill = "NA"),
         panel.border = element_rect(color = "black", size = 1, fill = NA))+
   geom_vline(xintercept =0,color="gray",linetype="dashed")+
-  geom_hline(yintercept = 1,color="red",linetype="dashed",size=1.1)
+  geom_hline(yintercept = 1,color="red",linetype="dashed",size=1.1)+
+  ylab("Response ratio")+
+  xlab("")
   
   
   
@@ -672,7 +674,7 @@ r_present_northam <- raster::mask(raster::crop(r_present, north_america_cropped)
 
 
 
-ggplot(change_richness_rcp245) +
+p1=ggplot(change_richness_rcp245) +
   geom_point(data = change_richness_rcp245, pch=21,aes(x = lon, y = lat, color = value), size = 0.275) +
   scale_color_gradient2(expression("Change %"), low = "seagreen", mid="yellow",high = "purple", na.value = "white")+ 
   xlab("Predicted species loss") +
@@ -763,9 +765,9 @@ f=ggplot()+
 
 
 ggplot()+
-  geom_point(data=present_richness,aes(x=lon,y=lat,color=all_normalized),size=0.275)+
+  geom_point(data=present_richness,pch=15,aes(x=lon,y=lat,color=all_normalized),size=0.275)+
   scale_color_gradient2("Richness",low = "seagreen", mid = "yellow", high = "purple", na.value = "white",midpoint =0.545  )+
-  theme(legend.position = "right",
+  theme(legend.position =c(0.28,0.4),
         legend.margin = margin(t = -15, r = -5, b = 5, l = 0),
         legend.text = element_text(size=8),
         legend.title  = element_text(size=10),
@@ -777,6 +779,7 @@ ggplot()+
         axis.title.x = element_text(size = 18), 
         axis.ticks.x = element_blank(), 
         axis.ticks.y = element_blank(),
+        legend.key.size = unit(0.3, "cm"),
         plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "cm"),
         panel.background = element_rect(fill = "NA"),
         panel.border = element_blank())+
@@ -794,7 +797,7 @@ ggplot()+geom_point(data=richness_2100%>%bind_cols(coords_present),aes(x=lon,y=l
 
 
 
-ggplot()+
+p2=ggplot()+
   geom_line(data = summary_data, aes(x = lat, y = mean_value), color = "blue", size = 0.5) +  # Mean trend line
   geom_ribbon(data = summary_data, aes(x = lat, ymin = mean_value - sd_value, ymax = mean_value +sd_value), fill = "blue", alpha = 0.2)+
   theme(legend.position = c(0.75,0.28),
@@ -822,7 +825,7 @@ ggplot()+
 
 tem_df_rcp245_land$variable=factor(tem_df_rcp245_land$variable,levels=guild_type)
 
-ggplot(data=tem_df_rcp245_land,aes(fill=type,y=variable ,x=mean_value))+
+p3=ggplot(data=tem_df_rcp245_land,aes(fill=type,y=variable ,x=mean_value))+
   geom_col(width = 0.5,color="black")+
   geom_errorbar(data=tem_df_rcp245_land, aes(xmin = mean_value- sd_value/sqrt(count), xmax = mean_value +sd_value/sqrt(count)),width=0.2)+
   scale_fill_manual("",breaks=c("Negative","Positive"),labels=c("Loss","Gain"),values=c("#8fd1e1","#fedc5e"))+
@@ -842,7 +845,7 @@ theme(legend.position = c(0.8,0.87),
   geom_vline(xintercept =0,color="gray",linetype="dashed")+
   ylab("")+
   xlab("")+
-  scale_y_discrete(breaks=guild_type,position="right",labels=c("AM","EM","Soil saprotroph","Litter saprotroph","Wood saprotroph","Plant pathogen","Parasite","Epiphyte","All"))+
+  scale_y_discrete(breaks=guild_type,position="right",labels=c("AM(+4.1%)","EM(-4.7%)","Soil saprotroph(+4.5%)","Litter saprotroph(+3.2%)","Wood saprotroph(-0.6%)","Plant pathogen(+4.2%)","Parasite(-1.8%)","Epiphyte(-4.6%)","All(-1.2%)"))+
   geom_segment(data=tem_df_rcp245_land,size=0.35,color="black",aes(x=overal_mean-low,xend=overal_mean+up,y=variable,yend=variable))+
   geom_point(aes(y=variable,x=overal_mean),pch=23,color="black",size=2,fill="seagreen1",alpha=0.5)+
   geom_hline(yintercept = 8.5,color="red",size=1,alpha=0.3,linetype="dotted")+
@@ -861,7 +864,7 @@ p3=ggplotGrob(p3)
 
 p2$heights=p3$heights
 
-p7=plot_grid(p1,p2,p3,ncol=3,rel_heights = c(1,0.6,0.6),rel_widths  = c(1,0.6,0.8))
+p7=plot_grid(p1,p2,p3,ncol=3,rel_heights = c(1,0.6,0.6),rel_widths  = c(1,0.5,0.8))
 
 
 
@@ -1089,7 +1092,7 @@ p6=ggplot(data=tem_df_rcp585_land,aes(fill=type,y=variable ,x=mean_value))+
   )+
   geom_point(aes(y=variable,x=overal_mean),pch=23,color="black",size=2,fill="seagreen1",alpha=0.5)+
   xlab("")+
-  scale_y_discrete(breaks=guild_type,position="right",labels=c("AM","EM","Soil saprotroph","Litter saprotroph","Wood saprotroph","Plant pathogen","Parasite","Epiphyte","All"))+
+  scale_y_discrete(breaks=guild_type,position="right",labels=c("AM(+0.2%)","EM(-0.3%)","Soil saprotroph(-0.3%)","Litter saprotroph(+0.3%)","Wood saprotroph(-0.05%)","Plant pathogen(+0.4%)","Parasite(-0.1%)","Epiphyte(-0.3%)","All(-0.1%)"))+
   ggtitle("RCP8.5 & SSP5")+
   geom_hline(yintercept = 8.5,color="red",size=1,alpha=0.3,linetype="dotted")+
   xlim(-0.15,0.15)+
@@ -1106,7 +1109,7 @@ p5$heights=p6$heights
 
 
 
-p8=plot_grid(p4,p5,p6,ncol=3,rel_heights = c(1,0.6,0.6),rel_widths  = c(1,0.6,0.8))
+p8=plot_grid(p4,p5,p6,ncol=3,rel_heights = c(1,0.6,0.6),rel_widths  = c(1,0.5,0.8))
 
 
   
@@ -1121,17 +1124,253 @@ p8=plot_grid(p4,p5,p6,ncol=3,rel_heights = c(1,0.6,0.6),rel_widths  = c(1,0.6,0.
   op=data.frame(df=PFT_2100$No_crop-PFT_2015$No_crop,coords_present)
   op_crop=data.frame(df=PFT_2100$crop-PFT_2015$crop,coords_present)
   
+  op=data.frame(df=PFT_2015$crop,coords_present)
+  op_2100=data.frame(df=PFT_2100$crop,coords_present)
+  
+  
 head(op)
 
-ggplot()+
+p1=ggplot()+
   geom_point(data = op, pch = 15, aes(x = lon, y = lat, color = df), size = 0.275) +
-  scale_color_gradient2(expression("Change %"), low = "seagreen", mid = "yellow", high = "purple", midpoint = 0, na.value = "white")+ 
-  xlab("Predicted species loss") 
+  scale_color_gradient2(expression("%"), low = "seagreen", mid = "yellow", high = "purple", midpoint = 0, na.value = "white")+ 
+  #xlab("Human-dominanted land cover in 2015") +
+  theme(legend.position = c(0.2,0.4),
+        legend.text = element_text(size=8),
+        legend.title  = element_text(size=10),
+        text = element_text(size = 18),
+        plot.title = element_text(size = 15, hjust = 0.5), 
+        axis.text.y = element_text(hjust = 0), 
+        axis.text.x = element_text(hjust = 1), 
+        axis.title.y = element_text(size = 18), 
+        axis.title.x = element_text(size = 18), 
+        axis.ticks.x = element_blank(), 
+        legend.key.size = unit(0.3, "cm"),
+        panel.background = element_rect(fill = "NA"),
+        panel.border = element_rect(color = "black", size = 1, fill = NA))+
+  ylab("")+
+  geom_sf(data=st_as_sf(north_america_cropped),size=0.1, col="black", fill=alpha("white", 0),linetype = "solid")
+
+
+p2=ggplot()+
+  geom_point(data = op_2100, pch = 15, aes(x = lon, y = lat, color = df), size = 0.275) +
+  scale_color_gradient2(expression("%"), low = "seagreen", mid = "yellow", high = "purple", midpoint = 0, na.value = "white")+ 
+  #xlab("Human-dominanted land cover in 2100") +
+  theme(legend.position = c(0.2,0.4),
+        legend.text = element_text(size=8),
+        legend.title  = element_text(size=10),
+        text = element_text(size = 18),
+        plot.title = element_text(size = 15, hjust = 0.5), 
+        axis.text.y = element_text(hjust = 0), 
+        axis.text.x = element_text(hjust = 1), 
+        axis.title.y = element_text(size = 18), 
+        axis.title.x = element_text(size = 18), 
+        axis.ticks.x = element_blank(), 
+        legend.key.size = unit(0.3, "cm"),
+        panel.background = element_rect(fill = "NA"),
+        panel.border = element_rect(color = "black", size = 1, fill = NA))+
+  ylab("")+
+  geom_sf(data=st_as_sf(north_america_cropped),size=0.1, col="black", fill=alpha("white", 0),linetype = "solid")
+
+
+
+
 
 ggplot()+
   geom_point(data = op_crop, pch = 15, aes(x = lon, y = lat, color = df), size = 0.275) +
   scale_color_gradient2(expression("Change %"), low = "seagreen", mid = "yellow", high = "purple",midpoint = 0, na.value = "white")+ 
-  xlab("changes in modified land") 
+  xlab("Changes in human-dominant land cover") +
+  theme(legend.position = c(0.24,0.4),
+        legend.text = element_text(size=8),
+        legend.title  = element_text(size=10),
+        text = element_text(size = 18),
+        plot.title = element_text(size = 15, hjust = 0.5), 
+        axis.text.y = element_text(hjust = 0,size=10), 
+        axis.text.x = element_text(hjust = 1,size=10), 
+        axis.title.y = element_text(size = 18), 
+        axis.title.x = element_text(size = 18), 
+        axis.ticks.x = element_blank(), 
+        legend.key.size = unit(0.3, "cm"),
+        panel.background = element_rect(fill = "NA"),
+        panel.border = element_rect(color = "black", size = 1, fill = NA))+
+  ylab("")+
+  geom_sf(data=st_as_sf(north_america_cropped),size=0.1, col="black", fill=alpha("gray80", 0.2),linetype = "solid")
+
+####
+op_rcp585=data.frame(df=PFT_2100_rcp585$No_crop-PFT_2015$No_crop,coords_present)
+
+op_crop_rcp585=data.frame(df=PFT_2100_rcp585$crop-PFT_2015$crop,coords_present)
+
+
+ggplot()+
+  geom_point(data = op_crop_rcp585, pch = 15, aes(x = lon, y = lat, color = df), size = 0.275) +
+  scale_color_gradient2(expression("Change %"), low = "seagreen", mid = "yellow", high = "purple",midpoint = 0, na.value = "white")+ 
+  xlab("Changes in human-dominant land cover") +
+  theme(legend.position = c(0.24,0.4),
+        legend.text = element_text(size=8),
+        legend.title  = element_text(size=10),
+        text = element_text(size = 18),
+        plot.title = element_text(size = 15, hjust = 0.5), 
+        axis.text.y = element_text(hjust = 0,size=10), 
+        axis.text.x = element_text(hjust = 1,size=10), 
+        axis.title.y = element_text(size = 18), 
+        axis.title.x = element_text(size = 18), 
+        axis.ticks.x = element_blank(), 
+        legend.key.size = unit(0.3, "cm"),
+        panel.background = element_rect(fill = "NA"),
+        panel.border = element_rect(color = "black", size = 1, fill = NA))+
+  ylab("")+
+  geom_sf(data=st_as_sf(north_america_cropped),size=0.1, col="black", fill=alpha("gray80", 0.2),linetype = "solid")
 
 
 
+
+
+
+##
+
+# Load necessary library
+library(ggplot2)
+
+# Simulated data
+set.seed(42)
+area <- seq(1, 100, by=1)
+richness <- 10 * log(area) + rnorm(length(area), mean=0, sd=1)  # Nonlinear relationship
+
+# Create the plot
+# Load necessary library
+library(ggplot2)
+
+# Simulate data
+set.seed(42)
+area <- seq(1, 1000, by=10)
+richness <- 10 * area^0.3  # Assuming k=10 and z=0.3 for the power-law relationship
+
+# Create data frame
+data <- data.frame(area = area, richness = richness)
+
+# Plot original relationship
+p1=ggplot(data, aes(x = area, y = richness)) +
+  geom_point(color = 'blue') +
+  geom_smooth(method = 'loess', color = 'red') +
+  labs(title = '',
+       x = 'Area',
+       y = 'Richness')+
+  theme(legend.position = c(0.8,0.87),
+        legend.text = element_text(size=8),
+        legend.title  = element_text(size=10),
+        text = element_text(size = 18),
+        plot.title = element_text(size = 15, hjust = 0.5), 
+        axis.text.y = element_text(hjust = 0), 
+        axis.text.x = element_text(hjust = 1), 
+        axis.title.y = element_text(size = 18), 
+        axis.title.x = element_text(size = 18), 
+        axis.ticks.x = element_blank(), 
+        plot.margin = unit(c(0.5, 0.5, 0, 0.1), "cm"),
+        legend.key.size = unit(0.3, "cm"),
+        panel.background = element_rect(fill = "NA"),
+        panel.border = element_rect(color = "black", size = 1, fill = NA))
+  
+
+# Transform data for log-log plot
+data$log_area <- log(data$area)
+data$log_richness <- log(data$richness)
+
+# Plot transformed (log) relationship
+p2=ggplot(data, aes(x = log_area, y = log_richness)) +
+  geom_point(color = 'blue') +
+  geom_smooth(method = 'lm', color = 'red') +
+  labs(title = '',
+       x = 'Log(Area)',
+       y = 'Log(Richness)')+
+  theme(legend.position = c(0.8,0.87),
+        legend.text = element_text(size=8),
+        legend.title  = element_text(size=10),
+        text = element_text(size = 18),
+        plot.title = element_text(size = 15, hjust = 0.5), 
+        axis.text.y = element_text(hjust = 0), 
+        axis.text.x = element_text(hjust = 1), 
+        axis.title.y = element_text(size = 18), 
+        axis.title.x = element_text(size = 18), 
+        axis.ticks.x = element_blank(), 
+        legend.key.size = unit(0.3, "cm"),
+        plot.margin = unit(c(0, 0.5, 0.5, 0.1), "cm"),
+        panel.background = element_rect(fill = "NA"),
+        panel.border = element_rect(color = "black", size = 1, fill = NA))
+  
+
+# Display plots
+plot_grid(p1,p2,ncol=1)
+
+
+### the importance
+
+
+
+north_america <- ne_countries(continent = "North America", scale = "medium", returnclass = "sf")
+
+north_america <- north_america %>% filter(iso_a3 != "CAN")
+
+# Extract Alaska
+alaska <- north_america %>% filter(iso_a3 == "USA" & name == "Alaska")
+
+# Move Alaska
+alaska <- st_transform(alaska, st_crs(north_america)) %>%
+  st_set_geometry(alaska$geometry + c(30, -50))
+
+# Combine Alaska back with the res
+
+
+world <- ne_countries(scale = "medium", returnclass = "sf")
+north_america <- world[world$continent == "North America", ]
+
+
+ggplot(data = north_america) +
+  geom_sf() +
+  coord_sf(xlim = c(-170, -30), ylim = c(5, 85), expand = FALSE) +
+  theme_minimal()
+
+
+###
+
+alaska <- north_america[north_america$admin == "United States of America" & north_america$subunit == "Alaska", ]
+
+# Main map without Alaska
+main_map <- north_america[!(north_america$admin == "United States of America" & north_america$subunit == "Alaska"), ]
+
+main_plot <- ggplot(data = main_map) +
+  geom_sf() +
+  coord_sf(xlim = c(-170, -30), ylim = c(5, 85), expand = FALSE) +
+  theme_minimal()
+
+alaska_plot <- ggplotGrob(
+  ggplot(data = alaska) +
+    geom_sf() +
+    coord_sf(xlim = c(-180, -120), ylim = c(50, 75), expand = FALSE) +
+    theme_void()
+)
+
+main_plot + 
+  annotation_custom(grob = alaska_plot, xmin = -130, xmax = -60, ymin = -70, ymax = -40)
+
+###
+
+
+
+# Load US map
+# Load US map
+us <- st_as_sf(maps::map("state", plot = FALSE, fill = TRUE))
+
+# Filter out Alaska and the rest of the US
+alaska <- us %>% filter(ID == "alaska")
+mainland_us <- us %>% filter(ID != "alaska")
+
+
+p1 <- ggplot() +
+  geom_sf(data = mainland_us, fill = "white", color = "black") +
+  theme_void() +
+  ggtitle("Mainland US")
+
+p2 <- ggplot() +
+  geom_sf(data = alaska, fill = "white", color = "black") +
+  theme_void() +
+  ggtitle("Alaska")
