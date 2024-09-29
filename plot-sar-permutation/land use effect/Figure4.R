@@ -33,6 +33,7 @@ species_change_climate_rcp585 %>%
     TRUE ~ variable  # Keep other values unchanged
   ))->species_change_climate_rcp585
 
+####select the data set for each guild
 
 data_subset_land_rcp245=list()
 for(i in 1:9)
@@ -62,7 +63,7 @@ for(i in 1:9)
     bind_cols(coords_present) ->data_subset_climate_rcp585[[i]]
 }
 
-# combined the two effects
+# combined the two effects for the two scenarios
 
 data_both_effect_rcp245=list()
 for(i in 1:9){
@@ -99,11 +100,6 @@ my_function=function(data)
   r_exclude_lakes <- mask(r_masked, lakes_raster, maskvalue = 1, updatevalue = NA)
   data$group<- as.numeric(as.factor(data$group))
   r <- rasterFromXYZ(data[, c("lon", "lat", "group")])
-  # to mask the object based on the NA map
-  # to match the extent of the raster
-  #r_present_northam <- raster::mask(raster::crop(r_present, north_america_cropped), north_america_cropped)
-  #r_present_northam <- clipOutPoly(r_present_northam, greatlakes) # the map based on climates so no need to add variables
-  #r_present_northam=raster(r_present_northam)
   r <- crop(r, extent(r_exclude_lakes ))
   crs(r)="+proj=longlat +datum=WGS84 +no_defs"
   r=projectRaster(r, crs = projection(r_exclude_lakes ))
@@ -129,7 +125,7 @@ my_function_project=function(data)
 }
 
 
-
+# function to determine the species loss rate
 
 my_function_guild_loss=function(data){
   data%>%filter(climate_effect<0)->data_loss_climate 
@@ -156,13 +152,12 @@ my_function_guild_loss=function(data){
                          joint_effect%in%c("L-loss-low _ C-loss-high","NA _ C-loss-high",
                          "L-gain-high _ C-loss-high","L-gain-low _ C-loss-high")~"C-high-loss",
                          TRUE~"other"))->df4
-  
   df4=my_function(df4)
   return(df4)
 }
         
         
-# function to get the species gain rate
+# function to determine the species gain rate
 
 my_function_guild_gain=function(data){
   data%>%filter(climate_effect<0)->data_loss_climate 
@@ -192,7 +187,7 @@ my_function_guild_gain=function(data){
   return(df4)
 }
 
-#to look at the data related
+# the common theme for the plots
 
 common_theme=theme(legend.position = c(0.18,0.60),
         legend.margin = margin(t = -5, r = -5, b = -5, l = 0),

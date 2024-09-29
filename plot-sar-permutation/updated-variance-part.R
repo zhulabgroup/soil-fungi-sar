@@ -2,6 +2,9 @@
 # model the z values
 
 setwd("/Users/luowenqi/soil-sar/plot-sar-permutation/standard sar neon")
+load("~/soil-sar/plot-sar-permutation/model_data.RData")
+load("~/soil-sar/plot-sar-permutation/soil_mean.RData")
+
 
 full_parameter_data=readRDS("full_parameter_data.rds")
 
@@ -11,12 +14,11 @@ full_parameter_data%>%dplyr::select(logc,zvalue,plotID,guild)%>%
   left_join(model_data%>%dplyr::select(plotID,siteIDD,bio1,bio2,bio4,bio8,bio12,bio15,bio18,richness)%>%distinct(),by="plotID")%>%
   left_join(soil_mean%>%dplyr::select(-lon,-lat)%>%distinct(),by="plotID")->model_data_SAR_rarefaction
 
-
-
 model_data_SAR_rarefaction$logc=2.71828^model_data_SAR_rarefaction$logc
 
-# do not include plotID
+# does not include plotID
 # use this data for modeling when plant richness was not included
+
 model_data_SAR_climate=model_data_SAR_rarefaction%>%dplyr::select(siteIDD,plotID,guild,logc,  zvalue,  soilInCaClpH ,nitrogenPercent, organicCPercent, soilMoisture, cec, sand,  bio1, bio2,  bio4, bio8, bio12, bio15, bio18)
 model_data_SAR_climate=model_data_SAR_climate[complete.cases(model_data_SAR_climate),]
 
@@ -133,8 +135,6 @@ guild_effect_no_plant=effect_no_plant%>%filter(guild!="all")
 
 
 ## when plant richness were included
-
-
 
 high_cor_variables=list()
 for (i in 1:9)
@@ -461,7 +461,7 @@ ggplot(data=varp_new_withplant%>%filter(Fractions>0&guild!="all"), aes(x = guild
 
 #when all the guilds were considered
 
-p1=ggplot(data=varp_new_noplant%>%filter(Fractions>0&guild=="all"), aes(x = guild, y = Fractions, fill = type)) +
+ggplot(data=varp_new_noplant%>%filter(Fractions>0&guild=="all"), aes(x = guild, y = Fractions, fill = type)) +
   geom_bar(stat = "identity",position="fill",color="black",width = 0.6)+
   scale_fill_manual("Component",breaks=unique(varp_new_noplant$type),
                     labels=c(expression(italic(C)),"S","Cli.",expression(italic(C)*"+S"),expression(italic(C)*"+Cli."),
