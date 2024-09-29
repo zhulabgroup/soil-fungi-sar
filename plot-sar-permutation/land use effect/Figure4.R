@@ -115,7 +115,7 @@ my_function=function(data)
 # the function to project the raster
 my_function_project=function(data)
 {
-  points <- vect(data, geom = c("lon", "lat"), crs = "EPSG:4326")  # Assuming WGS84 coordinates
+  points <- vect(data, geom = c("x", "y"), crs = "EPSG:4326")  # Assuming WGS84 coordinates
   raster_template <- rast(ext(points), resolution = 0.17, crs = "EPSG:4326")  # Resolution of 1 degree
   raster <- rasterize(points, raster_template, field = "group")
   target_crs <- "EPSG:5070"
@@ -236,6 +236,9 @@ map_loss[[i]]=ggplot()+
   geom_sf(data = mexico_projected, fill = NA, size=0.01,color = "black")+
   geom_sf(data = haiti_projected, fill = NA, size=0.01,color = "black")+
   geom_sf(data = dominican_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = baha_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = jama_projected, fill = NA, size=0.01,color = "black")+
+  
   coord_sf(xlim = c(-5000000 , 3000000), ylim = c(-252303 , 5980000))+
   common_theme
   
@@ -245,7 +248,7 @@ else{
     geom_point(data=df5,aes(x=x,y=y,color=group),size=0.01)+
     scale_color_manual("RCP5.8-SSP5",breaks=c("0","1","2","3","4","5"),
                        labels=c(paste0(data_percent$group ," (",round(data_percent$Freq*100,1),"%)"),""),
-                       values=c("#E92316","#DA5725","#32CD92","#CD326D","gray88","white"))+
+                       values=c("#E92316","yellow","#32CD92","#CD326D","gray88","white"))+
     
     #geom_sf(data=st_as_sf(north_america_cropped),size=0.1, col="black", fill=alpha("white", 0),linetype = "solid")+
     ggtitle("Species loss rate")+
@@ -259,6 +262,9 @@ else{
     geom_sf(data = mexico_projected, fill = NA, size=0.01,color = "black")+
     geom_sf(data = haiti_projected, fill = NA, size=0.01,color = "black")+
     geom_sf(data = dominican_projected, fill = NA, size=0.01,color = "black")+
+    geom_sf(data = baha_projected, fill = NA, size=0.01,color = "black")+
+    geom_sf(data = jama_projected, fill = NA, size=0.01,color = "black")+
+    
     coord_sf(xlim = c(-5000000 , 3000000), ylim = c(-252303 , 5980000))+
     common_theme
 }
@@ -281,7 +287,7 @@ for (i in 1:2)
       geom_point(data=df5,aes(x=x,y=y,color=group),size=0.01)+
       scale_color_manual("RCP4.5-SSP2",breaks=c("0","1","2","3","4","5"),
                          labels=c(paste0(data_percent$group ," (",round(data_percent$Freq*100,1),"%)"),""),
-                         values=c("#E92316","#DA5725","#32CD92","#CD326D","gray88","white"))+
+                         values=c("#E92316","yellow","#32CD92","#CD326D","gray88","white"))+
       #geom_sf(data=st_as_sf(north_america_cropped),size=0.1, col="black", fill=alpha("white", 0),linetype = "solid")+
       ggtitle("Species gain rate")+
       guides(color = guide_legend(override.aes = list(size = 2)))+
@@ -294,6 +300,9 @@ for (i in 1:2)
       geom_sf(data = mexico_projected, fill = NA, size=0.01,color = "black")+
       geom_sf(data = haiti_projected, fill = NA, size=0.01,color = "black")+
       geom_sf(data = dominican_projected, fill = NA, size=0.01,color = "black")+
+      geom_sf(data = baha_projected, fill = NA, size=0.01,color = "black")+
+      geom_sf(data = jama_projected, fill = NA, size=0.01,color = "black")+
+      
       coord_sf(xlim = c(-5000000 , 3000000), ylim = c(-252303 , 5980000))+
       common_theme
   }
@@ -303,7 +312,7 @@ for (i in 1:2)
       
       scale_color_manual("RCP5.8-SSP5",breaks=c("0","1","2","3","4","5"),
                          labels=c(paste0(data_percent$group ," (",round(data_percent$Freq*100,1),"%)"),""),
-                         values=c("#E92316","#DA5725","#32CD92","#CD326D","gray88","white"))+
+                         values=c("#E92316","yellow","#32CD92","#CD326D","gray88","white"))+
       
       #geom_sf(data=st_as_sf(north_america_cropped),size=0.1, col="black", fill=alpha("white", 0),linetype = "solid")+
       ggtitle("Species gain rate")+
@@ -317,6 +326,9 @@ for (i in 1:2)
       geom_sf(data = mexico_projected, fill = NA, size=0.01,color = "black")+
       geom_sf(data = haiti_projected, fill = NA, size=0.01,color = "black")+
       geom_sf(data = dominican_projected, fill = NA, size=0.01,color = "black")+
+      geom_sf(data = baha_projected, fill = NA, size=0.01,color = "black")+
+      geom_sf(data = jama_projected, fill = NA, size=0.01,color = "black")+
+      
       coord_sf(xlim = c(-5000000 , 3000000), ylim = c(-252303 , 5980000))+
       common_theme
   }
@@ -324,7 +336,7 @@ for (i in 1:2)
 
 plot_grid(map_loss[[1]],map_gain[[1]],map_loss[[2]],map_gain[[2]],ncol=2,
 
-          labels = c("(a)","(b)","(c)","(d)"),label_y = 0.98,label_x = 0.2,label_size = 20)
+          labels = c("(a)","(b)","(c)","(d)"),label_y = 1,label_x = 0.2,label_size = 20)
 
 
 ##if we just look at the regions with both species loss
