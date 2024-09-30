@@ -80,7 +80,9 @@ full_neon_data_with_sd%>%filter(plotid%in%rand_plot&!is.na(mean_value) )->plot_d
    unnest(cols = c(Predicted))
  
  # Plotting the data and the fitted NLS lines
+ 
  ggplot(plot_data, aes(x = area, y = mean_value, color = plotid)) +
+   geom_errorbar(data=plot_data,aes(ymin=mean_value-sd_value,ymax=mean_value+sd_value,color=plotid),width=45)+
    geom_point(size=3) +
    scale_color_manual("PlotID",breaks=unique(plot_data$plotid),
                       labels=c("Central Plains Experimental Range ",
@@ -98,8 +100,7 @@ full_neon_data_with_sd%>%filter(plotid%in%rand_plot&!is.na(mean_value) )->plot_d
    theme(legend.position =c(0.68,0.21205205),
          legend.text = element_text(size=8),
          legend.title  = element_text(size=8),
-         legend.key.height = unit(0.34, "cm"),
-         legend.spacing.= unit(0.1, 'cm'),
+         legend.key.height = unit(0.36, "cm"),
          text = element_text(size = 18),
          plot.title = element_text(size = 12, hjust = 0.5), 
          axis.text.y = element_text(hjust = 0,size=10), 
@@ -112,10 +113,8 @@ full_neon_data_with_sd%>%filter(plotid%in%rand_plot&!is.na(mean_value) )->plot_d
    xlab(expression(Area *" " * m^2))+
    ylab("Richness")+
    guides(color = guide_legend(nrow = 10))+
-   ylim(-400,2500)+
-   geom_errorbar(data=plot_data,aes(ymin=mean_value-sd_value,ymax=mean_value+sd_value,color=plotid),width=45)
+   ylim(-400,2430)
    
- 
  
  
  
