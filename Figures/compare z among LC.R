@@ -46,7 +46,12 @@ p1=ggboxplot(data1, x = "type", y = "z", fill = "type", outlier.shape = NA) +
   xlab("") +
   theme(legend.position = "bottom", legend.text = element_text(size = 14), text = element_text(size = 15), axis.text.x = element_blank(), axis.title.y = element_text(face = "italic", size = 20), axis.title.x = element_text(size = 20), axis.ticks.x = element_blank()) +
   ylab("z") +
-  theme(legend.position = c(0.45, 0.7558), legend.text = element_text(size = 14), text = element_text(size = 15), axis.text.x = element_blank(), axis.title.y = element_text(face = "italic", size = 20), axis.title.x = element_text(size = 20), axis.ticks.x = element_blank()) +
+  theme(legend.position = c(0.45, 0.7558), 
+        legend.text = element_text(size = 14), 
+        text = element_text(size = 15), 
+        axis.text.x = element_blank(),
+        axis.title.y = element_text(face = "italic", size = 20), 
+        axis.title.x = element_text(size = 20), axis.ticks.x = element_blank()) +
   guides(fill = guide_legend(nrow = 7, byrow = TRUE)) + # make four rows for the legend
   geom_hline(yintercept = 0.7559199, linetype = "dashed", color = "red") +
   annotate("text", x = 1, y = 1.205, label = "e", size = 6) +
