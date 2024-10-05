@@ -214,6 +214,8 @@ biomes=c("Temperate Broadleaf & Mixed Forests","Temperate Conifer Forests",
 core_number=matrix(ncol=2,nrow=4)
 site=list()
 for (j in 1:4)
+  
+  if(j%in%c(1,2,4))
 {
   cat("\r", paste(paste0(rep("*", round(j / 1, 0)), collapse = ""), j, collapse = "")) 
   dk=subset_samples(rare_all_guild_biome,LABEL==biomes[j])# select the biome of interest
@@ -237,16 +239,19 @@ for (j in 1:4)
 
 # if we just based on the site-specific comparison for the richness 
 
+hehe=list()
+
+for(j in 1:4)
+  
+{
+
 dk=subset_samples(rare_all_guild_biome,LABEL==biomes[j])# select the biome of interest
 # to see which are croplands
 subset_samples(dk,type=="cultivatedCrops")->modified_data
 #soil samples
 dim(sample_data(modified_data)%>%data.frame())[1]->n_crop_sample
-
 subset_samples(dk,type!="cultivatedCrops")->natural_data
 dim(sample_data(natural_data)%>%data.frame())[1]->n_nature_sample
-
-
 sample_data(modified_data)%>%data.frame()%>%pull(plotIDM)%>%
   substr(start = 1, stop = 4)%>%unique()->modified_site
 sample_data(natural_data)%>%data.frame()%>%pull(plotIDM)%>%
@@ -256,12 +261,16 @@ overlap <- intersect(modified_site, natural_site)
 
 site_number=length(overlap)
 
-site_response=matrix(ncol=site_number,nrow=100)#calculate the response ratio for
 
- for(m in 1:4)
+  times=5
+  
+  if(length(overlap)>=1)
+  {
+
+site_response=matrix(ncol=site_number,nrow=times)#calculate the response ratio for
+ 
+for(m in 1:site_number)
  {
-if(length(overlap)>1)
-{
   # when there is overlap between these two data sets
  
   set.seed(234)
@@ -271,14 +280,11 @@ if(length(overlap)>1)
   n_sub_natural_samples=nsamples(sub_natural_data)
   n_sub_modified_samples=nsamples(sub_modified_data)
 
-  
   if(n_sub_natural_samples>=n_sub_modified_samples)
   {
     set.seed(123)
     sample_names=sample_names(sub_natural_data)
-    times=100
     sampled_names <- replicate(times,sample(sample_names, n_sub_modified_samples,replace = FALSE))
-    
     #richness_natural=numeric()
     
     richness_natural=numeric()
@@ -301,9 +307,7 @@ else
   {
   set.seed(123)
   sample_names=sample_names(sub_modified_data)
-  times=100
   sampled_names <- replicate(times,sample(sample_names, n_sub_natural_samples,replace = FALSE))
-  
   richness_modified=numeric()
   for (i in 1:times)
   {
@@ -319,10 +323,18 @@ richness_natural=estimate_richness(sub_natural_data, measures = "Observed")%>%
   as.numeric()
 # the ratio between the natural and modified communities
 site_response[,m]=richness_modified/richness_natural
+  }
+  
+}#wit the for
+
+hehe[[j]]=site_response
 }
-}}
-  
-  
+
+  else{
+    hehe[[j]]="hehe"
+  }
+
+}
 
 
 
