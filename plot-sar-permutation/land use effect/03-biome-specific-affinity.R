@@ -209,6 +209,132 @@ data_epiphy <- subset_taxa(rare_all_guild_biome, primary_lifestyle == "epiphyte"
 biomes=c("Temperate Broadleaf & Mixed Forests","Temperate Conifer Forests",
          "Temperate Grasslands, Savannas & Shrublands","Tropical & Subtropical Moist Broadleaf Forests")
 
+#to see how many soil samples are there in the natural and human-dominated communities
+
+core_number=matrix(ncol=2,nrow=4)
+site=list()
+for (j in 1:4)
+{
+  cat("\r", paste(paste0(rep("*", round(j / 1, 0)), collapse = ""), j, collapse = "")) 
+  dk=subset_samples(rare_all_guild_biome,LABEL==biomes[j])# select the biome of interest
+  # to see which are croplands
+  subset_samples(dk,type=="cultivatedCrops")->modified_data
+  #soil samples
+  
+  dim(sample_data(modified_data)%>%data.frame())[1]->n_crop_sample
+  subset_samples(dk,type!="cultivatedCrops")->natural_data
+  dim(sample_data(natural_data)%>%data.frame())[1]->n_nature_sample
+  sample_data(modified_data)%>%data.frame()%>%pull(plotIDM)%>%
+    substr(start = 1, stop = 4)%>%unique()->modified_site
+  
+  sample_data(natural_data)%>%data.frame()%>%pull(plotIDM)%>%
+    substr(start = 1, stop = 4)%>%unique()->natural_site
+  overlap <- intersect(modified_site, natural_site)
+  core_number[j,1]=n_crop_sample
+  core_number[j,2]=n_nature_sample
+  site[[j]]=list(modified_site,natural_site)
+}
+
+# if we just based on the site-specific comparison for the richness 
+
+dk=subset_samples(rare_all_guild_biome,LABEL==biomes[j])# select the biome of interest
+# to see which are croplands
+subset_samples(dk,type=="cultivatedCrops")->modified_data
+#soil samples
+dim(sample_data(modified_data)%>%data.frame())[1]->n_crop_sample
+
+subset_samples(dk,type!="cultivatedCrops")->natural_data
+dim(sample_data(natural_data)%>%data.frame())[1]->n_nature_sample
+
+
+sample_data(modified_data)%>%data.frame()%>%pull(plotIDM)%>%
+  substr(start = 1, stop = 4)%>%unique()->modified_site
+sample_data(natural_data)%>%data.frame()%>%pull(plotIDM)%>%
+  substr(start = 1, stop = 4)%>%unique()->natural_site
+
+overlap <- intersect(modified_site, natural_site)
+
+site_number=length(overlap)
+
+site_response=matrix(ncol=site_number,nrow=100)#calculate the response ratio for
+
+ for(m in 1:4)
+ {
+if(length(overlap)>1)
+{
+  # when there is overlap between these two data sets
+ 
+  set.seed(234)
+  # based on the selected site names to select the samples
+  subset_samples(natural_data,Site%in%overlap[m])->sub_natural_data
+  subset_samples(modified_data,Site%in%overlap[m])->sub_modified_data
+  n_sub_natural_samples=nsamples(sub_natural_data)
+  n_sub_modified_samples=nsamples(sub_modified_data)
+
+  
+  if(n_sub_natural_samples>=n_sub_modified_samples)
+  {
+    set.seed(123)
+    sample_names=sample_names(sub_natural_data)
+    times=100
+    sampled_names <- replicate(times,sample(sample_names, n_sub_modified_samples,replace = FALSE))
+    
+    #richness_natural=numeric()
+    
+    richness_natural=numeric()
+    for (i in 1:times)
+    {
+      # cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) 
+      sampled_physeq <- prune_samples(sampled_names[,i], sub_natural_data)
+      richness_natural[i]=estimate_richness(sampled_physeq, measures = "Observed")%>%
+        summarize(mean_A = mean(Observed, na.rm = TRUE))%>%
+        as.numeric()
+    }
+    
+    richness_modified=estimate_richness(sub_modified_data, measures = "Observed")%>%
+      summarize(mean_A = mean(Observed, na.rm = TRUE))%>%
+      as.numeric()
+    site_response[,m]=richness_modified/richness_natural
+  }
+  
+else
+  {
+  set.seed(123)
+  sample_names=sample_names(sub_modified_data)
+  times=100
+  sampled_names <- replicate(times,sample(sample_names, n_sub_natural_samples,replace = FALSE))
+  
+  richness_modified=numeric()
+  for (i in 1:times)
+  {
+    # cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) 
+    sampled_physeq <- prune_samples(sampled_names[,i], sub_modified_data)
+    richness_modified[i]=estimate_richness(sampled_physeq, measures = "Observed")%>%
+      summarize(mean_A = mean(Observed, na.rm = TRUE))%>%
+      as.numeric()
+  }
+
+richness_natural=estimate_richness(sub_natural_data, measures = "Observed")%>%
+  summarize(mean_A = mean(Observed, na.rm = TRUE))%>%
+  as.numeric()
+# the ratio between the natural and modified communities
+site_response[,m]=richness_modified/richness_natural
+}
+}}
+  
+  
+
+
+
+
+
+
+
+
+
+
+
+
 mm=list()
 for (k in 1:9)
 {
@@ -229,24 +355,18 @@ dim(sample_data(natural_data)%>%data.frame())[1]->n_nature_sample
 
 sample_data(modified_data)%>%data.frame()%>%pull(plotIDM)%>%
 substr(start = 1, stop = 4)%>%unique()->modified_site
-
 sample_data(natural_data)%>%data.frame()%>%pull(plotIDM)%>%
   substr(start = 1, stop = 4)%>%unique()->natural_site
-
 overlap <- intersect(modified_site, natural_site)
-
 if(length(overlap)>1)
   {
 # when there is overlap between these two data sets
     set.seed(234)
   # based on the selected site names to select the samples
-  
   subset_samples(natural_data,Site%in%overlap)->sub_natural_data
-
     sample_names=sample_names(sub_natural_data)
     times=100
     sampled_names <- replicate(times,sample(sample_names, n_crop_sample,replace = FALSE))
-    
     richness_natural=numeric()
     for (i in 1:times)
     {
