@@ -1,6 +1,12 @@
 # create the new figures when part of the regions have been removed
 #for the land use effect
 #species_change_land_rcp245_all
+#based on the land use effect to maks the climate change effect
+
+land_effect=bind_cols(coords_present,species_change_land_rcp245%>%filter(variable=="all"))
+crs(r_climate) <- CRS("+proj=longlat +datum=WGS84")
+r_land <- rasterFromXYZ(land_effect[, c("lon", "lat", "value")])
+
 
 crop_data=list()
 for (i in 1:9)
@@ -8,19 +14,25 @@ for (i in 1:9)
   climate_effect=bind_cols(coords_present,species_change_climate_rcp245%>%filter(variable==guild_type[i]))
   r_climate <- rasterFromXYZ(climate_effect[, c("lon", "lat", "value")])
   crs(r_climate) <- CRS("+proj=longlat +datum=WGS84")
-  masked_raster <- mask(r_climate, r_land)
+  masked_raster <- mask(r_climate, r_land)#mask the climate change effect
   raster_df <- as.data.frame(masked_raster, xy = TRUE, na.rm = TRUE)
   colnames(raster_df) <- c("x", "y", "value")
-  crop_data[[i]]=raster_df%>%mutate(variable=rep(guild_type[i],40650))
+  crop_data[[i]]=raster_df%>%mutate(variable=rep(guild_type[i],dim(raster_df)[1]))
 }
 
 
 
-crop_data_rcp585_climate[[9]]%>%mutate(coordinate=paste(round(x,3),"_",round(y,3)))->climate_change_effect_crop_585
-
-# to combine both effect
-species_change_land_rcp585%>%filter(variable=="all")%>%
-  bind_cols(coords_present)%>%mutate(coordinate=paste(lon,"_",lat))->land_change_effect_585
+crop_data_rcp585_climate=list()
+for (i in 1:9)
+{
+  climate_effect=bind_cols(coords_present,species_change_climate_rcp585%>%filter(variable==guild_type[i]))
+  r_climate <- rasterFromXYZ(climate_effect[, c("lon", "lat", "value")])
+  crs(r_climate) <- CRS("+proj=longlat +datum=WGS84")
+  masked_raster <- mask(r_climate, r_land)
+  raster_df <- as.data.frame(masked_raster, xy = TRUE, na.rm = TRUE)
+  colnames(raster_df) <- c("x", "y", "value")
+  crop_data_rcp585_climate[[i]]=raster_df%>%mutate(variable=rep(guild_type[i],dim(raster_df)[1]))
+}
 
 data_both_effect_rcp245=list()
  for (i in 1:9)
@@ -79,7 +91,7 @@ for (i in 1:2)
       geom_point(data=df5,pch=15,aes(x=x,y=y,color=group),size=0.01)+
       scale_color_manual("RCP4.5-SSP2",breaks=c("0","1","2","3","4","5"),
                          labels=c(paste0(data_percent$group ," (",round(data_percent$Freq*100,1),"%)"),""),
-                         values=c("#E92316","tan2","#32CD92","#CD326D","gray88","white"))+
+                         values=c("#E92316","#E3A72F",  "#32CD92","#CD326D","gray88","white"))+
       
       #geom_sf(data=st_as_sf(north_america_cropped),size=0.1, col="black", fill=alpha("white", 0),linetype = "solid")+
       ggtitle("Species loss rate")+
@@ -105,7 +117,7 @@ for (i in 1:2)
       geom_point(data=df5,pch=15,aes(x=x,y=y,color=group),size=0.01)+
       scale_color_manual("RCP5.8-SSP5",breaks=c("0","1","2","3","4","5"),
                          labels=c(paste0(data_percent$group ," (",round(data_percent$Freq*100,1),"%)"),""),
-                         values=c("#E92316","tan2","#32CD92","#CD326D","gray88","white"))+
+                         values=c("#E92316","#E3A72F","#32CD92","#CD326D","gray88","white"))+
       
       #geom_sf(data=st_as_sf(north_america_cropped),size=0.1, col="black", fill=alpha("white", 0),linetype = "solid")+
       ggtitle("Species loss rate")+
@@ -143,7 +155,7 @@ for (i in 1:2)
       geom_point(data=df5,pch=15,aes(x=x,y=y,color=group),size=0.01)+
       scale_color_manual("RCP4.5-SSP2",breaks=c("0","1","2","3","4","5"),
                          labels=c(paste0(data_percent$group ," (",round(data_percent$Freq*100,1),"%)"),""),
-                         values=c("#E92316","tan2","#32CD92","#CD326D","gray88","white"))+
+                         values=c("#E92316","#E3A72F","#32CD92","#CD326D","gray88","white"))+
       #geom_sf(data=st_as_sf(north_america_cropped),size=0.1, col="black", fill=alpha("white", 0),linetype = "solid")+
       ggtitle("Species gain rate")+
       guides(color = guide_legend(override.aes = list(size = 2)))+
@@ -168,7 +180,7 @@ for (i in 1:2)
       
       scale_color_manual("RCP5.8-SSP5",breaks=c("0","1","2","3","4","5"),
                          labels=c(paste0(data_percent$group ," (",round(data_percent$Freq*100,1),"%)"),""),
-                         values=c("#E92316","tan2","#32CD92","#CD326D","gray88","white"))+
+                         values=c("#E92316","#E3A72F","#32CD92","#CD326D","gray88","white"))+
       
       #geom_sf(data=st_as_sf(north_america_cropped),size=0.1, col="black", fill=alpha("white", 0),linetype = "solid")+
       ggtitle("Species gain rate")+
