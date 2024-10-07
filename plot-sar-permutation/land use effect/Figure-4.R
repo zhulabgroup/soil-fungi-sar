@@ -115,9 +115,24 @@ my_function=function(data)
 # the function to project the raster
 my_function_project=function(data)
 {
-  points <- vect(data, geom = c("x", "y"), crs = "EPSG:4326")  # Assuming WGS84 coordinates
+  if (grepl(colnames(data), "x"))
+  {
+    points <- vect(data, geom = c("x", "y"), crs = "EPSG:4326")  # Assuming WGS84 coordinates
+  }
+  else{
+    points <- vect(data, geom = c("lon", "lat"), crs = "EPSG:4326")  # Assuming WGS84 coordinates
+    
+  }
   raster_template <- rast(ext(points), resolution = 0.17, crs = "EPSG:4326")  # Resolution of 1 degree
-  raster <- rasterize(points, raster_template, field = "group")
+  
+  if (grepl(colnames(data), "group"))
+    {
+    raster <- rasterize(points, raster_template, field = "group")
+  }
+  else
+  {
+    raster <- rasterize(points, raster_template, field = "value")
+  }
   target_crs <- "EPSG:5070"
   raster_equal_area <- project(raster, target_crs,method="near")# there are options for the method used
   raster_df <- as.data.frame(raster_equal_area, xy = TRUE,)
@@ -201,7 +216,7 @@ common_theme=theme(legend.position = c(0.18,0.60),
         axis.title.x = element_text(size = 18), 
         axis.ticks.x = element_blank(), 
         axis.ticks.y = element_blank(),
-        plot.margin = unit(c(0,0, 0, 0), "cm"),
+        plot.margin = unit(c(0,1, -5, 0), "cm"),
         panel.background = element_rect(fill = "NA"),
         panel.border = element_blank())
 
