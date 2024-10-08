@@ -667,24 +667,36 @@ k <- aggregate(value ~ variable, data = tem_data, FUN = mean)
 od <- k[order(-k$value), ] # with the increase trend to display the box plots
 tem_data$variable <- factor(tem_data$variable, levels = od$variable)
 
+#test the significant of the difference
+color_match%>%
+  mutate(land_cover=c("Cultivated crops", 
+                      "Deciduous forest","Evergreen forest",
+                      "Mixed forest","Woody wetlands",
+                      "Grassland herbaceous","Shrub scrub",
+                      "Emergent herbaceous wetlands"))->color_match
+
+comp_result[[2]]$Letters%>%data.frame()%>%rownames_to_column()%>%
+  rename_all(~paste0(c("landcover","letter")))->significant
+
 type[[i]]%>%data.frame()%>%rename_all(~paste0(c("landcover")))%>%left_join(color_match,by="landcover")->
   color_select
 pp[[i]]=ggplot(tem_data,aes(x=variable,y=value,fill=variable),alpha=0.5)+
   sm_raincloud()+
   geom_boxplot(width = 0.1, color = "black", outlier.size = 2) +
-  theme(legend.position =c(0.4,0.25), legend.text = element_text(size = 12), 
-        text = element_text(size = 15), 
+  theme(legend.position =c(0.32,0.20), legend.text = element_text(size = 12), 
+        text = element_text(size = 12), 
         axis.text.x = element_blank(), 
-        axis.title.y = element_text(size = 20), 
-        axis.title.x = element_text(size = 20), 
-        axis.ticks.x = element_blank()) +
-  ylab("Core level richness") +
-  scale_fill_manual("",breaks=type[[i]],values = color_select$color)+
-  ylim(-20,300)+
-  
-  guides(fill = guide_legend(keywidth = 0.5, keyheight = 0.5))  # Adjust key size
-
-
+        axis.text.y = element_text(size=12), 
+        axis.title.y = element_text(size = 15), 
+        axis.title.x = element_text(size = 15),
+        axis.ticks.x = element_blank(),
+        panel.grid.major = element_line(color="white"),
+        panel.background = element_rect(fill = "NA")) +
+  ylab("Core-level ichness") +
+  xlab(paste0(biomes[i]))+
+  scale_fill_manual("",breaks=type[[i]],values = color_select$color,labels=color_select$land_cover)+
+  ylim(-10,300)+
+  guides(fill = guide_legend(keywidth = 0.8, keyheight = 0.7))  # Adjust key size
 }
 
 plot_grid(pp[[1]],pp[[2]],pp[[3]],pp[[4]],ncol=2)
@@ -710,121 +722,78 @@ comp_result[[i]] <- multcompLetters(tukey_pvalues, compare = "<", threshold = 0.
       
     
 #compare the species composition among land use types
-        
+# for each land use type select the same number
+# for the first biome
+
       set.seed(544)
-      sub_com=list()
-      for (i in 1:5)
+      # the number of the land use type
+      
+      community_data=list()
+      for (k in 1:4)
       {
-        cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # 
-        dk=subset_samples(biome_data,type==type0[i])
+      cat("\r", paste(paste0(rep("*", round(k / 1, 0)), collapse = ""), k, collapse = "")) # 
         
+      type01=c("cultivatedCrops","deciduousForest","evergreenForest","mixedForest","woodyWetlands")
+      type02=c("cultivatedCrops","deciduousForest","evergreenForest","grasslandHerbaceous", "mixedForest","shrubScrub","woodyWetlands")
+      type03=c("cultivatedCrops","deciduousForest","grasslandHerbaceous", "emergentHerbaceousWetlands","shrubScrub")
+      type04=c("cultivatedCrops","grasslandHerbaceous", "evergreenForest")
+      type=list(type01,type02,type03,type04)
+      times_sample=c(100,20,25,8)
+      
+      number_types=type[[k]]%>%length()
+      
+      sub_com=list()
+      for (i in 1:number_types)
+      {
+        #cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # 
+        type_select=type[[k]][i]
+        biome_data=subset_samples(get(data[1]),LABEL==biomes[k])#
+       # number of samples need to be sampled
+         dk=subset_samples(biome_data,type==type_select)
         sample_names=sample_names(dk)
-        sampled_names <- sample(sample_names, 100,replace = FALSE)
+        sampled_names <- sample(sample_names, times_sample[k],replace = FALSE)
         sampled_physeq <- prune_samples(sampled_names, dk)
-        
         sub_com[[i]]=otu_table(sampled_physeq )%>%data.frame()
       }
     
-    
-      
-      
-      
-    
-    
-    if(length(overlap)>1)
-    {
-      # when there is overlap between these two data sets
-      set.seed(234)
-      # based on the selected site names to select the samples
-      subset_samples(natural_data,Site%in%overlap)->sub_natural_data
-      sample_names=sample_names(sub_natural_data)
-      times=100
-      sampled_names <- replicate(times,sample(sample_names, n_crop_sample,replace = FALSE))# the same number of the soil cores
-      richness_natural=numeric()
-      for (i in 1:times)
-      {
-        # cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) 
-        sampled_physeq <- prune_samples(sampled_names[,i], sub_natural_data)
-        richness_natural[i]=estimate_richness(sampled_physeq, measures = "Observed")%>%
-          summarize(mean_A = mean(Observed, na.rm = TRUE))%>%
-          as.numeric()
+      # bind all the community data; the presented results were based on one permutation
+      vege_com=combined_df <- do.call(rbind, sub_com)%>%
+        mutate(type=rep(type[[k]],each=times_sample[k]))
+      ordination <- metaMDS(vege_com[, -ncol(vege_com)], distance = "bray")
+      plot(ordination, type = "points")
+      com_score=ordination$species
+      com_score=ordination$points%>%data.frame()%>%mutate(type=rep(type[[k]],each=times_sample[k]))
+      community_data[[k]]=com_score
       }
-      
-      richness_modified=estimate_richness(modified_data, measures = "Observed")%>%
-        summarize(mean_A = mean(Observed, na.rm = TRUE))%>%
-        as.numeric()
-      # the ratio between the natural and modified communities
-      response_ratio[[j]]=richness_modified/richness_natural
-    }
-    
-    else if(length(overlap)==1)
-    {
-      # when there is overlap between these two data sets
-      set.seed(234)
-      
-      # based on the selected site names to select the samples
-      
-      subset_samples(modified_data,Site%in%overlap)->sub_modified_data
-      
-      #more samples in the human modified sites
-      
-      sample_names=sample_names(sub_modified_data)
-      
-      times=100
-      
-      sampled_names <- replicate(times,sample(sample_names, n_nature_sample,replace = FALSE))
-      
-      richness_modified=numeric()
-      for (i in 1:times)
-      {
-        # cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) 
-        
-        sampled_physeq <- prune_samples(sampled_names[,i], sub_modified_data)
-        
-        richness_modified[i]=estimate_richness(sampled_physeq, measures = "Observed")%>%
-          summarize(mean_A = mean(Observed, na.rm = TRUE))%>%
-          as.numeric()
-      }
-      
-      richness_natural=estimate_richness(natural_data, measures = "Observed")%>%
-        summarize(mean_A = mean(Observed, na.rm = TRUE))%>%
-        as.numeric()
-      # the ratio between the natural and modified communities
-      response_ratio[[j]]=richness_modified/richness_natural
-    }
-    
-    else if (length(overlap)<1)
-      
-    {
-      nearest_df_site%>%filter(site%in%modified_site)%>%pull(nearest_site)->near_sites
-      
-      subset_samples(natural_data,Site%in%near_sites)->sub_natural_data
-      set.seed(234)
-      sample_names=sample_names(sub_natural_data)
-      times=100
-      sampled_names <- replicate(times,sample(sample_names, n_crop_sample,replace = FALSE))
-      
-      richness_natural=numeric()
-      for (i in 1:times)
-      {
-        # cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) 
-        sampled_physeq <- prune_samples(sampled_names[,i], sub_natural_data)
-        richness_natural[i]=estimate_richness(sampled_physeq, measures = "Observed")%>%
-          summarize(mean_A = mean(Observed, na.rm = TRUE))%>%
-          as.numeric()
-      }
-      
-      richness_modified=estimate_richness(modified_data, measures = "Observed")%>%
-        summarize(mean_A = mean(Observed, na.rm = TRUE))%>%
-        as.numeric()
-      # the ratio between the natural and modified communities
-      response_ratio[[j]]=richness_modified/richness_natural
-    }
-    
-  }
-  
-  mm[[k]]=response_ratio
-}
 
 
+      
+      # change the 0-1 data
+      
+      vege_com[vege_com>0]=1
+      
+      adonis_result <- adonis(vege_com[, -ncol(vege_com)] ~ type, data =com_score, permutations = 999)
+      
+      
+      ggplot(data=com_score,aes(x=MDS1,  y= MDS2,color=type ))+
+        geom_point(data=com_score,pch=21,color="black",aes(x=MDS1,y= MDS2,fill=type ),size=3,alpha=0.75)+
+        stat_ellipse(size=0.8,linetype="dashed")+
+        
+        theme(legend.position = c(0.449,0.213), 
+              legend.title = element_text(size=10),
+              text = element_text(size = 18), 
+              
+              legend.text = element_text(size=11),
+              plot.title = element_text(size = 15, hjust = 0.5), 
+              axis.text.y = element_text(hjust = 0), 
+              axis.text.x = element_text(hjust = 1,margin = margin(t = -17)), 
+              axis.title.y = element_text(size = 18), 
+              axis.title.x = element_text(size = 18),
+              axis.ticks.x = element_blank(), 
+              panel.background = element_rect(fill = "NA"), 
+              panel.border = element_rect(color = "black", size = 1, fill = NA)) +
+        annotate("text",x=0.15,y=0.705,label=expression(italic(F)*" = 5.12"),size=7)+
+        annotate("text",x=0.64,y=0.705,label=expression(italic(P)*" < 0.001"),size=7)+
+        ylim(-1.7,0.75)+
+        xlab("MDS1")
 
