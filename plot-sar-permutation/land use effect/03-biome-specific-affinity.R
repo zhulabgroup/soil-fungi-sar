@@ -8,6 +8,7 @@ library(sp)
 library(sf)
 library(terra)
 library(tidyr)
+library(geosphere)
 
 setwd("/Volumes/seas-zhukai/proj-soil-fungi/land-use-effect")
 
@@ -95,7 +96,7 @@ plot_coordinates%>%bind_cols(extract_biomes%>%dplyr::select(LABEL))%>%dplyr::sel
 # to see the plot level land cover types
 
 
-load("~/soil-sar/data/comp_vege.RData")
+#load("~/soil-sar/data/comp_vege.RData")
 
 
 sample_data(rare_all_guild)%>%data.frame()%>%dplyr::select(plotIDM)%>%
@@ -112,6 +113,7 @@ land=read.csv("All_NEON_TOS_Plot_Centroids_V11.csv")
 land%>%dplyr::select(plotID,nlcdClass)->land
 land=distinct(land)
 
+#not sure why some plot still do not have landcover data need to consult the neon falculty
 # the plot TREE_015 was defined with two land cover types
 
 land=land[-1882,]#remove the dumplicated 
@@ -124,9 +126,23 @@ temp%>%mutate(type = replace_na(nlcdClass, "evergreenForest"))%>%data.frame()->l
 
 land%>%left_join(plot_biomes,by="plotID")%>%
   mutate(joint_land=paste(type,"_",LABEL))%>%
-  dplyr::select(joint_land, LABEL)->land_biome
+  dplyr::select(type,joint_land, LABEL)->land_biome
+
+# replace the 
+land_biome$type=gsub("pastureHay","cultivatedCrops",land_biome$type)
 
 # assign the NA rows with "evergreen forest" and then combine that with the phyloseq object
+
+
+sample_data_df <- as.data.frame(sample_data(rare_all_guild))
+
+# Delete the column you want (replace "column_name" with the actual column name)
+sample_data_df$type <- NULL
+
+# Assign the modified sample data back to the phyloseq object
+sample_data(rare_all_guild) <- sample_data(sample_data_df)
+
+
 
 row.names(land_biome)=row.names(sample_data(d))
 land_biome=sample_data(land_biome)
@@ -502,6 +518,44 @@ else if (length(overlap)<1)
 mm[[k]]=response_ratio
 }
 
+# to test the difference between the ratio and the 
+test_result_guild=list()
+for (m in 1:9){
+
+set.seed(123)
+test_result=matrix(nrow=4,ncol=3)
+for (j in 1:4)
+{
+  # get a subset data for that
+  sub_data=sample(mm[[m]][[j]],100)
+  
+test_result[j,1]=t.test(sub_data,mu=1,alternative = "two.sided")$estimate
+test_result[j,2:3]=t.test(sub_data,mu=1,alternative = "two.sided")[4]$conf.int[1:2]
+}
+
+test_result_guild[[m]]=test_result
+}
+
+do.call(rbind,test_result_guild)%>%data.frame()%>%
+  rename_all(~paste0(c("mean","low","up")))%>%
+  mutate(guild=rep(c("all","AM","EM","plapat","soilsap","littersap","woodsap","epiphy","para"),each=4))%>%
+  mutate(biome=rep(biomes,9))->t_test_result_guild
+
+ggplot()+
+  geom_point(data=t_test_result_guild%>%filter(guild=="all"),size=2,aes(x=1:4,y=mean))+
+  geom_segment(data=t_test_result_guild%>%filter(guild=="all"),size=0.35,color="black",aes(x=1:4,xend=1:4,y=low,yend=up))+
+  geom_hline(yintercept = 1,color="red",lty="dashed")+
+  ylab("Response ratio")+
+  xlab("Biomes")
+
+
+# if we just look at the richness and compared the mean rather than the ratio
+
+
+
+
+
+
 # to get the response ratio of different guilds
 # get the mean of the response ration
 kkm=matrix(ncol=4,nrow=9)
@@ -510,7 +564,7 @@ for(j in 1:9){
 kk=numeric()
 for (i in 1:4)
   {
-  kk[i]=mm[[j]][[i]]%>%mean()
+  kk[i]=mm[[j]][[i]]%>%mean()#need to test the significant among
   
 }
 kkm[j,]=kk
@@ -521,6 +575,8 @@ kkm%>%data.frame()%>%
   rename_all(~paste0(c(biomes,"guild")))%>%melt()%>%
   rename(biome=variable,response=value)%>%
   mutate(guild_biome=paste(guild,"_",biome))->guild_specific_response_ratio
+
+op=readRDS("full_guild_affinity_data.rds")
 
 # to combine the response ratio with the c and z values
 
@@ -581,12 +637,15 @@ ggplot()+
 
 # determine the difference in the species composition among land use types and different biomes
 
-
+all_richness_data_guild=list()
+for( m in 1:9)#select three guilds
+{
+cat("\r", paste(paste0(rep("*", round(m / 1, 0)), collapse = ""), m, collapse = "")) # 
 all_richness_data=list()
   for(k in 1:4)
   {
-    cat("\r", paste(paste0(rep("*", round(k / 1, 0)), collapse = ""), k, collapse = "")) # 
-    biome_data=subset_samples(get(data[1]),LABEL==biomes[k])# select the biome of interest
+    #cat("\r", paste(paste0(rep("*", round(k / 1, 0)), collapse = ""), k, collapse = "")) # 
+    biome_data=subset_samples(get(data[m]),LABEL==biomes[k])# select the biome of interest
     # to see which are croplands
     subset_samples(biome_data,type=="cultivatedCrops")->modified_data
     #soil samples
@@ -600,8 +659,8 @@ all_richness_data=list()
     overlap <- intersect(modified_site, natural_site)
     # with the same site to compare the species composition
  
-    #natural_data%>%sample_data%>%group_by(type)%>%count()
-    #modified_data%>%sample_data%>%group_by(type)%>%count()
+    natural_data%>%sample_data%>%group_by(type)%>%count()
+    modified_data%>%sample_data%>%group_by(type)%>%count()
     
    # deciduousForest  1129
     # evergreenForest   573
@@ -629,7 +688,7 @@ all_richness_data=list()
       #cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # 
         richness=numeric()
         for (j in 1:times){
-        cat("\r", paste(paste0(rep("*", round(j / 1, 0)), collapse = ""), j, collapse = "")) # 
+        #cat("\r", paste(paste0(rep("*", round(j / 1, 0)), collapse = ""), j, collapse = "")) # 
         dk=subset_samples(biome_data,type==type_select)
         sample_names=sample_names(dk)
         sampled_names <- replicate(times,sample(sample_names, times_sample[k]))
@@ -641,10 +700,14 @@ all_richness_data=list()
       all_richness_data[[k]]=richness_guild
   }
       
+all_richness_data_guild[[m]]=all_richness_data
+}
       
 #save the results
 
 saveRDS(all_richness_data,"all_richness_data.rds")
+
+saveRDS(all_richness_data_guild,"all_richness_data_guild.rds")#data saved
 
 
 #compared the richness among different land use types
@@ -661,7 +724,7 @@ pp=list()
 for(i in 1:4)
 {
 
-all_richness_data[[i]]%>%data.frame()%>%
+all_richness_data_guild[[1]][[i]]%>%data.frame()%>%
   rename_all(~paste0(type[[i]]))%>%melt()->tem_data
 k <- aggregate(value ~ variable, data = tem_data, FUN = mean)
 od <- k[order(-k$value), ] # with the increase trend to display the box plots
@@ -675,8 +738,8 @@ color_match%>%
                       "Grassland herbaceous","Shrub scrub",
                       "Emergent herbaceous wetlands"))->color_match
 
-comp_result[[2]]$Letters%>%data.frame()%>%rownames_to_column()%>%
-  rename_all(~paste0(c("landcover","letter")))->significant
+#comp_result[[2]]$Letters%>%data.frame()%>%rownames_to_column()%>%
+ # rename_all(~paste0(c("landcover","letter")))->significant
 
 type[[i]]%>%data.frame()%>%rename_all(~paste0(c("landcover")))%>%left_join(color_match,by="landcover")->
   color_select
@@ -695,8 +758,10 @@ pp[[i]]=ggplot(tem_data,aes(x=variable,y=value,fill=variable),alpha=0.5)+
   ylab("Core-level ichness") +
   xlab(paste0(biomes[i]))+
   scale_fill_manual("",breaks=type[[i]],values = color_select$color,labels=color_select$land_cover)+
-  ylim(-10,300)+
-  guides(fill = guide_legend(keywidth = 0.8, keyheight = 0.7))  # Adjust key size
+  #ylim(-10,300)+
+  guides(fill = guide_legend(keywidth = 0.8, keyheight = 0.7))+
+  guides(fill="none")+
+  guides(color="none")
 }
 
 plot_grid(pp[[1]],pp[[2]],pp[[3]],pp[[4]],ncol=2)
@@ -725,20 +790,28 @@ comp_result[[i]] <- multcompLetters(tukey_pvalues, compare = "<", threshold = 0.
 # for each land use type select the same number
 # for the first biome
 
-      set.seed(544)
+community_data_guild=list()
+statistic_guild=list()
+for(m in 1:9)
+{
+  cat("\r", paste(paste0(rep("*", round(m / 1, 0)), collapse = ""), m, collapse = "")) # 
+  
+      set.seed(556)
       # the number of the land use type
       
       community_data=list()
+      statistic=matrix(ncol=3,nrow=4)
       for (k in 1:4)
       {
-      cat("\r", paste(paste0(rep("*", round(k / 1, 0)), collapse = ""), k, collapse = "")) # 
+     # cat("\r", paste(paste0(rep("*", round(k / 1, 0)), collapse = ""), k, collapse = "")) # 
         
       type01=c("cultivatedCrops","deciduousForest","evergreenForest","mixedForest","woodyWetlands")
       type02=c("cultivatedCrops","deciduousForest","evergreenForest","grasslandHerbaceous", "mixedForest","shrubScrub","woodyWetlands")
       type03=c("cultivatedCrops","deciduousForest","grasslandHerbaceous", "emergentHerbaceousWetlands","shrubScrub")
       type04=c("cultivatedCrops","grasslandHerbaceous", "evergreenForest")
       type=list(type01,type02,type03,type04)
-      times_sample=c(100,20,25,8)
+      #times_sample=c(100,20,25,8)
+      times_sample=shared_sample_number_guild[[m]]
       
       number_types=type[[k]]%>%length()
       
@@ -747,7 +820,8 @@ comp_result[[i]] <- multcompLetters(tukey_pvalues, compare = "<", threshold = 0.
       {
         #cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # 
         type_select=type[[k]][i]
-        biome_data=subset_samples(get(data[1]),LABEL==biomes[k])#
+        biome_data=subset_samples(get(data[m]),LABEL==biomes[k])#
+        biome_data= prune_samples(sample_sums(biome_data)> 0, biome_data)#select non-zero rows
        # number of samples need to be sampled
          dk=subset_samples(biome_data,type==type_select)
         sample_names=sample_names(dk)
@@ -758,42 +832,152 @@ comp_result[[i]] <- multcompLetters(tukey_pvalues, compare = "<", threshold = 0.
     
       # bind all the community data; the presented results were based on one permutation
       vege_com=combined_df <- do.call(rbind, sub_com)%>%
-        mutate(type=rep(type[[k]],each=times_sample[k]))
+        mutate(type=rep(type[[k]],each=times_sample[k]))#
       ordination <- metaMDS(vege_com[, -ncol(vege_com)], distance = "bray")
-      plot(ordination, type = "points")
       com_score=ordination$species
       com_score=ordination$points%>%data.frame()%>%mutate(type=rep(type[[k]],each=times_sample[k]))
       community_data[[k]]=com_score
-      }
-
-
-      
-      # change the 0-1 data
-      
       vege_com[vege_com>0]=1
-      
       adonis_result <- adonis(vege_com[, -ncol(vege_com)] ~ type, data =com_score, permutations = 999)
+      statistic[k,1]=ordination$stress
+      statistic[k,2]=adonis_result $aov.tab[1,c(4,6)][1]%>%pull()#f-value
+      statistic[k,3]=adonis_result $aov.tab[1,c(4,6)][2]%>%pull()#p-vale
+      }
+     
+      community_data_guild[[m]]=community_data
+      
+      statistic_guild[[m]]=statistic
+}
+
+
+
+saveRDS(community_data_guild,file="community_data_guild.rds")
+saveRDS( statistic_guild,file=" statistic_guild.rds")
+
+
+
+   
+# need to consider different fungal guilds
+  # at the guild, some sample do not have any species
+  
+  
+  
       
       
-      ggplot(data=com_score,aes(x=MDS1,  y= MDS2,color=type ))+
-        geom_point(data=com_score,pch=21,color="black",aes(x=MDS1,y= MDS2,fill=type ),size=3,alpha=0.75)+
-        stat_ellipse(size=0.8,linetype="dashed")+
+statistic_guild=round(statistic,2)
+      
+pp1=list()
+      for (i in 1:4){
         
-        theme(legend.position = c(0.449,0.213), 
+data_range=community_data_guild[[1]][[i]]%>%data.frame()
+        y_range=range(data_range$MDS2)[2]
+        x_range=range(data_range$MDS1)[1]
+       
+type[[i]]%>%data.frame()%>%rename_all(~paste0(c("landcover")))%>%left_join(color_match,by="landcover")->
+          color_select
+        
+ pp1[[i]]=ggplotGrob(ggplot(data=community_data_guild[[1]][[i]],aes(x=MDS1,  y= MDS2,color=type ))+
+        geom_point(data=community_data_guild[[1]][[i]],pch=21,color="black",aes(x=MDS1,y= MDS2,fill=type ),size=3,alpha=0.75)+
+        stat_ellipse(size=0.8,linetype="dashed")+
+        theme(legend.position = c(0.3,0.3), 
               legend.title = element_text(size=10),
               text = element_text(size = 18), 
-              
               legend.text = element_text(size=11),
               plot.title = element_text(size = 15, hjust = 0.5), 
-              axis.text.y = element_text(hjust = 0), 
-              axis.text.x = element_text(hjust = 1,margin = margin(t = -17)), 
+              axis.text.y = element_text(hjust = 1), 
+              axis.text.x = element_text(hjust = 0), 
               axis.title.y = element_text(size = 18), 
               axis.title.x = element_text(size = 18),
-              axis.ticks.x = element_blank(), 
               panel.background = element_rect(fill = "NA"), 
-              panel.border = element_rect(color = "black", size = 1, fill = NA)) +
-        annotate("text",x=0.15,y=0.705,label=expression(italic(F)*" = 5.12"),size=7)+
-        annotate("text",x=0.64,y=0.705,label=expression(italic(P)*" < 0.001"),size=7)+
-        ylim(-1.7,0.75)+
-        xlab("MDS1")
+              panel.border = element_rect(color = "black", size = 1, fill = NA))+
+   #guides(color="none",fill="none")+
+        
+        annotate("text",x=max(community_data_guild[[1]][[i]]$MDS1),y=max(community_data_guild[[1]][[i]]$MDS2),label=bquote(italic(F)~ "=" ~ .(statistic_guild[[1]][i, 1])),size=5)+
+        #annotate("text",x=0.64,y=0.705,label=expression(italic(P)*" < 0.001"),size=5)+
+        xlab("MDS1")+
+        scale_fill_manual("",breaks=type[[i]],values = color_select$color,labels=color_select$land_cover)+
+      scale_color_manual("",breaks=type[[i]],values = color_select$color,labels=color_select$land_cover))
+ 
+      
+        }
+      
 
+
+
+pp[[1]]$widths=pp[[2]]$widths
+pp[[2]]$widths=pp[[3]]$widths
+pp[[4]]$widths=pp[[3]]$widths
+pp[[1]]$widths=pp[[3]]$widths
+
+plot_grid(pp1[[1]],pp[[1]],pp1[[2]],pp[[2]], pp1[[3]], pp[[3]],pp1[[4]],pp[[4]],ncol=2)
+
+#to creat the legend
+combined_legend=cowplot::get_legend(pp[[1]])
+
+combined_legend1=cowplot::get_legend(pp[[2]])
+
+legend_combined <- plot_grid(combined_legend, combined_legend1, ncol = 2)
+
+
+# Get legend from one of the plots
+
+
+rare_all_guild%>%sample_data()%>%data.frame()%>%
+  distinct(plotIDM)%>%pull(plotIDM)->plot_id
+rare_all_guild%>%sample_data()%>%data.frame()%>%filter(Project=="NEON")->temp_data
+
+dd=list()
+for(i in 1:515){
+
+dd[[i]]=temp_data%>%filter(plotIDM==plot_id[i])%>%distinct(lon)
+}
+
+
+#
+mm=list()
+mm_size=list()
+for (k in 1:9)
+{
+  
+  response_ratio=list()
+  size=matrix(nrow=4,ncol=2)
+  for (j in 1:4)
+  {
+    cat("\r", paste(paste0(rep("*", round(j / 1, 0)), collapse = ""), j, collapse = "")) 
+    dk=subset_samples(get(data[k]),LABEL==biomes[j])# select the biome of interest
+    # to see which are croplands
+    subset_samples(dk,type=="cultivatedCrops")->modified_data
+    #soil samples
+    dim(sample_data(modified_data)%>%data.frame())[1]->n_crop_sample
+    
+    subset_samples(dk,type!="cultivatedCrops")->natural_data
+    dim(sample_data(natural_data)%>%data.frame())[1]->n_nature_sample
+    
+    
+    sample_data(modified_data)%>%data.frame()%>%pull(plotIDM)%>%
+      substr(start = 1, stop = 4)%>%unique()->modified_site
+    sample_data(natural_data)%>%data.frame()%>%pull(plotIDM)%>%
+      substr(start = 1, stop = 4)%>%unique()->natural_site
+    
+    richness_natural=estimate_richness(natural_data, measures = "Observed")
+    
+    richness_modified=estimate_richness(modified_data, measures = "Observed")
+    
+    richness_natural%>%data.frame()%>%rename_all(~paste0(c("Observed")))->richness_natural
+    
+    richness_modified=estimate_richness(modified_data, measures = "Observed")
+    
+    N1=dim(richness_modified)[1]
+    N2=dim(richness_natural)[1]
+    
+    richness_modified%>%bind_rows(richness_natural)%>%
+      mutate(type=rep(c("modified","nature"),times=c(N1,N2)))->nature_modified
+    
+    response_ratio[[j]]=nature_modified%>%group_by(type)%>%summarise(mean_value=mean(Observed))%>%data.frame()
+    size[j,1]=N1
+    size[j,2]=N2
+  }
+  
+  mm[[k]]=response_ratio
+  mm_size[[k]]=size
+}

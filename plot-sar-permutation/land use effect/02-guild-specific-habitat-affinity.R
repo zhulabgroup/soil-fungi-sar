@@ -5,6 +5,45 @@ library(stringr)
 library(ggplot2)
 library(terra)
 
+
+## the function to determine the guild-specific affinity
+# this function does not work, it returns with the same
+my_function_guild_level_richness=function(data,i,j)
+  {
+  set.seed(123)
+  kk=list()
+  for(j in 1:50)
+  {
+    cat("\r", paste(paste0(rep("*", round(j / 1, 0)), collapse = ""), j, collapse = "")) # 
+    type0=c("cultivatedCrops","deciduousForest","evergreenForest","grasslandHerbaceous","mixedForest","shrubScrub","woodyWetlands")
+    
+    richness=numeric()
+    for (i in 1:7)
+    {
+      dk=subset_samples(data,type==type0[i])
+      sample_names=sample_names(dk)
+      sampled_names <- sample(sample_names, 30)
+      sampled_physeq <- prune_samples(sampled_names, dk)
+      richness[i]=estimate_richness(sampled_physeq, measures = "Observed")%>%summarize(mean_A = mean(Observed, na.rm = TRUE))%>%as.numeric()
+    } 
+    kk[[j]]=richness
+  }
+  
+  df=matrix(ncol=7,nrow=500)
+  for (i in 1:500)
+  {
+    df[i,]=kk[[i]]
+  }
+  df%>%data.frame()%>%rename_all(~paste0(c(type0)))%>%melt()->df
+  
+return(df)
+}
+
+
+save(land_rich_all_updated,file="land_rich_all_updated.RData")
+
+
+
 #(1)# determining the habitat affinity for each fungal guild and land use type
 
 #add the fungal guild data to the full sample data
@@ -111,20 +150,15 @@ model_data_SAR%>%dplyr::select(plotID,logc,zvalue,guild)%>%left_join(temp,by="pl
 # split the data into different guilds
 
 data_EM <- subset_taxa(rare_all_guild, primary_lifestyle == "ectomycorrhizal")
-
 data_AM <- subset_taxa(rare_all_guild, primary_lifestyle == "arbuscular_mycorrhizal")
 data_soilsap <- subset_taxa(rare_all_guild, primary_lifestyle == "soil_saprotroph")
 data_littersap <- subset_taxa(rare_all_guild, primary_lifestyle == "litter_saprotroph")
-
 data_plapat <- subset_taxa(rare_all_guild, primary_lifestyle == "plant_pathogen")
-
 data_woodsap <- subset_taxa(rare_all_guild, primary_lifestyle == "wood_saprotroph")
 data_para <- subset_taxa(rare_all_guild, primary_lifestyle%in%c("protistan_parasite","lichen_parasite","algal_parasite","mycoparasite","animal_parasite"))
 data_epiphy <- subset_taxa(rare_all_guild, primary_lifestyle == "epiphyte")
 
 ### write a function to manipulate all the data sets
-
-
 
 
 ###
@@ -429,6 +463,126 @@ for (i in 1:9)
   df=mean_richness_guild%>%filter(guild==guild_type[i])
   affinity[i]=df[1,2]/df[2:7,2] %>%mean()
 }
+
+# if we test the significance of the response
+
+reponse_significance=numeric()
+for (i in 1:9)
+{
+  df=mean_richness_guild%>%filter(guild==guild_type[i])
+  response=df[1,2]/df[2:7,2]
+  
+  reponse_significance[i]=t.test(response,mu=1,alternative = "two.sided")[[3]]
+  
+}
+
+reponse_significance%>%data.frame()%>%bind_cols(guild_type)%>%
+  rename_all(~paste0(c("pvalue","guild")))
+# if we based on the overl richness among different guilds to get the ratio
+
+my_function_response_ratio=function(data)
+{
+  data%>%mutate(type=if_else(!variable%in% c("cultivatedCrops"),"modified","Natural"))->d
+  # to compare the means among the modified and the natural natural communities
+  #mod=aov(value~type,data=d)
+  d%>%group_by(type)%>%summarise(mean_value=mean(value,na.rm=TRUE))->d
+  
+  ratio=d[2,2]/d[1,2]
+  return(ratio)
+}
+
+#difference in the ratio among species
+ratio=numeric()
+
+for(i in 1:9)
+  {
+  df=mean_richness_guild%>%filter(guild==guild_type[i])
+  ratio[i]=my_function_response_ratio(df)%>%pull()
+  
+}
+
+# test the significance of the richness values based on the broad classification of the difference
+
+richness_guild=bind_rows(land_rich_AM_updated,
+                              land_rich_EM_updated,
+                              land_rich_soilsap_updated,
+                              land_rich_littersap_updated,
+                              land_rich_woodsap_updated,
+                              land_rich_plapat_updated,
+                              land_rich_para_updated,
+                              land_rich_epiphy_updated,
+                              land_rich_all_updated)%>%
+mutate(guild=rep(c("AM","EM","soilsap","littersap","woodsap","plapat","para","epiphy","all"),each=3500))%>%data.frame()
+
+
+guild_type=c("AM","EM","soilsap","littersap","woodsap","plapat","para","epiphy","all")
+
+
+
+
+ratio=numeric()
+for(i in 1:9)
+{
+  df=richness_guild%>%filter(guild==guild_type[i])
+  df%>%mutate(type=if_else(!variable%in% c("cultivatedCrops"),"modified","Natural"))->d
+  #leveneTest(zvalue ~ type, data = type_mean)
+  #k=oneway.test(value ~ type, data = d, na.action = na.omit, var.equal = FALSE)
+  k=tukey(d$value, d$type, method = "G")
+  ratio[i]=k$result1[1,2]/k$result1[2,2]# the richness ratio between the modified and native ones
+  #ratio[i]=k$p.value
+}
+
+#create the box plot for the mean richness
+
+pp_affinity=list()
+for(i in 1:9)
+{
+  df=richness_guild%>%filter(guild==guild_type[i])
+  df%>%mutate(type=if_else(!variable%in% c("cultivatedCrops"),"Modified","Natural"))->d
+  
+  pp_affinity[[i]]=ggboxplot(d, x = "type", y = "value", fill = "type", outlier.shape = NA) +
+    xlab("") +
+    ylab("Richness") +
+    theme(legend.position = c(0.25, 0.7558), 
+          legend.text = element_text(size = 14), 
+          axis.text.x = element_blank(),
+          legend.title = element_blank(),
+          text = element_text(size = 15),
+          axis.title.y = element_text( size = 20), 
+          axis.title.x = element_text(size = 20)) +
+    guides(fill = guide_legend(nrow = 2, byrow = TRUE)) + # make four rows for the legend
+    xlab("Land cover types")+
+    ggtitle(paste0(d$guild)%>%unique())
+  pp_affinity[[i]]=ggplotGrob(pp_affinity[[i]])
+}
+
+plot_grid(pp_affinity[[1]],
+          pp_affinity[[2]],
+          pp_affinity[[3]],
+          pp_affinity[[4]],
+          pp_affinity[[5]],
+          pp_affinity[[6]],
+          pp_affinity[[7]],
+          pp_affinity[[8]],
+          pp_affinity[[9]],
+          ncol=3)
+
+pp_affinity[[1]]$widths=pp_affinity[[6]]$widths
+
+pp_affinity[[1]]$widths=pp_affinity[[9]]$widths
+pp_affinity[[1]]$widths=pp_affinity[[2]]$widths
+
+pp_affinity[[9]]$widths=pp_affinity[[2]]$widths
+
+
+plot_grid(pp_affinity[[1]],
+          pp_affinity[[2]],
+          
+          pp_affinity[[6]],
+          
+          pp_affinity[[9]],
+          ncol=2)
+
 
 
 
