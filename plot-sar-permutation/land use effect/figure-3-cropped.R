@@ -71,6 +71,7 @@ bbox <- st_bbox(c(xmin = -2665004, ymin = 2157670 , xmax = 3188701, ymax = 54000
 bbox_sf <- st_as_sfc(bbox)
 cropped_province <- st_crop(canadian_projected, bbox_sf)
 canada_clipped=cropped_province
+
 bbox <- st_bbox(sf_object)#to see the range of the sf object
 
 # the effect of land use change in the scenario of rcp585
@@ -239,7 +240,7 @@ effect_land_overall_585=my_function_overall_effect(species_change_land_rcp585)
 
 
 ###############the effect of climate change######################
-
+setwd("/Volumes/seas-zhukai/proj-soil-fungi/sdm-richness-data")
 
 species_change_climate_rcp245=readRDS("species_change_climate_rcp245.rds")
 species_change_climate_rcp585=readRDS("species_change_climate_rcp585.rds")
@@ -251,7 +252,7 @@ species_change_climate_rcp585=readRDS("species_change_climate_rcp585.rds")
 land_effect=bind_cols(coords_present,species_change_land_rcp245%>%filter(variable=="all"))
 crs(r_climate) <- CRS("+proj=longlat +datum=WGS84")
 r_land <- rasterFromXYZ(land_effect[, c("lon", "lat", "value")])
-r_tem=as.data.frame(r_land, xy = TRUE, na.rm = TRUE)
+
 # see the overall effects of climate change
 #need to maks the data and then bind different guilds
 
@@ -265,7 +266,7 @@ for (i in 1:9)
   masked_raster <- mask(r_climate, r_land)
   raster_df <- as.data.frame(masked_raster, xy = TRUE, na.rm = TRUE)
   colnames(raster_df) <- c("x", "y", "value")
-  crop_data[[i]]=raster_df%>%mutate(variable=rep(guild_type[i],40650))
+  crop_data[[i]]=raster_df%>%mutate(variable=rep(guild_type[i],dim(raster_df)[1]))
 }
 
 crop_data_rcp585_climate=list()
@@ -286,10 +287,9 @@ combined_data=bind_rows(crop_data[[1]],crop_data[[2]],crop_data[[3]],
                         crop_data[[4]],crop_data[[5]],crop_data[[6]],
                         crop_data[[7]],crop_data[[8]],crop_data[[9]])
 
-combined_data_climate_rcp585=bind_rows(crop_data_rcp585_climate[[1]],crop_data_rcp585_climate[[2]],crop_data_rcp585_climate[[3]],
-                                       crop_data_rcp585_climate[[4]],crop_data_rcp585_climate[[5]],crop_data_rcp585_climate[[6]],
-                                       crop_data_rcp585_climate[[7]],crop_data_rcp585_climate[[8]],crop_data_rcp585_climate[[9]])
+combined_data=do.call(rbind,crop_data)
 
+combined_data_climate_rcp585=do.call(rbind,crop_data_rcp585_climate)
 
 
 
@@ -323,6 +323,9 @@ climate_585_overall_effect$variable=factor(climate_585_overall_effect$variable,
 
 #create the plots
 # for the overall climate effect
+#save the data
+saveRDS(species_change_land_rcp245_all,file="species_change_land_rcp245_all.rds")
+
 
 p_land_245=ggplotGrob(ggplot(species_change_land_rcp245_all) +
                         geom_point(data = species_change_land_rcp245_all, pch=15,aes(x = x, y = y, color = last*100), size = 0.175) +
@@ -356,7 +359,10 @@ p_land_245=ggplotGrob(ggplot(species_change_land_rcp245_all) +
                         ylab("Land-use impact")+
                         ggtitle("RCP4.5-SSP2"))
 
-## for the latidude patterns
+## for the latitude patterns
+
+saveRDS(summary_data,file="summary_data.rds")
+
 
 p_land_latitude_245=ggplotGrob(ggplot()+
                                  geom_line(data = summary_data, aes(x = lat, y = 100*mean_value), color = "#1173EE", size = 0.5) +  # Mean trend line
@@ -382,6 +388,7 @@ p_land_latitude_245=ggplotGrob(ggplot()+
                                  ylim(-20,20))
 # for the overall effects
 
+saveRDS(effect_land_overall_245,file="effect_land_overall_245.rds")
 
 p_land_overall_245=ggplotGrob(ggplot(data=effect_land_overall_245,aes(fill=type,y=variable ,x=100*mean_value))+
                                 geom_col(width = 0.5)+
@@ -413,6 +420,8 @@ p_land_overall_245=ggplotGrob(ggplot(data=effect_land_overall_245,aes(fill=type,
 #geom_text(data=effect_land_overall_245,size=5,color="black",
 #aes(x=rep(c(0.25020640385390, -0.2011087320765014266, -0.1312420753516064,  0.1287910320636994127, -0.086540611321197594057,  0.1027649490386, -0.128586038102421426806,
 #-0.13132754493784, -0.10245710314108882),each=2),y=variable),label="***"))
+
+saveRDS(climate_induced_change_richness_rcp245,file="climate_induced_change_richness_rcp245.rds")
 
 p_climate_245=ggplotGrob(ggplot(climate_induced_change_richness_rcp245) +
                            geom_point(data = climate_induced_change_richness_rcp245, pch=15,aes(x = x, y = y, color = last*100), size = 0.175) +
@@ -446,6 +455,7 @@ p_climate_245=ggplotGrob(ggplot(climate_induced_change_richness_rcp245) +
                            ylab("Climate impact")+
                            ggtitle("RCP4.5-SSP2"))
 
+saveRDS(summary_data_climate_rcp245,file="summary_data_climate_rcp245.rds")
 
 p_climate_latitude_245=ggplotGrob(ggplot()+
                                     geom_line(data = summary_data_climate_rcp245, aes(x = lat, y = 100*mean_value), color = "#1173EE", size = 0.5) +  # Mean trend line
@@ -473,6 +483,7 @@ p_climate_latitude_245=ggplotGrob(ggplot()+
                                     xlim(15,65)+
                                     ylim(-40,40))
 
+saveRDS(climate_245_overall_effect,file="climate_245_overall_effect.rds")
 
 p_climate_overall_245=ggplotGrob(ggplot(data=climate_245_overall_effect,aes(fill=type,y=variable ,x=100*mean_value))+
                                    geom_col(width = 0.5)+
@@ -511,7 +522,7 @@ p_climate_overall_245=ggplotGrob(ggplot(data=climate_245_overall_effect,aes(fill
 # aes(x=rep(c(0.230632182824253641, 0.2330315022376859, 0.23403021121617,  0.2531245325303022191932, 0.24201853004074219,  0.253231703030850445, 0.3025423286213010492210,
 # 0.283202963021995706, 0.264321503007214357),each=2),y=variable),label="***")
 
-
+saveRDS(species_change_land_rcp585_all,file="species_change_land_rcp585_all.rds")
 
 p_land_585=ggplotGrob(ggplot(species_change_land_rcp585_all) +
                         geom_point(data = species_change_land_rcp585_all, pch=15,aes(x = x, y = y, color = last*100), size = 0.175) +
@@ -545,7 +556,7 @@ p_land_585=ggplotGrob(ggplot(species_change_land_rcp585_all) +
                         ylab("Land-use impact")+
                         ggtitle("RCP8.5-SSP5"))
 
-
+saveRDS(summary_data_land_rcp585,file="summary_data_land_rcp585.rds")
 
 p_land_latitude_585=ggplotGrob(ggplot()+
                                  geom_line(data = summary_data_land_rcp585, aes(x = lat, y = 100*mean_value), color = "#1173EE", size = 0.5) +  # Mean trend line
@@ -569,7 +580,7 @@ p_land_latitude_585=ggplotGrob(ggplot()+
                                  geom_hline(yintercept = 0,linetype="dashed")+
                                  ylim(-20,20)+
                                  xlim(15,65))
-
+saveRDS(effect_land_overall_585,file="effect_land_overall_585.rds")
 
 p_land_overall_585=ggplotGrob(ggplot(data=effect_land_overall_585,aes(fill=type,y=variable ,x=100*mean_value))+
                                 geom_col(width = 0.5)+
@@ -607,6 +618,8 @@ p_land_overall_585=ggplotGrob(ggplot(data=effect_land_overall_585,aes(fill=type,
 
 #for the climate effect in the scenario of the rcp585
 
+saveRDS(climate_induced_change_richness_rcp585,file="climate_induced_change_richness_rcp585.rds")
+
 p_climate_585=ggplotGrob(ggplot(climate_induced_change_richness_rcp585) +
                            geom_point(data = climate_induced_change_richness_rcp585, pch=15,aes(x = x, y = y, color = last*100), size = 0.175) +
                            scale_color_gradient2(expression("Change %"), high = "#1173EE", mid="white",low = "#ee8c11", na.value = "white")+
@@ -641,6 +654,7 @@ p_climate_585=ggplotGrob(ggplot(climate_induced_change_richness_rcp585) +
                            ggtitle("RCP8.5-SSP5"))
 
 # latitude patterns for the rcp585
+saveRDS(summary_data_climate_rcp585,file="summary_data_climate_rcp585.rds")
 
 p_climate_latitude_585=ggplotGrob(ggplot()+
                                     geom_line(data = summary_data_climate_rcp585, aes(x = lat, y = 100*mean_value), color = "#1173EE", size = 0.5) +  # Mean trend line
@@ -666,6 +680,7 @@ p_climate_latitude_585=ggplotGrob(ggplot()+
                                     ylim(-60,60))
 
 
+saveRDS(climate_585_overall_effect,file="climate_585_overall_effect.rds")
 
 p_climate_overall_585=ggplotGrob(ggplot(data=climate_585_overall_effect,aes(fill=type,y=variable ,x=100*mean_value))+
                                    geom_col(width = 0.5)+
