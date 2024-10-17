@@ -1,7 +1,7 @@
 # create the new figures when part of the regions have been removed
 #for the land use effect
 #species_change_land_rcp245_all
-#based on the land use effect to maks the climate change effect
+#based on the land use effect to mask the climate change effect
 
 land_effect=bind_cols(coords_present,species_change_land_rcp245%>%filter(variable=="all"))
 crs(r_climate) <- CRS("+proj=longlat +datum=WGS84")
