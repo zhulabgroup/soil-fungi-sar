@@ -141,6 +141,8 @@ saveRDS(historical_land_use,file="historical_land_use.rds")
 
 historical_land_use=readRDS("historical_land_use.rds")
 
+historical_land_use=readRDS("historical_land_use_all.rds")
+
 
 subset_columns <- historical_land_use[1630:2020]
 
@@ -181,7 +183,7 @@ cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = 
 # the most often seen type was considered as the pre-modified land use type for each plot
 
 type=numeric()
-for (i in 1:45)
+for (i in 1:515)
   {
  type[i]=land_use_among_year[i,]%>%t()%>%data.frame()%>%
    rename_all(~paste0(c("name")))%>%
