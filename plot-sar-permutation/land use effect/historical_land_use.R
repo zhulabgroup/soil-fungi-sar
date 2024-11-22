@@ -1,6 +1,7 @@
-## get the history map for the continental US
 
-setwd("/Volumes/seas-zhukai/proj-soil-fungi/land-use-effect")
+## get the historical map for the continental US
+
+setwd("/Volumes/seas-zhukai/proj-soil-fungi/conus_lulc_boolean")
 
 land_use_data <- rast("nlcd_2001_land_cover_l48_20210604.img")
 
@@ -118,6 +119,10 @@ sample_data(rare_all_guild_biome)%>%data.frame()%>%
 #8 water
 #9 barren
 
+setwd("/Volumes/seas-zhukai/proj-soil-fungi/conus_lulc_boolean")# the map data was stored here
+
+plot_coordinates=readRDS("plot_coordinates.rds")
+
 historical_land_use=list()
 for (i in 1630:2020)
 {
@@ -126,7 +131,7 @@ file_name=paste("conus_lulc_",i,".tif")
 file_name=gsub(" ","",file_name)
 land_history_data <- rast(file_name)
 result_raster_history <- project(land_history_data, 'EPSG:4326',method="near")# select a CRS
-historical_land_use[[i]]=terra::extract(result_raster_history,crop_plot[,c("lon","lat")],method="simple")%>%
+historical_land_use[[i]]=terra::extract(result_raster_history,plot_coordinates[,c("lon","lat")],method="simple")%>%
   data.frame()%>%dplyr::select(-ID)%>%rename_all(~paste0(c("year")))
 }
 
@@ -243,7 +248,7 @@ all_land_cover=sample_data(rare_all_guild_biome)%>%data.frame()%>%distinct(type)
 #for each human-modified plot, calculate the richness in the plot
 # and find the co-site plots having the analogous land use type as the human-modified plot's historical land use type
 
-
+rare_all_guild_biome=readRDS("rare_all_guild_biome.rds")
 
 data=c("rare_all_guild_biome","data_AM","data_EM","data_plapat","data_soilsap","data_littersap","data_woodsap","data_epiphy","data_para")
 data_EM <- subset_taxa(rare_all_guild_biome, primary_lifestyle == "ectomycorrhizal")
@@ -261,17 +266,18 @@ plotid=df4$plotIDM
 site=df4$Site
 
 # for other tropic guilds
-#compare_richness_guild=list()
+compare_richness_guild=list()
 response_ratio_guild=list()
 for (m in 1:9)
 {
   
 cat("\r", paste(paste0(rep("*", round(m / 1, 0)), collapse = ""), m, collapse = ""))
 
+land=list()
 response_ratio=numeric()
 sample_size=matrix(nrow=45,ncol=2)
 #t_test_result=numeric()
-#compare_richness=list()
+compare_richness=list()
 #species_com=list()
 for (i in c(1:45))
 {
@@ -293,7 +299,7 @@ for (i in c(1:45))
   # find the plot within the same site
   # all sites in the 
   Site=df4$Site
-  #when no sites are available, we can find the plots based on the most close sites
+  #when no sites are available, we can find the plots based on the closest sites
   nearest_df_site%>%filter(site==Site[i])%>%pull(nearest_site)->near_site
   
   matching_elements <- grep(paste("STER", "KONA",sep = "|"), plotid)# for these plots, they do not have shared sites
@@ -314,7 +320,7 @@ for (i in c(1:45))
   }
   #when i=12, the history land use type was grassland but all current plots are deciduous forest
   # the nearest plots are also forest, so we used forest as the analogous land use type
-  #when i=24 the history land use type was forest but currently all are woodyWetlands
+  #when i=24 the historical land use type was forest but currently all are woodyWetlands
   #and we get the adjacent sites
   # for the LAJA site we do not have historical data and we assumed the historical land use type for all the plots was forest
   n_natural_sample=nsamples(natural_data_sub)
@@ -333,14 +339,14 @@ for (i in c(1:45))
   
   sample_size[i,1]=n_modified_sample
   sample_size[i,2]=n_natural_sample
-  #compare_richness[[i]]=bind_rows(richness_modified,richness_natural)%>%bind_cols(combined_land_use)%>%
+  compare_richness[[i]]=bind_rows(richness_modified,richness_natural)%>%bind_cols(combined_land_use)
     #mutate(type = if_else(type %in% c("cultivatedCrops"), type, "natural"))
    response_ratio[i]=mean(richness_modified$Observed)/mean(richness_natural$Observed)
   #species_com[[i]]=bind_rows(otu_modified,otu_natural)
-
+land[[i]]=natural_land_use
 }
 
-#compare_richness_guild[[m]]=compare_richness
+compare_richness_guild[[m]]=compare_richness
 response_ratio_guild[[m]]=response_ratio
 }
 
@@ -352,7 +358,20 @@ compare_richness_guild=readRDS("compare_richness_guild.rds")
 
 response_ratio_guild=readRDS("response_ratio_guild.rds")
 
+compare_richness_guild_original_type=compare_richness_guild
 
+saveRDS(compare_richness_guild_original_type,file="compare_richness_guild_original_type.rds")
+
+# the unique natural type 
+# no shrublands were included
+unique_type=list()
+for (i in 1:45){
+  land[[i]]%>%distinct(type)%>%pull(type)->unique_type[[i]]
+  
+}
+#sedgeherbaceous(TOOL,BARR)
+#emergentHerbaceousWetlands(WOOD,BARR)
+"shrubScrub"(fifteen sites)
 
 # get the mean of the response ratio for each guild
 # and biome without considering the significance of the difference
@@ -387,7 +406,7 @@ biome_response_ratio[[i]]=ratio_temp%>%summarise(mean_value=mean(ratio))
 # need to select the plots with more than 3 samples
 # significance test are the same if we use the aov test with unequal variance
 
-# select the plots with more than three samples to test the significance of differene in richness
+# select the plots with more than three samples to test the significance of difference in richness
 sample_size%>%data.frame()%>%
   bind_cols(df4$plotIDM)%>%
   mutate(no=1:45)%>%
@@ -437,16 +456,24 @@ for (m in 1:9)
     distinct()%>%mutate(LABEL= ifelse(is.na(as.character(LABEL)), "Tropical & Subtropical Moist Broadleaf Forests", as.character(LABEL)))%>%
     group_by(LABEL)%>%distinct()%>%
     rename(ratio=...7)%>%
-    group_by(LABEL)%>%summarise(mean_value=mean(ratio))
+    group_by(LABEL)%>%summarise(mean_value=mean(ratio),sd=sd(ratio))
 }
 
 row_counts <- sapply(final_biome_ratio, nrow)
 do.call(rbind,final_biome_ratio)%>%
   mutate(guild=rep(c("all","AM","EM","plapat","soilsap","littersap","woodsap","epiphy","para"),times=row_counts))->df1
 
+saveRDS(trend_biome_ratio,file="trend_biome_ratio.rds")
+
+trend_biome_ratio=readRDS("trend_biome_ratio.rds")
+
 
 do.call(rbind,trend_biome_ratio)%>%
   mutate(guild=rep(c("all","AM","EM","plapat","soilsap","littersap","woodsap","epiphy","para"),each=4))->df2
+
+trend_biome_ratio=df2
+
+
 
 df3=rbind(df2,df1)%>%mutate(type=rep(c("trend","sig"),times=c(36,34)))
 
@@ -463,6 +490,25 @@ b=ggplot(df3%>%filter(type=="sig"), aes(x = LABEL, y = mean_value, fill = guild)
   geom_hline(yintercept = 1,color="red",linetype="dashed")
 
 plot_grid(a,b,ncol=2,labels = c("trend","sig"))
+
+
+full_guild_affinity_data%>%bind_cols(dk)%>%rename(biome=...7 )%>%
+  filter(!is.na(response))->dk
+
+
+strsplit(full_guild_affinity_data$guild_biome, "_")->dk
+
+
+do.call(rbind, lapply(dk, function(x) x[2]))->dk
+
+
+dk=dk%>%filter(!is.na(response))
+
+ggplot(dk, aes(x = biome, y = response, fill =  guild)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  theme(axis.text.x = element_text(angle=90))+
+  geom_hline(yintercept = 1,color="red",linetype="dashed")
+
 
 # based on the significance test to get the mean value of the response ratio 
 
@@ -610,91 +656,6 @@ sample_data(rare_all_guild_biome)%>%data.frame()%>%dplyr::select(Site,LABEL)%>%d
 
 
 
-  
+results <- mclapply(1:10000, parallel_function, mc.cores = detectCores() - 1)
 
 
-
-
-
-
-
-
-
-
-
-
- 
-    
-    
-    
-   
-    
-    
-    
-  df4%>%filter(plotIDM==plotid[i])%>%distinct(historical_type)%>%pull(historical_type)->historical_type
-  # the land cover to be selected from the adjacent natural plots
-  
-  
-  unique(df4$Site)->modified_site
-  subset_samples(rare_all_guild_biome,type!="cultivatedCrops")->natural_data
-  sample_data(natural_data)%>%data.frame()%>%distinct(Site)%>%pull(Site)->natural_site
-  
-  # find the sites not included in the natural data
-  #to see if the two data sets have overlap
-  setdiff(modified_site,natural_site)->sites_no_in_nature
-  
-  # find the plot within the same site
-  Site=df4$Site
-  
-  #when no sites are available, we can find the plots based on the most close sites
-  
-  nearest_df_site%>%filter(site==Site[i])%>%pull(nearest_site)->near_site
-  
-  matching_elements <- grep(paste("STER", "KONA",sep = "|"), plotid)
-  
-  if(i%in%c(matching_elements,24))
-  {
-    subset_samples(natural_data,Site==near_site&type%in%select_type)->natural_data_sub
-    
-  }
-  else if(i==12)
-  {
-    subset_samples(natural_data,Site==site[i])->natural_data_sub
-  }
-  
-  else{
-    subset_samples(natural_data,Site==site[i]&type%in%select_type)->natural_data_sub
-    
-  }
-  #when i =12, the history land use type was grassland but currently all are deciduous forest
-  # the nearest is also forest, so we used forest as the analogous land use type
-  
-  #when i=24 the history land use type was forest but currently all are woodyWetlands
-  #and we get the adjacent sites
-  
-  # for the LAJA site we do not have historical data and we assumed the historical land use type was forest
-  n_natural_sample=nsamples(natural_data_sub)
-  n_modified_sample=nsamples(modified_data)
-  
-  # need to get the land use type for the natural data
-  natural_data_sub%>%sample_data()%>%data.frame()%>%dplyr::select(type)->natural_land_use
-  modified_data%>%sample_data()%>%data.frame()%>%dplyr::select(type)->modified_land_use
-  
-  combined_land_use=rbind(modified_land_use,natural_land_use)
-  
-  richness_modified=estimate_richness(modified_data, measures = "Observed")
-  richness_natural=estimate_richness(natural_data_sub, measures = "Observed")
-  
-  #otu_table(modified_data)%>%data.frame()->otu_modified
-  #otu_table(natural_data)%>%data.frame()->otu_natural
-  
-  #compare_richness[[i]]=bind_rows(richness_modified,richness_natural)%>%bind_cols(combined_land_use)
-  response_ratio[i]=mean(richness_modified$Observed)/mean(richness_natural$Observed)
-  
-  sample_size[i,1]=n_modified_sample
-  sample_size[i,2]=n_natural_sample
-  #species_com[[i]]=bind_rows(otu_modified,otu_natural)
-  
-  #t_test_result <- t.test(richness_modified$Observed, richness_natural$Observed, var.equal = FALSE)
-  #t_test_result[i]=t_test_result$p.value
-}
