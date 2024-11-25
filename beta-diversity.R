@@ -1,5 +1,12 @@
 #
-ned codetools::checkUsag
+#setwd("/nfs/turbo/seas-zhukai/proj-soil-fungi/land-use-effect")
+library(dplyr)
+library(phyloseq)
+
+species_com_guild=readRDS("species_com_guild.rds")
+
+# to see the overall fungi and in the first plot
+# for the first plot
 beta=numeric()
 for (i in 1:45){
   cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
