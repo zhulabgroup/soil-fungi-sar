@@ -407,4 +407,5 @@ saveRDS(richness_compare_crop_nature_guild,file="richness_compare_crop_nature_gu
     mutate(type=rep(c("nature","crop"),each=45))->data_mean_richness_biome_model
   
 
-
+###
+  
