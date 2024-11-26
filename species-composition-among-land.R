@@ -329,7 +329,7 @@ for(m in 1:9)
     richness_pair=matrix(ncol=4,nrow=plot_number[j])
     for (i in 1:plot_number[j])
     {
-      sub=species_com_guild[[m]][biome_group[[j]]][[i]]#the first plot with croplands for the first biome
+      sub= species_com_guild_adjust_natural[[m]][biome_group[[j]]][[i]] #bio me first plot with croplands for the first biome
       
       #need to convert the binary category of the pairwise
       sample_data_df <- data.frame(sample_data(sub))
@@ -379,6 +379,11 @@ for(m in 1:9)
   
   dd[[m]]=richness_ratio_with_rarefaction
 }
+
+
+richness_compare_crop_nature_guild=dd
+
+saveRDS(richness_compare_crop_nature_guild,file="richness_compare_crop_nature_guild.rds")
 
 
   
