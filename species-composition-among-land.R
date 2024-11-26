@@ -290,7 +290,7 @@ saveRDS(species_com_guild_adjust_natural,file="species_com_guild_adjust_natural.
 species_com_guild_adjust_natural=readRDS("species_com_guild_adjust_natural.rds")
 
 
-
+#
 
 ##
 sample_data(rare_all_guild_biome)%>%data.frame()%>%
