@@ -15,84 +15,9 @@ for (i in 1:4){
     filter(LABEL==biomes[i])%>%pull(code)->biome_group[[i]]
 }
 
-
-# based on the biome to look at the difference in species richness among land use types
-
-
-test_result=numeric()
-for(i in 1:4){
-  
-  cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = ""))
-  
-  #do.call(rbind,compare_richness_guild_original_type[[m]][biome_group[[i]]])->combined_data
-  do.call(rbind,compare_richness_guild[[m]][biome_group[[i]]])->combined_data
-  
-  test_result[i]=oneway.test(Observed~type, data=combined_data, var.equal = FALSE)$p.value
-}
-
-pp_compare=list()
-for (i in 1:4)
-  {
-  do.call(rbind,compare_richness_guild[[m]][biome_group[[i]]])->combined_data
-  pp_compare[[i]]=ggplot(combined_data,aes(x=type,y=Observed ,fill=type),alpha=0.5)+
-  sm_raincloud(size=0.1,point.params =list(size=2),sep_level=2)+
-  geom_boxplot(width = 0.2, color = "black", size=0.1,outlier.size = 1)+
-    ylab("Richness")+
-    scale_x_discrete(labels = c("Cultivated crops", "Natural"))+
-    xlab("")+
-    ylim(0,500)+
-    scale_fill_manual("",breaks=c("cultivatedCrops" ,"natural")  ,labels=c("cultivatedCrops" ,"natural") ,values=c("#c94e65","#037f77"))
-    
-}
-
-# create individual plots
-
-do.call(rbind,compare_richness_guild[[m]][biome_group[[i]]])->combined_data
-
-oneway.test(Observed~type, data=combined_data, var.equal = FALSE)
-
-
-
-
-
-
-
-  do.call(rbind,compare_richness_guild[[m]][biome_group[[i]]])
+species_com_guild=readRDS("species_com_guild.rds")
  
-  
-  pp_compare=list()
-    for (i in 1:4)
-      {
-      pp_compare[[i]]=ggplotGrob(ggplot(do.call(rbind,compare_richness_guild[[1]][biome_group[[i]]]),aes(x=type,y=Observed ,fill=type),alpha=0.5)+
-        sm_raincloud(size=0.1,point.params =list(size=2),sep_level=2)+
-        geom_boxplot(width = 0.2, color = "black", size=0.1,outlier.size = 1)+
-        ylab("Richness")+
-        scale_x_discrete(labels = c("Cultivated crops", "Natural"))+
-        #ggtitle("Temperate Broadleaf & Mixed Forests")+
-        ylim(0,500)+
-        scale_fill_manual("",breaks=c("cultivatedCrops" ,"natural")  ,labels=c("cultivatedCrops" ,"Natural") ,values=c("#c94e65","#4EC9B2"))+
-        theme(legend.position = c(0.3,0.4), 
-              legend.title = element_text(size=10),
-              #text = element_text(size = 18), 
-              legend.text = element_text(size=11),
-              plot.title = element_text(size = 15, hjust = 0.5), 
-              axis.text.y = element_text(hjust = 1,size=9), 
-              axis.text.x = element_text(hjust = 0.5,margin = margin(t = -2)), 
-              axis.title.y = element_text(size = 18), 
-              
-              axis.title.x = element_text(size = 18,margin = margin(t = -5)),
-              panel.grid = element_line(color="white"),
-              panel.background = element_rect(fill = "NA"), 
-              panel.border = element_rect(color = "black", size = 1, fill = NA))+
-        xlab("Land cover type")+
-        guides(fill="none"))
-    }
-  
-
-  
-  
-  
-plot_grid(pp_compare[[1]],pp_compare[[2]],pp_compare[[3]],pp_compare[[4]])
+# the above codes should be deleted
 
 # based on the biome to look at the difference in species among land use types
 # all the data in the first biomes
@@ -114,7 +39,6 @@ for (m in 1:9){
     ordination_data[[i]]=ordination$points%>%data.frame()%>%mutate(land_cover_type)
     
   }
-  
   
   
   ordination_data_guild[[m]]=ordination_data
