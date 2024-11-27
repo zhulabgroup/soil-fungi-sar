@@ -14,7 +14,7 @@ table(d$Project)# the first 908 rows are dob sites with the remaining 5470 being
 d1=data.frame(d[,c("geneticSampleID","Site")])
 plotID=substr(d1$geneticSampleID,1,8)
 d1=cbind(d1,plotID)
-iddob=d1$Site[1:908]#a site correspondes to a plot
+iddob=d1$Site[1:908]#a site corresponds to a plot
 idneon=d1$plotID[909:6378]# an unique plotID corresponds to a plot
 plotIDM=data.frame(c(iddob,idneon))
 names(plotIDM)="plotIDM"# the plot id used for the SAR
@@ -98,6 +98,7 @@ d$variable<- factor(d$variable, levels = c("evergreenForest","woodyWetlands","pa
 load("~/soil-sar/land_richness.RData")
 
 d=land_richness
+
 save(land_richness,file="land_richness.RData")
 
 ggboxplot(d%>%filter(variable!="pastureHay"), x = "variable", y = "value", fill = "variable", outlier.shape = NA) +
@@ -117,7 +118,11 @@ ggboxplot(d%>%filter(variable!="pastureHay"), x = "variable", y = "value", fill 
 
 # consider the difference in the sampling season 
 
-## all the samples were taken from the season of peakGreeness
+
+
+
+
+## all the samples were taken from peakGreeness
 
 sample_data(rare_all)%>%data.frame()%>% dplyr::select(sampleTiming)%>%count(sampleTiming,name="count")#
 
