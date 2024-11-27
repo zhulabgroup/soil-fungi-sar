@@ -113,24 +113,19 @@ my_function=function(data)
 }
 
 # the function to project the raster
+
 my_function_project=function(data)
 {
-  if (grepl(colnames(data), "x"))
+  if ("x"%in%colnames(data))
   {
     points <- vect(data, geom = c("x", "y"), crs = "EPSG:4326")  # Assuming WGS84 coordinates
+    raster_template <- rast(ext(points), resolution = 0.17, crs = "EPSG:4326")  # Resolution of 1 degree
+    raster <- rasterize(points, raster_template, field = "group")
   }
   else{
     points <- vect(data, geom = c("lon", "lat"), crs = "EPSG:4326")  # Assuming WGS84 coordinates
+    raster_template <- rast(ext(points), resolution = 0.17, crs = "EPSG:4326")  # Resolution of 1 degree
     
-  }
-  raster_template <- rast(ext(points), resolution = 0.17, crs = "EPSG:4326")  # Resolution of 1 degree
-  
-  if (grepl(colnames(data), "group"))
-    {
-    raster <- rasterize(points, raster_template, field = "group")
-  }
-  else
-  {
     raster <- rasterize(points, raster_template, field = "value")
   }
   target_crs <- "EPSG:5070"
@@ -362,8 +357,6 @@ my_function_guild_loss_overall=function(data){
                                  climate_effect>0~"C-gain",
                                  is.na(climate_effect)~"C-NA",
                                  climate_effect==0~"C-no"))->df2
-  
-  
   data%>%mutate(type_L=case_when(land_effect<0~"L-loss", 
                                  land_effect>0~"L-gain",
                                  is.na(land_effect)~"L-NA",
@@ -378,7 +371,6 @@ my_function_guild_loss_overall=function(data){
                            joint_effect%in%c("L-loss _ NA",  "L-loss _ C-gain", "L-loss _ C-none")~"L-loss", 
                            joint_effect%in%c( "L-none _ C-loss", "NA _ C-loss", "L-gain _ C-loss")~"C-loss",
                            TRUE~"other"))->df4
-  
   #df4=my_function(df4)
   return(df4)
 }
@@ -428,7 +420,7 @@ for (i in 1:2)
     mutate(group=c("Both loss","Climate loss","Land loss","Other"))->data_percent
   if(i<2){
     map_loss[[i]]=ggplot()+
-      geom_point(data=df5,aes(x=x,y=y,color=group),size=0.01)+
+      geom_point(data=df5,aes(x=x,y=y,color=group),pch=15,size=0.01)+
       scale_color_manual("RCP4.5-SSP2",breaks=c("0","2","3","4","1"),
                          labels=c(paste0(data_percent$group ," (",round(data_percent$Freq*100,1),"%)"),""),
                          values=c("#CD326D","#E3A72F","#32CD92","gray88","white"))+
@@ -449,7 +441,7 @@ for (i in 1:2)
   }
   else{
     map_loss[[i]]=ggplot()+
-      geom_point(data=df5,aes(x=x,y=y,color=group),size=0.01)+
+      geom_point(data=df5,aes(x=x,y=y,color=group),pch=15,size=0.01)+
       
       scale_color_manual("RCP5.8-SSP5",breaks=c("0","2","3","4","1"),
                          labels=c(paste0(data_percent$group ," (",round(data_percent$Freq*100,1),"%)"),""),
@@ -486,7 +478,7 @@ for (i in 1:2)
     mutate(group=c("Both gain","Climate gain","Land gain","Other"))->data_percent
   if(i<2){
     map_gain[[i]]=ggplot()+
-      geom_point(data=df5,aes(x=x,y=y,color=group),size=0.01)+
+      geom_point(data=df5,aes(x=x,y=y,color=group),pch=15,size=0.01)+
       scale_color_manual("RCP4.5-SSP2",breaks=c("0","2","3","4","1"),
                          labels=c(paste0(data_percent$group ," (",round(data_percent$Freq*100,1),"%)"),""),
                          values=c("#CD326D", "#E3A72F","#32CD92","gray88","white"))+
@@ -507,7 +499,7 @@ for (i in 1:2)
   }
   else{
     map_gain[[i]]=ggplot()+
-      geom_point(data=df5,aes(x=x,y=y,color=group),size=0.01)+
+      geom_point(data=df5,pch=15,aes(x=x,y=y,color=group),size=0.01)+
       
       scale_color_manual("RCP5.8-SSP5",breaks=c("0","2","3","4","1"),
                          labels=c(paste0(data_percent$group ," (",round(data_percent$Freq*100,1),"%)"),""),
@@ -533,7 +525,7 @@ for (i in 1:2)
 
 plot_grid(map_loss[[1]],map_gain[[1]],map_loss[[2]],map_gain[[2]],ncol=2,
           
-          labels = c("(a)","(b)","(c)","(d)"),label_y = 0.98,label_x = 0.2,label_size = 20)
+          labels = c("(a)","(b)","(c)","(d)"),label_y = 1,label_x = 0.2,label_size = 20)
 
 
 
