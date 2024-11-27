@@ -11,9 +11,9 @@ library(sf)
 
 my_function_project=function(data)
 {
-  points <- vect(data, geom = c("lon", "lat"), crs = "EPSG:4326")  # Assuming WGS84 coordinates
+  points <- vect(data, geom = c("x", "y"), crs = "EPSG:4326")  # Assuming WGS84 coordinates
   raster_template <- rast(ext(points), resolution = 0.17, crs = "EPSG:4326")  # Resolution of 1 degree
-  raster <- rasterize(points, raster_template, field = "hehe")
+  raster <- rasterize(points, raster_template, field = "value")
   target_crs <- "EPSG:5070"
   raster_equal_area <- project(raster, target_crs,method="near")
   raster_df <- as.data.frame(raster_equal_area, xy = TRUE,)
@@ -24,7 +24,7 @@ my_function_project=function(data)
 my_function_latitude_patterns=function(data)
 {
   data%>%filter(variable=="all")%>%
-    bind_cols(coords_present)%>%rename(lon=x,lat=y)->temp_data
+    bind_cols(coords_present)%>%rename(lon=lon,lat=lat)->temp_data
   latitude_patterns <- temp_data%>% group_by(lat) %>%
     summarise(mean_value = mean(value,na.rm=TRUE),sd_value = sd(value,na.rm=TRUE))
   return(latitude_patterns )
@@ -57,50 +57,22 @@ my_function_overall_effect=function(data)
 guild_type=c("AM","EM","soilsap","littersap","woodsap","plapat","para","epiphy","all")
 
 
-#to get the sf object of the several states
-
-
-us_states <- states(cb = TRUE)
-canadian_provinces <- ne_states(country = "Canada", returnclass = "sf")
-cuba_provinces <- ne_states(country = "Cuba", returnclass = "sf")
-mexico_states <- ne_states(country = "Mexico", returnclass = "sf")
-rico_provinces <- ne_countries(scale = "medium", returnclass = "sf") %>%
-  dplyr::filter(admin == "Puerto Rico")
-haiti_provinces <- ne_countries(scale = "medium", returnclass = "sf") %>%
-  dplyr::filter(admin == "Puerto Rico")
-
-haiti_sf <- ne_countries(scale = "medium", country = "Haiti", returnclass = "sf")
-dominican_republic <- ne_countries(scale = "medium", returnclass = "sf", country = "Dominican Republic")
-
-
-
-# to make projection for the sf objects
-
-target_crs <- "EPSG:5070"
-us_projected <- st_transform(us_states, crs = target_crs)
-canadian_projected <- st_transform(canadian_provinces, crs = target_crs)
-mexico_projected <- st_transform(mexico_states, crs = target_crs)
-rico_projected <- st_transform(rico_provinces, crs = target_crs)
-cuba_projected <- st_transform(cuba_provinces, crs = target_crs)
-
-haiti_projected <- st_transform(haiti_sf, crs = target_crs)
-
-dominican_projected <- st_transform(dominican_republic, crs = target_crs)
-
 
 #load in the data stored on turbo
 
 setwd("/Volumes/seas-zhukai/proj-soil-fungi/sdm-richness-data")
 species_change_climate_rcp245=readRDS("species_change_climate_rcp245.rds")
 species_change_climate_rcp585=readRDS("species_change_climate_rcp585.rds")
+
 species_change_land_rcp245=readRDS("species_change_land_rcp245.rds")
+
 species_change_land_rcp585=readRDS("species_change_land_rcp585.rds")
 
 
 # when all the guilds were combined, for the impact of climate change in the scenario of rcp245
 
 species_change_climate_rcp245%>%filter(variable=="all")%>%
-  bind_cols(coords_present)%>%rename(lon=x,lat=y)->climate_induced_change_richness_rcp245
+  bind_cols(coords_present)%>%rename(lon=lon,lat=lat)->climate_induced_change_richness_rcp245
 
 
 species_change_climate_rcp585%>%filter(variable=="all")%>%
@@ -136,6 +108,7 @@ common_boundary= ggplot()+
 
 
 climate_induced_change_richness_rcp245=my_function_project(climate_induced_change_richness_rcp245)
+
 climate_induced_change_richness_rcp585=my_function_project(climate_induced_change_richness_rcp585)
 
 change_richness_land_rcp245_all=my_function_project(change_richness_land_rcp245_all)
@@ -145,8 +118,12 @@ change_richness_land_rcp585_all=my_function_project(change_richness_land_rcp585_
 
 # create maps for the distributions
 
-p_land_245=ggplot(change_richness_land_rcp245_all) +
-  geom_point(data = change_richness_land_rcp245_all, pch=15,aes(x = x, y = y, color = last*100), size = 0.275) +
+
+
+p_land_245
+
+ggplot(change_richness_land_rcp245_all) +
+  geom_point(data = change_richness_land_rcp245_all, pch=15,aes(x = x, y = y, color = last*100), size = 0.175) +
   scale_color_gradient2(expression("Change %"), high = "#1173EE", mid="white",low = "#ee8c11", na.value = "white")+
   geom_sf(data = us_projected, fill = NA, size=0.01,color = "black")+
   geom_sf(data = canada_clipped, fill=NA,size=0.01,color = "black")+
@@ -155,9 +132,12 @@ p_land_245=ggplot(change_richness_land_rcp245_all) +
   geom_sf(data = mexico_projected, fill = NA, size=0.01,color = "black")+
   geom_sf(data = haiti_projected, fill = NA, size=0.01,color = "black")+
   geom_sf(data = dominican_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = baha_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = jama_projected, fill = NA, size=0.01,color = "black")+
+  
   coord_sf(xlim = c(-5000000 , 3000000), ylim = c(-252303 , 5980000))+
-  theme(legend.position = "bottom",
-        legend.margin = margin(t = -15, r = -5, b = 1, l = 0),
+  theme(legend.position = c(0.2,0.35),
+        legend.margin = margin(t = -30, r = -4, b = -1, l = 0),
         legend.text = element_text(size=8,angle=0),
         legend.title  = element_text(size=10),
         text = element_text(size = 18),
@@ -168,7 +148,7 @@ p_land_245=ggplot(change_richness_land_rcp245_all) +
         axis.title.x = element_text(size = 18), 
         axis.ticks.x = element_blank(), 
         axis.ticks.y = element_blank(),
-        plot.margin = unit(c(0.3, -0.5, 0.5, 0.5), "cm"),
+        plot.margin = unit(c(0.3, -5, -.5, 0.5), "cm"),
         panel.background = element_rect(fill = "NA"),
         panel.border = element_blank())+
   xlab("")+
@@ -189,7 +169,7 @@ p_land_latitude_245=ggplot()+
         axis.title.y = element_text(size = 15), 
         axis.title.x = element_text(size = 15), 
         
-        plot.margin = unit(c(0.5, 0.5, 0.5, 0), "cm"),
+        plot.margin = unit(c(0.3, 0.1, -.5, 0), "cm"),
         panel.background = element_rect(fill = "NA"),
         panel.border = element_rect(color = "black", size = 0.6, fill = NA))+
   xlab("Latitude")+
@@ -219,6 +199,7 @@ p_land_overall_245=ggplot(data=effect_land_overall_245,aes(fill=type,y=variable 
         axis.title.y = element_text(size = 18), 
         axis.title.x = element_text(size = 18), 
         legend.key.size = unit(0.3, "cm"),
+        plot.margin = unit(c(0.3, 0.5, -0.5, 0.1), "cm"),
         panel.background = element_rect(fill = "NA"),
         panel.border = element_rect(color = "black", size = 0.6, fill = NA))+
   geom_vline(xintercept =0,color="gray",linetype="dashed")+
@@ -234,22 +215,8 @@ p_land_overall_245=ggplot(data=effect_land_overall_245,aes(fill=type,y=variable 
             aes(x=rep(c(0.1020640385390, -0.11087320765014266, -0.112420753516064,  0.087910320636994127, -0.03540611321197594057,  0.1027649490386, -0.0586038102421426806,
                         -0.1132754493784, -0.045710314108882),each=2),y=variable),label="***")
 
-
-p_land_245=ggplotGrob(p_land_245)
-p_land_latitude_245=ggplotGrob(p_land_latitude_245)
-p_land_overall_245=ggplotGrob(p_land_overall_245)
-p_land_latitude_245$heights=p_land_overall_245$heights
-p_land_overall_245$widths=p_climate_overall_245$widths
-
-p1=plot_grid(p_land_245,p_land_latitude_245,p_land_overall_245,ncol=3,rel_heights = c(1,0.4,0.4),rel_widths  = c(1,0.5,0.9),labels =c("(a)","(b)","(c)"))
-
-
-
-
-
-  
 p_climate_245=ggplot(climate_induced_change_richness_rcp245) +
-  geom_point(data = climate_induced_change_richness_rcp245, pch=15,aes(x = x, y = y, color = last*100), size = 0.275) +
+  geom_point(data = climate_induced_change_richness_rcp245, pch=15,aes(x = x, y = y, color = last*100), size = 0.175) +
   scale_color_gradient2(expression("Change %"), high = "#1173EE", mid="white",low = "#ee8c11", na.value = "white")+
   geom_sf(data = us_projected, fill = NA, size=0.01,color = "black")+
   geom_sf(data = canada_clipped, fill=NA,size=0.01,color = "black")+
@@ -258,9 +225,12 @@ p_climate_245=ggplot(climate_induced_change_richness_rcp245) +
   geom_sf(data = mexico_projected, fill = NA, size=0.01,color = "black")+
   geom_sf(data = haiti_projected, fill = NA, size=0.01,color = "black")+
   geom_sf(data = dominican_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = baha_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = jama_projected, fill = NA, size=0.01,color = "black")+
+  
   coord_sf(xlim = c(-5000000 , 3000000), ylim = c(-252303 , 5980000))+
-  theme(legend.position = "bottom",
-        legend.margin = margin(t = -15, r = -5, b = 1, l = 0),
+  theme(legend.position = c(0.2,0.35),
+        legend.margin = margin(t = -30, r = -5, b = -1, l = 0),
         legend.text = element_text(size=8,angle=0),
         legend.title  = element_text(size=10),
         text = element_text(size = 18),
@@ -271,7 +241,7 @@ p_climate_245=ggplot(climate_induced_change_richness_rcp245) +
         axis.title.x = element_text(size = 18), 
         axis.ticks.x = element_blank(), 
         axis.ticks.y = element_blank(),
-        plot.margin = unit(c(0.3, -0.5, 0.5, 0.5), "cm"),
+        plot.margin = unit(c(0.3, -5, -0.5, 0.5), "cm"),
         panel.background = element_rect(fill = "NA"),
         panel.border = element_blank())+
   xlab("")+
@@ -281,11 +251,11 @@ p_climate_245=ggplot(climate_induced_change_richness_rcp245) +
 # for the latitude patterns
 
 p_climate_latitude_245=ggplot()+
-  geom_line(data = summary_data_climate_rcp245, aes(x = lat, y = mean_value), color = "#1173EE", size = 0.5) +  # Mean trend line
-  geom_ribbon(data = summary_data_climate_rcp245, aes(x = lat, ymin = mean_value - sd_value, ymax = mean_value + sd_value), fill = "#1173EE", alpha = 0.2)+
-  theme(legend.position = c(0.75,0.28),
+  geom_line(data = summary_data_climate_rcp245, aes(x = lat, y = 100*mean_value), color = "#1173EE", size = 0.5) +  # Mean trend line
+  geom_ribbon(data = summary_data_climate_rcp245, aes(x = lat, ymin = 100*mean_value - 100*sd_value, ymax = 100*mean_value + 100*sd_value), fill = "#1173EE", alpha = 0.2)+
+  theme(
         legend.text = element_text(size=8),
-        legend.margin = margin(t = -15, r = -5, b = 1, l = 0),
+        legend.margin = margin(t = -30, r = -5, b = -1, l = 0),
         legend.title  = element_text(size=10),
         text = element_text(size = 18),
         plot.title = element_text(size = 15, hjust = 0.5), 
@@ -294,7 +264,7 @@ p_climate_latitude_245=ggplot()+
         axis.title.y = element_text(size = 15), 
         axis.title.x = element_text(size = 15), 
         
-        plot.margin = unit(c(0.5, 0.5, 0.5, 0), "cm"),
+        plot.margin = unit(c(0.3, 0.1, -0.5, 0), "cm"),
         panel.background = element_rect(fill = "NA"),
         panel.border = element_rect(color = "black", size = 0.6, fill = NA))+
   xlab("Latitude")+
@@ -302,8 +272,9 @@ p_climate_latitude_245=ggplot()+
   ggtitle("")+
   coord_flip()+
   geom_hline(yintercept = 0,linetype="dashed")+
-  ylim(-0.6,0.6)+
-  ggtitle("RCP4.5-SSP2")
+ 
+  ggtitle("RCP4.5-SSP2")+
+  ylim(-40,40)
 
 # for the overal effects
 
@@ -321,7 +292,7 @@ p_climate_overall_245=ggplot(data=climate_245_overall_effect,aes(fill=type,y=var
   theme(legend.position ="none",
         legend.text = element_text(size=8),
         legend.title  = element_text(size=10),
-        legend.margin = margin(t = -15, r = -5, b = 1, l = 0),
+        legend.margin = margin(t = -30, r = -5, b = -1, l = 0),
         text = element_text(size = 15),
         plot.title = element_text(size = 15, hjust = 0.5), 
         axis.text.y = element_text(size=12), 
@@ -329,6 +300,7 @@ p_climate_overall_245=ggplot(data=climate_245_overall_effect,aes(fill=type,y=var
         axis.title.y = element_text(size = 15), 
         axis.title.x = element_text(size = 15), 
         legend.key.size = unit(0.3, "cm"),
+        plot.margin = unit(c(0.3, 0.5, -0.5, 0.1), "cm"),
         panel.background = element_rect(fill = "NA"),
         panel.border = element_rect(color = "black", size = 0.6, fill = NA))+
   geom_vline(xintercept =0,color="gray",linetype="dashed")+
@@ -351,18 +323,9 @@ p_climate_overall_245=ggplot(data=climate_245_overall_effect,aes(fill=type,y=var
 
 
 
-p_climate_245=ggplotGrob(p_climate_245)
-p_climate_latitude_245=ggplotGrob(p_climate_latitude_245)
-p_climate_overall_245=ggplotGrob(p_climate_overall_245)
-p_climate_latitude_245$heights=p_climate_overall_245$heights
-
-
-p2=plot_grid(p_climate_245,p_climate_latitude_245,p_climate_overall_245,ncol=3,rel_heights = c(1,0.4,0.4),rel_widths  = c(1,0.5,0.9),
-             labels=c("(d)","(e)","(f)"))
-
-
+          
 p_land_585=ggplot(change_richness_rcp585) +
-  geom_point(data = change_richness_rcp585, pch=15,aes(x = x, y = y, color = last*100), size = 0.275) +
+  geom_point(data = change_richness_rcp585, pch=15,aes(x = x, y = y, color = last*100), size = 0.175) +
   scale_color_gradient2(expression("Change %"), high = "#1173EE", mid="white",low = "#ee8c11", na.value = "white")+
   geom_sf(data = us_projected, fill = NA, size=0.01,color = "black")+
   geom_sf(data = canada_clipped, fill=NA,size=0.01,color = "black")+
@@ -371,9 +334,12 @@ p_land_585=ggplot(change_richness_rcp585) +
   geom_sf(data = mexico_projected, fill = NA, size=0.01,color = "black")+
   geom_sf(data = haiti_projected, fill = NA, size=0.01,color = "black")+
   geom_sf(data = dominican_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = baha_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = jama_projected, fill = NA, size=0.01,color = "black")+
+  
   coord_sf(xlim = c(-5000000 , 3000000), ylim = c(-252303 , 5980000))+
-  theme(legend.position = "bottom",
-        legend.margin = margin(t = -15, r = -5, b = 1, l = 0),
+  theme(legend.position = c(0.2,0.35),
+        legend.margin = margin(t = -30, r = -5, b = -1, l = 0),
         legend.text = element_text(size=8,angle=0),
         legend.title  = element_text(size=10),
         text = element_text(size = 18),
@@ -384,7 +350,7 @@ p_land_585=ggplot(change_richness_rcp585) +
         axis.title.x = element_text(size = 18), 
         axis.ticks.x = element_blank(), 
         axis.ticks.y = element_blank(),
-        plot.margin = unit(c(0.3, -0.5, 0.5, 0.5), "cm"),
+        plot.margin = unit(c(0.3, -5, -0.5, 0.5), "cm"),
         panel.background = element_rect(fill = "NA"),
         panel.border = element_blank())+
   xlab("")+
@@ -399,7 +365,7 @@ summary_data_land_rcp585=my_function_latitude_patterns(species_change_land_rcp58
 p_land_latitude_585=ggplot()+
   geom_line(data = summary_data_land_rcp585, aes(x = lat, y = mean_value), color = "#1173EE", size = 0.5) +  # Mean trend line
   geom_ribbon(data = summary_data_land_rcp585, aes(x = lat, ymin = mean_value - sd_value, ymax = mean_value + sd_value), fill = "#1173EE", alpha = 0.2)+
-  theme(legend.position = c(0.75,0.28),
+  theme(
         legend.text = element_text(size=8),
         legend.title  = element_text(size=10),
         text = element_text(size = 18),
@@ -408,7 +374,7 @@ p_land_latitude_585=ggplot()+
         axis.text.x = element_text(size = 12), 
         axis.title.y = element_text(size = 15), 
         axis.title.x = element_text(size = 15), 
-        plot.margin = unit(c(0.5, 0.5, 0.5, 0), "cm"),
+        plot.margin = unit(c(0.3, 0.1, -0.5, 0), "cm"),
         panel.background = element_rect(fill = "NA"),
         panel.border = element_rect(color = "black", size = 0.6, fill = NA))+
   xlab("Latitude")+
@@ -438,6 +404,7 @@ p_land_overall_585=ggplot(data=effect_land_overall_585,aes(fill=type,y=variable 
         axis.title.y = element_text(size = 15), 
         axis.title.x = element_text(size = 15), 
         legend.key.size = unit(0.3, "cm"),
+        plot.margin = unit(c(0.3, 0.5, -0.5, 0.1), "cm"),
         panel.background = element_rect(fill = "NA"),
         panel.border = element_rect(color = "black", size = 0.6, fill = NA))+
   geom_vline(xintercept =0,color="gray",linetype="dashed")+
@@ -459,24 +426,13 @@ p_land_overall_585=ggplot(data=effect_land_overall_585,aes(fill=type,y=variable 
 
 
 
-p_land_585=ggplotGrob(p_land_585)
-p_land_latitude_585=ggplotGrob(p_land_latitude_585)
-p_land_overall_585=ggplotGrob(p_land_overall_585)
-p_land_latitude_585$heights=p_land_overall_585$heights
-p_climate_overall_585=ggplotGrob(p_climate_overall_585)
-p_land_overall_585$widths=p_climate_overall_585$widths
-
-p3=plot_grid(p_land_585,p_land_latitude_585,p_land_overall_585,ncol=3,rel_heights = c(1,0.4,0.4),
-             rel_widths  = c(1,0.5,0.9),labels=c("(h)","(i)","(j)"))
-
-
 
 
 
 climate_induced_change_richness_rcp585=my_function_project(species_change_climate_rcp585)
 
 p_climate_585=ggplot(climate_induced_change_richness_rcp585) +
-  geom_point(data = climate_induced_change_richness_rcp585, pch=15,aes(x = x, y = y, color = last*100), size = 0.275) +
+  geom_point(data = climate_induced_change_richness_rcp585, pch=15,aes(x = x, y = y, color = last*100), size = 0.175) +
   scale_color_gradient2(expression("Change %"), high = "#1173EE", mid="white",low = "#ee8c11", na.value = "white")+
   geom_sf(data = dominican_projected, fill = NA, size=0.01,color = "black")+
     geom_sf(data = us_projected, fill = NA, size=0.01,color = "black")+
@@ -485,9 +441,12 @@ p_climate_585=ggplot(climate_induced_change_richness_rcp585) +
     geom_sf(data = cuba_projected, fill = NA, size=0.01,color = "black")+
     geom_sf(data = mexico_projected, fill = NA, size=0.01,color = "black")+
     geom_sf(data = haiti_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = baha_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = jama_projected, fill = NA, size=0.01,color = "black")+
+  
   coord_sf(xlim = c(-5000000 , 3000000), ylim = c(-252303 , 5980000))+
-  theme(legend.position = "bottom",
-        legend.margin = margin(t = -15, r = -5, b = 1, l = 0),
+  theme(legend.position = c(0.2,0.35),
+        legend.margin = margin(t = -30, r = -5, b = -1, l = 0),
         legend.text = element_text(size=8,angle=0),
         legend.title  = element_text(size=10),
         text = element_text(size = 18),
@@ -498,7 +457,7 @@ p_climate_585=ggplot(climate_induced_change_richness_rcp585) +
         axis.title.x = element_text(size = 18), 
         axis.ticks.x = element_blank(), 
         axis.ticks.y = element_blank(),
-        plot.margin = unit(c(0.3, -0.5, 0.5, 0.5), "cm"),
+        plot.margin = unit(c(0.3, -5, -0.5, 0.5), "cm"),
         panel.background = element_rect(fill = "NA"),
         panel.border = element_blank())+
   xlab("")+
@@ -511,7 +470,7 @@ summary_data_climate_rcp585=my_function_latitude_patterns(species_change_climate
 p_climate_latitude_585=ggplot()+
   geom_line(data = summary_data_climate_rcp585, aes(x = lat, y = mean_value), color = "#1173EE", size = 0.5) +  # Mean trend line
   geom_ribbon(data = summary_data_climate_rcp585, aes(x = lat, ymin = mean_value - sd_value, ymax = mean_value + sd_value), fill = "#1173EE", alpha = 0.2)+
-  theme(legend.position = c(0.75,0.28),
+  theme(
         legend.text = element_text(size=8),
         legend.title  = element_text(size=10),
         text = element_text(size = 18),
@@ -520,11 +479,11 @@ p_climate_latitude_585=ggplot()+
         axis.text.x = element_text(size = 12), 
         axis.title.y = element_text(size = 15), 
         axis.title.x = element_text(size = 15), 
-        plot.margin = unit(c(0.5, 0.5, 0.5, 0), "cm"),
+        plot.margin = unit(c(0.3, 0.1, 0.5, 0), "cm"),
         panel.background = element_rect(fill = "NA"),
         panel.border = element_rect(color = "black", size = 0.6, fill = NA))+
   xlab("Latitude")+
-  ylab("Species change rate")+
+  ylab("")+
   ggtitle("RCP8.5-SSP5")+
   coord_flip()+
   geom_hline(yintercept = 0,linetype="dashed")+
@@ -551,13 +510,14 @@ p_climate_overall_585=ggplot(data=effect_climate_overall_585,aes(fill=type,y=var
         axis.title.y = element_text(size = 15), 
         axis.title.x = element_text(size = 15), 
         legend.key.size = unit(0.3, "cm"),
+        plot.margin = unit(c(0.3, 0.5, 0.5, 0.1), "cm"),
         panel.background = element_rect(fill = "NA"),
         panel.border = element_rect(color = "black", size = 0.6, fill = NA))+
   geom_vline(xintercept =0,color="gray",linetype="dashed")+
   ylab("")+
   #geom_errorbar(data=tem_df_rcp585_climate,size=0.25,color="black",aes(xmin=mean_value-overal_sd,xmax=mean_value+overal_sd,width=0.2))+
   geom_point(aes(y=variable,x=overal_mean),pch=23,color="black",size=2,fill="seagreen1")+
-  xlab("Species change rate")+
+  xlab("")+
   
   scale_y_discrete(breaks=guild_type,position="right",
                    labels=c("AM (-4.4%)","EM (+1.0%)","Soil saprotroph (+1.6%)","Litter saprotroph (+5.0%)","Wood saprotroph (+3.1%)","Plant pathogen (+2.6%)","Parasite (+1.0%)","Epiphyte (-7.9%)","All (+4.4%)"))+
@@ -567,7 +527,7 @@ p_climate_overall_585=ggplot(data=effect_climate_overall_585,aes(fill=type,y=var
   geom_text(data=effect_climate_overall_585,size=5,color="black",
             aes(x=rep(c(-0.3024032182824253641, 0.235315022376859, -0.23021121617,  0.26713022191932, 0.243004074219,  0.25253030850445, -0.28543010492210,
                         0.28653021995706, 0.263007214357),each=2),y=variable),label="***")+
-  xlim(-0.5,0.5)
+  xlim(-0.6,0.6)
 
      
        
@@ -576,31 +536,58 @@ p_climate_overall_585=ggplot(data=effect_climate_overall_585,aes(fill=type,y=var
 
 
 
+
+p_land_245=ggplotGrob(p_land_245)
+p_land_latitude_245=ggplotGrob(p_land_latitude_245)
+p_land_overall_245=ggplotGrob(p_land_overall_245)
+p_land_latitude_245$heights=p_land_overall_245$heights
+p_land_overall_245$widths=p_climate_overall_245$widths
+
+p1=plot_grid(p_land_245,p_land_latitude_245,p_land_overall_245,ncol=3,rel_heights = c(1,0.4,0.4),rel_widths  = c(1,0.4,0.8))
+
+p_climate_245=ggplotGrob(p_climate_245)
+p_climate_latitude_245=ggplotGrob(p_climate_latitude_245)
+p_climate_overall_245=ggplotGrob(p_climate_overall_245)
+p_climate_latitude_245$heights=p_climate_overall_245$heights
+
+
+p2=plot_grid(p_climate_245,p_climate_latitude_245,p_climate_overall_245,ncol=3,rel_heights = c(1,0.4,0.4),rel_widths  = c(1,0.4,0.8))
+
+p_land_585=ggplotGrob(p_land_585)
+p_land_latitude_585=ggplotGrob(p_land_latitude_585)
+p_land_overall_585=ggplotGrob(p_land_overall_585)
+p_land_latitude_585$heights=p_land_overall_585$heights
+p_climate_overall_585=ggplotGrob(p_climate_overall_585)
+p_land_overall_585$widths=p_climate_overall_585$widths
+
+p_land_overall_585$widths=p_land_overall_245$widths
+
+
+p3=plot_grid(p_land_585,p_land_latitude_585,p_land_overall_585,ncol=3,rel_heights = c(1,0.4,0.4),
+             rel_widths  = c(1,0.4,0.8))
+
+
 p_climate_585=ggplotGrob(p_climate_585)# don't have to convert it
 p_climate_latitude_585=ggplotGrob(p_climate_latitude_585)
 p_climate_overall_585=ggplotGrob(p_climate_overall_585)
 p_climate_latitude_585$heights=p_climate_overall_585$heights
 
+p_climate_latitude_585$heights=p_climate_overall_245$heights
 
+p_climate_overall_585$heights=p_land_overall_245$heights
+
+p_climate_overall_585$widths=p_land_overall_245$widths
+p_land_overall_585$widths=p_land_overall_245$widths
 
 p4=plot_grid(p_climate_585,p_climate_latitude_585,p_climate_overall_585,ncol=3,rel_heights = c(1,0.4,0.4),
-             rel_widths  = c(1,0.5,0.9),labels=c("(k)","(l)","(m)"))
-
-
-
+             rel_widths  = c(1,0.4,0.8))
 
 load("~/soil-sar/plot-sar-permutation/land use effect/coords_present_new.RData")
-
-
-
-
 tem_df_rcp245_climate$variable=factor(tem_df_rcp245_climate$variable,
                                       levels=c("AM","EM","soilsap","littersap" ,
                                                "woodsap","plapat" ,"para" ,"epiphy","all"))
 
 
-
-p1/p2/p3/p4+theme(plot.margin = unit(c(0.1, 0.1, 0.1, 0.1), "cm"))
 
 plot_grid(p1,p2,p3,p4,ncol=1)
 
