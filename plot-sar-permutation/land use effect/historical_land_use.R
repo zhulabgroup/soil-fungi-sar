@@ -148,6 +148,8 @@ subset_columns <- historical_land_use[1630:2020]
 
 do.call(cbind,subset_columns)%>%data.frame()->land_use_among_year
 
+# to 
+
 # to see when the cropland and pasture were firstly appeared
 
 
@@ -181,6 +183,25 @@ cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = 
 
 # to see the variation of the land use type for each plot
 # the most often seen type was considered as the pre-modified land use type for each plot
+# do see how many different types have been associated with each plot
+type_year=list()
+number_type=numeric()
+for (i in 1:515)
+{
+  cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
+  type_year[[i]]=land_use_among_year[i,]%>%t()%>%data.frame()%>%
+    rename_all(~paste0(c("name")))%>%
+    group_by(name)%>%count()%>%data.frame()
+  number_type[i]=land_use_among_year[i,]%>%t()%>%data.frame()%>%
+    rename_all(~paste0(c("name")))%>%
+    group_by(name)%>%count()%>%data.frame()%>%dim()%>%head(1)# to see how many types each plot have been
+  
+  
+}
+
+# we found that 84%of the plots are associaed with only one type in the 391 years
+
+
 
 type=numeric()
 for (i in 1:515)
@@ -192,8 +213,29 @@ for (i in 1:515)
   
 }
 
+
+do.call(rbind,strsplit(plot_coordinates$plotID, "_"))%>%data.frame()%>%
+  dplyr::select(X1)->site
+
+plot_coordinates%>%bind_cols(type,as.factor(site$X1))%>%
+  rename(history=...4,site=...5)%>%
+  data.frame()%>%
+  mutate(historical_type=case_when(is.na(history)&site%in%c("GUAN","LAJA")~"forest",
+                                                                    history=="0"~"nodata",
+                                                                    history=="4"~"forest",
+                                                                    history=="5"~"shrub",
+                                                                    history=="6"~"grassland",
+                                                                    history=="7"~"wetland",
+                                                                    history=="7"~"water",
+                                                                    TRUE~"other"))->all_hitorical_land
+## add a new column to the original data
+
+sample_data(rare_all_guild_biome)%>%data.frame()
+
+
+
 # the historical land use type for each plot
-# all the plots in the LAJA site were assigend to forest because of none data
+# all the plots in the LAJA site were assigned to forest because of none data
 crop_plot%>%bind_cols(type)%>%
   rename(history=...5)%>%
   mutate(historical_type=case_when(history%in%c("4","NA")~"forest", 
@@ -263,6 +305,7 @@ data_para <- subset_taxa(rare_all_guild_biome, primary_lifestyle%in%c("protistan
 data_epiphy <- subset_taxa(rare_all_guild_biome, primary_lifestyle == "epiphyte")
 
 ###################used the below codes to get the species ratio##############
+## looks does not consider different sampling efforts
 
 plotid=df4$plotIDM
 site=df4$Site
