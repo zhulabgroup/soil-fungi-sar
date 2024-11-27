@@ -47,6 +47,8 @@ r <- rasterize(biomes, r, field = "LABEL")  # 'field' can be a column name or a 
 
 # get the land use data
 
+
+
 coords_present%>%data.frame()%>%rename_all(~paste0(c("lon","lat")))->coords_present
 
 
@@ -77,11 +79,16 @@ bbox <- st_bbox(sf_object)#to see the range of the sf object
 # the effect of land use change in the scenario of rcp585
 
 raster1 <- rast("GCAM_Demeter_LU_ssp2_rcp45_hadgem_2015.nc")# use the 2015 data as the baseline
+
 raster2 <- rast("GCAM_Demeter_LU_ssp2_rcp45_hadgem_2100.nc")# use the 2015 data as the baseline
 
 raster3 <- rast("GCAM_Demeter_LU_ssp5_rcp85_hadgem_2100.nc")# use the 2015 data as the baseline
 
 raster4 <- rast("GCAM_Demeter_LU_ssp5_rcp85_hadgem_2015.nc")# use the 2015 data as the baseline
+
+load("coords_present_new.RData")
+#get the new affinity data that based on plot-level measurements
+habitat_affinity_with_land_history=readRDS("habitat_affinity_with_land_history.rds")
 
 my_function_raster=function(data)
 {
@@ -135,7 +142,7 @@ richness_derived=matrix(ncol=9,nrow=dim(df_temp1)[1])
 for (i in 1:9)
 {
   richness_temp=df_temp1%>%dplyr::select(crop,No_crop,LABEL,area)%>%
-    left_join(full_guild_affinity_data%>%dplyr::select(guild, mean_zvalue, mean_cvalue,LABEL,affinity)%>%
+    left_join(habitat_affinity_with_land_history%>%dplyr::select(guild, mean_zvalue, mean_cvalue,LABEL,affinity)%>%
                 filter(guild==guild_type[i]),by="LABEL")%>%
     mutate(richness=mean_cvalue*(affinity*crop/100*area+No_crop/100*area)^mean_zvalue)%>%as.matrix()
   richness_derived[,i]=richness_temp[,"richness"]
@@ -149,8 +156,9 @@ return(richness_derived)
 # get the richness data for different scenarios
 
 richness_2015=my_function_raster(raster1)
-richness_2010_rcp245=my_function_raster(raster2)
-richness_2010_rcp585=my_function_raster(raster3)
+
+richness_2100_rcp245=my_function_raster(raster2)
+richness_2100_rcp585=my_function_raster(raster3)
 
 
 # difference in the richness among the two time points
@@ -158,10 +166,12 @@ richness_2010_rcp585=my_function_raster(raster3)
 
 colnames(richness_2100_rcp585)=c("AM","EM","soilsap","littersap","woodsap","plapat","para","epiphy","all")
 
+colnames(richness_2100_rcp245)=c("AM","EM","soilsap","littersap","woodsap","plapat","para","epiphy","all")
+
 colnames(richness_2015)=c("AM","EM","soilsap","littersap","woodsap","plapat","para","epiphy","all")
 
 
-species_change_land_rcp245=(richness_2100-richness_2015)/richness_2015
+species_change_land_rcp245=(richness_2100_rcp245-richness_2015)/richness_2015
 colnames(species_change_land_rcp245)=guild_type
 species_change_land_rcp245=melt(species_change_land_rcp245)
 
@@ -173,7 +183,9 @@ species_change_land_rcp585%>%melt()->species_change_land_rcp585
 species_change_land_rcp585%>%filter(variable=="all")%>%
   bind_cols(coords_present) ->change_richness_rcp585
 
+saveRDS(species_change_land_rcp245,file="species_change_land_rcp245.rds")
 
+saveRDS(species_change_land_rcp585,file="species_change_land_rcp585.rds")
 
 
 # project the results
@@ -283,7 +295,7 @@ for (i in 1:9)
 
 
 #to bind all the data for climate effect
-combined_data=bind_rows(crop_data[[1]],crop_data[[2]],crop_data[[3]],
+#combined_data=bind_rows(crop_data[[1]],crop_data[[2]],crop_data[[3]],
                         crop_data[[4]],crop_data[[5]],crop_data[[6]],
                         crop_data[[7]],crop_data[[8]],crop_data[[9]])
 
@@ -297,6 +309,7 @@ combined_data_climate_rcp585=do.call(rbind,crop_data_rcp585_climate)
 # for the latitude patterns for climate change impacts
 
 climate_induced_change_richness_rcp245=my_function_project(crop_data[[9]])#after cropping
+
 climate_induced_change_richness_rcp585=my_function_project(crop_data_rcp585_climate[[9]])
 
 
@@ -758,7 +771,207 @@ p4=plot_grid(p_climate_585,p_climate_latitude_585,p_climate_overall_585,ncol=3,r
 plot_grid(p1,p2,p3,p4,ncol=1)
 
 
+## current richness estimated based on the land area
+dd=bind_cols(coords_present,richness_2015$all)
+dd=dd%>%rename_all(~paste0(c("lon","lat","group")))
+
+dd=my_function_project(dd)
+
+blue_gradient <- c("#cceeff", "#66b2ff", "#0047b3")
+
+#c("#fdd49e", "#b3cde3", "#005824")
+
+ggplot(dd) +geom_point(data = dd, pch=15,aes(x = x, y = y, color = last*100), size = 0.175) +
+             scale_color_gradient2(expression("Richness"), high = "#005824", mid="#b3cde3",low = "#fdd49e", na.value = "white")+
+             geom_sf(data = us_projected, fill = NA, size=0.01,color = "black")+
+             geom_sf(data = canada_clipped, fill=NA,size=0.01,color = "black")+
+             geom_sf(data = rico_projected, fill = NA, size=0.01,color = "black")+
+             geom_sf(data = cuba_projected, fill = NA, size=0.01,color = "black")+
+             geom_sf(data = mexico_projected, fill = NA, size=0.01,color = "black")+
+             geom_sf(data = haiti_projected, fill = NA, size=0.01,color = "black")+
+             geom_sf(data = dominican_projected, fill = NA, size=0.01,color = "black")+
+             geom_sf(data = baha_projected, fill = NA, size=0.01,color = "black")+
+             geom_sf(data = jama_projected, fill = NA, size=0.01,color = "black")+
+             coord_sf(xlim = c(-5000000 , 3000000), ylim = c(-252303 , 5980000))+
+             theme(legend.position = c(0.2,0.35),
+                   legend.margin = margin(t = -30, r = -4, b = -1, l = 0),
+                   legend.text = element_text(size=8,angle=0),
+                   legend.title  = element_text(size=10),
+                   text = element_text(size = 18),
+                   plot.title = element_text(size = 15, hjust = 0.5), 
+                   axis.text.y = element_blank(), 
+                   axis.text.x = element_blank(), 
+                   axis.title.y = element_text(size = 18), 
+                   axis.title.x = element_text(size = 18), 
+                   axis.ticks.x = element_blank(), 
+                   axis.ticks.y = element_blank(),
+                   plot.margin = unit(c(0.3, 0.5, -.5, 0.5), "cm"),
+                   panel.background = element_rect(fill = "NA"),
+                   panel.border = element_blank())+
+             xlab("")+
+             ylab("")+
+             ggtitle("")
 
 
 
+c("#fdd49e", "#b3cde3", "#005824")
 
+
+df_future <- as.data.frame(r_future_northam[[1]], xy = TRUE) 
+
+df_future%>%rename(value=mat_celsius)->df_future
+
+df_future=my_function_project(df_future)
+
+df_present <- as.data.frame(r_present_northam[[1]], xy = TRUE) 
+
+df_present%>%rename(value=mat_celsius)->df_present
+#to project the climate variables
+
+df_present=my_function_project(df_present)
+
+p1=ggplot()+
+  geom_point(data=df_present,pch=15,size=0.15,aes(x=x,y=y,color=last))+
+  scale_color_gradient2(expression("MAT"), low = "seagreen3", mid = "yellow", high = "purple", na.value = "white")+
+  geom_sf(data = us_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = canada_clipped, fill=NA,size=0.01,color = "black")+
+  geom_sf(data = rico_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = cuba_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = mexico_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = haiti_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = dominican_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = baha_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = jama_projected, fill = NA, size=0.01,color = "black")+
+  coord_sf(xlim = c(-5000000 , 3000000), ylim = c(-252303 , 5980000))+
+  theme(legend.position = c(0.2,0.25),
+        legend.margin = margin(t = -30, r = -5, b = -1, l = 0),
+        legend.text = element_text(size=8,angle=0),
+        legend.title  = element_text(size=10),
+        text = element_text(size = 18),
+        plot.title = element_text(size = 15, hjust = 0.5), 
+        axis.text.y = element_blank(), 
+        axis.text.x = element_blank(), 
+        axis.title.y = element_text(size = 18), 
+        axis.title.x = element_text(size = 18), 
+        axis.ticks.x = element_blank(), 
+        axis.ticks.y = element_blank(),
+        plot.margin = unit(c(0.3, 0.5, -0.5, 0.5), "cm"),
+        panel.background = element_rect(fill = "NA"),
+        panel.border = element_blank())+
+  xlab("")+
+  ylab("")
+
+
+p2=ggplot()+
+  geom_point(data=df_future,pch=15,size=0.15,aes(x=x,y=y,color=last))+
+  scale_color_gradient2(expression("MAT"), low = "seagreen3", mid = "yellow", high = "purple", na.value = "white")+
+  geom_sf(data = us_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = canada_clipped, fill=NA,size=0.01,color = "black")+
+  geom_sf(data = rico_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = cuba_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = mexico_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = haiti_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = dominican_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = baha_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = jama_projected, fill = NA, size=0.01,color = "black")+
+  coord_sf(xlim = c(-5000000 , 3000000), ylim = c(-252303 , 5980000))+
+  theme(legend.position = c(0.2,0.25),
+        legend.margin = margin(t = -30, r = -5, b = -1, l = 0),
+        legend.text = element_text(size=8,angle=0),
+        legend.title  = element_text(size=10),
+        text = element_text(size = 18),
+        plot.title = element_text(size = 15, hjust = 0.5), 
+        axis.text.y = element_blank(), 
+        axis.text.x = element_blank(), 
+        axis.title.y = element_text(size = 18), 
+        axis.title.x = element_text(size = 18), 
+        axis.ticks.x = element_blank(), 
+        axis.ticks.y = element_blank(),
+        plot.margin = unit(c(0.3, 0.5, -0.5, 0.5), "cm"),
+        panel.background = element_rect(fill = "NA"),
+        panel.border = element_blank())+
+  xlab("")+
+  ylab("")
+
+plot_grid(p1,p2,ncol=2)
+
+###for the land cover data 
+
+df_temp_present=df_temp1%>%dplyr::select(lon,lat,crop)
+
+df_temp_present=df_temp_present%>%rename(group=crop)
+
+df_temp_present=my_function_project(df_temp_present)
+
+
+df_temp_future=df_temp1%>%dplyr::select(lon,lat,crop)
+
+df_temp_future=df_temp_future%>%rename(group=crop)
+
+df_temp_future=my_function_project(df_temp_future)
+
+
+p1=ggplot()+
+  geom_point(data=df_temp_present,pch=15,size=0.15,aes(x=x,y=y,color=last))+
+  scale_color_gradient2(expression("Cover(%)"), low = "seagreen3", mid = "white", high = "purple", na.value = "white")+
+  geom_sf(data = us_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = canada_clipped, fill=NA,size=0.01,color = "black")+
+  geom_sf(data = rico_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = cuba_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = mexico_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = haiti_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = dominican_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = baha_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = jama_projected, fill = NA, size=0.01,color = "black")+
+  coord_sf(xlim = c(-5000000 , 3000000), ylim = c(-252303 , 5980000))+
+  theme(legend.position = c(0.2,0.25),
+        legend.margin = margin(t = -30, r = -5, b = -1, l = 0),
+        legend.text = element_text(size=8,angle=0),
+        legend.title  = element_text(size=10),
+        text = element_text(size = 18),
+        plot.title = element_text(size = 15, hjust = 0.5), 
+        axis.text.y = element_blank(), 
+        axis.text.x = element_blank(), 
+        axis.title.y = element_text(size = 18), 
+        axis.title.x = element_text(size = 18), 
+        axis.ticks.x = element_blank(), 
+        axis.ticks.y = element_blank(),
+        plot.margin = unit(c(0.3, 0.5, -0.5, 0.5), "cm"),
+        panel.background = element_rect(fill = "NA"),
+        panel.border = element_blank())+
+  xlab("")+
+  ylab("")
+
+p2=ggplot()+
+  geom_point(data=df_temp_future,pch=15,size=0.15,aes(x=x,y=y,color=last))+
+  scale_color_gradient2(expression("Cover(%)"), low = "seagreen3", mid = "white", high = "purple", na.value = "white")+
+  geom_sf(data = us_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = canada_clipped, fill=NA,size=0.01,color = "black")+
+  geom_sf(data = rico_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = cuba_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = mexico_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = haiti_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = dominican_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = baha_projected, fill = NA, size=0.01,color = "black")+
+  geom_sf(data = jama_projected, fill = NA, size=0.01,color = "black")+
+  coord_sf(xlim = c(-5000000 , 3000000), ylim = c(-252303 , 5980000))+
+  theme(legend.position = c(0.2,0.25),
+        legend.margin = margin(t = -30, r = -5, b = -1, l = 0),
+        legend.text = element_text(size=8,angle=0),
+        legend.title  = element_text(size=10),
+        text = element_text(size = 18),
+        plot.title = element_text(size = 15, hjust = 0.5), 
+        axis.text.y = element_blank(), 
+        axis.text.x = element_blank(), 
+        axis.title.y = element_text(size = 18), 
+        axis.title.x = element_text(size = 18), 
+        axis.ticks.x = element_blank(), 
+        axis.ticks.y = element_blank(),
+        plot.margin = unit(c(0.3, 0.5, -0.5, 0.5), "cm"),
+        panel.background = element_rect(fill = "NA"),
+        panel.border = element_blank())+
+  xlab("")+
+  ylab("")
+
+
+c("#9a3412", "#f97316", "#fed7aa")
