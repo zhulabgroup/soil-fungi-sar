@@ -4,7 +4,10 @@
 
 
 
-color_palette=c( "#CD326D","#B0BEC5" ,"#32CD92", "#4A90E2", "#E6E6FA","#C7F9CC","#E3A72F","#F8A488" , "mediumpurple")
+color_palette1=c( "#CD326D","#B0BEC5" ,"#32CD92", "#4A90E2", "#E6E6FA","#C7F9CC","#E3A72F","#F8A488" , "mediumpurple")
+
+color_palette1=c("mediumpurple","#32CD92","#FF7F00","#4A90E2", "#CD326D","#C7F9CC","#E3A72F","#F8A488" ,"#E6E6FA" )
+
 
 theme_grid_plot=theme(axis.text = element_text(size = 10,hjust=0),
       plot.title = element_text(hjust = 0.5),
@@ -82,7 +85,7 @@ map_direction_overall=list()
     # the order will be based on the grids
     # reorder the columns so that the cells correponsed
     data%>%left_join(data_percent%>%dplyr::rename(Combination=group),by="Combination")%>%
-      arrange(Var1)%>%mutate(color=color_palette )%>%
+      arrange(Var1)%>%mutate(color=color_palette1 )%>%
       mutate(proportion=round(Freq,3)*100)->data
  
     
@@ -153,7 +156,7 @@ map_direction_overall=list()
   }
   
 
-  #when considerting the magnitude of both effects
+  #when considering the magnitude of both effects
 
 
   
@@ -206,12 +209,6 @@ map_direction_overall=list()
   
   
   
-  ggplot()+geom_point(data=df5,pch=15,aes(x=lon,y=lat,color=group),size=0.01)+
-    guides(color = guide_legend(override.aes = list(size = 2)))+
-  
-    scale_color_manual(breaks=c(unique(df5$group)),
-                       labels=c(unique(df5$group)),
-                       values=c("white","brown","yellow","green","purple","blue","gold","pink","red","seagreen"))
   
   
   #data=get(map_data[i])[[9]]    
@@ -335,10 +332,112 @@ map_direction_overall=list()
     }
   }
   
-  colors <- c("#2C3E50", "#1ABC9C", "#F1C40F", "#E74C3C", "#95A5A6", 
-              "#9B59B6", "#A2D9CE", "#D5B895", "#8E44AD")
-
+ 
  plot_grid(map_direction_overall[[1]],map_direction_overall[[2]],map_loss[[1]],map_loss[[2]],ncol=2,
            label_x = 0.08,label_y = 0.95,label_size = 20,labels = paste0("(", letters[1:4], ")"))
+ 
+ ## maps to show changes of the effects of either climate or land cover among scenarios
+ 
+ # first project the effects
+ #both for land cover and climate effects
+ 
+ 
+ map_data=c("data_both_effect_rcp245","data_both_effect_rcp585")
+ #with different scenarios
+ climate_scenario=c("RCP4.5-SSP2","RCP8.5-SSP5")
+ 
+ #second and the sixth column 
+ direction_map_both=list()
+ for (j in c(2,6))
+ {
+   
+ direction_map=list()
+ for (i in 1:2){
+   
+
+ get(map_data[i])[[9]]%>%
+   mutate(binary=case_when(get(map_data[i])[[9]][,j]>0~"gain",
+                           get(map_data[i])[[9]][,j]<0~"loss",
+                           get(map_data[i])[[9]][,j]==0~"nochange",
+                          TRUE~"Other"))->temp_data
+   
+ #need to project the values
+ 
+   df5=my_function_project(temp_data)
+   
+   df5$binary=factor(df5$binary,levels=c("0","1","2","3"))
+   
+   table(df5$binary)[1:3]/sum(table(df5$binary)[1:3])->d
+   
+   d%>%data.frame()%>%mutate(section=c("Gain","Loss","nochange"))->data_percent
+   
+   data_direction <- data.frame(
+     section = c("Gain","Loss","nochange"),
+     value = c(20,20,20),  # Equal values for equal-sized sections
+     fill_color = c("#32CD92", "#CD326D", "gray88")
+   )
+   
+   data_percent%>%left_join(data_direction,by="section")->data_combine_plot
+   
+   p2=ggplot(data_combine_plot , aes(x = "", y = value, fill = section)) +
+     geom_bar(stat = "identity", width = 0.5,color="black",size=0.2) +
+     geom_text(data=data_combine_plot , size=3,aes(x = "", y =c(10, 30, 50 )),
+               label=paste0(sprintf("%.1f", round(data_combine_plot%>%pull(Freq)*100,1)%>%rev())))+
+     #labs(x = "", y = "Proportion", title = "Single Stacked Bar with Five Equal Sections") +
+     theme(legend.position = c(0.2,0.35),
+           
+           legend.text = element_text(size=8,angle=0),
+           legend.title  = element_text(size=10),
+           text = element_text(size = 18),
+           plot.title = element_text(size = 15, hjust = 0.5), 
+           axis.text.y = element_blank(), 
+           axis.text.x = element_blank(), 
+           axis.title.y = element_blank(), 
+           axis.title.x = element_blank(), 
+           axis.ticks.x = element_blank(), 
+           axis.ticks.y = element_blank(),
+           panel.grid = element_blank(),
+           panel.background = element_rect(fill = "NA"),
+           panel.border = element_blank())+
+     guides(fill="none")+
+     geom_text(x=0.20,y=c(10, 30, 50 ),label=c("Gain","Loss","No change")%>%rev(),hjust=0)+
+     annotate("text",x=1,y=65,label="% of pixels",size=4.5)+
+     scale_x_discrete(expand = c(0, 1))+
+     scale_fill_manual(breaks=c("Gain","Loss","nochange"),
+                       labels=c("Gain","Loss","nochange"),values=c("#32CD92", "#CD326D", "gray88"))
   
+   smaller_panel_grob <- ggplotGrob(p2)
+   direction_map[[i]]= ggplot()+
+     geom_point(data=df5,pch=15,aes(x=x,y=y,color=binary),size=0.01)+
+     #ggtitle("Magnitude of richness change \n(RCP4.5-SSP2)")+
+     ggtitle(bquote(atop("Magnitude of richness change"[Indi.],  ~ .(climate_scenario[i]))))+
+     
+     guides(color = guide_legend(override.aes = list(size = 2)))+
+     xlab("")+
+     ylab("")+
+     geom_sf(data = us_projected, fill = NA, size=0.01,color = "black")+
+     geom_sf(data = canada_clipped, fill=NA,size=0.01,color = "black")+
+     geom_sf(data = rico_projected, fill = NA, size=0.01,color = "black")+
+     geom_sf(data = cuba_projected, fill = NA, size=0.01,color = "black")+
+     geom_sf(data = mexico_projected, fill = NA, size=0.01,color = "black")+
+     geom_sf(data = haiti_projected, fill = NA, size=0.01,color = "black")+
+     geom_sf(data = dominican_projected, fill = NA, size=0.01,color = "black")+
+     geom_sf(data = baha_projected, fill = NA, size=0.01,color = "black")+
+     geom_sf(data = jama_projected, fill = NA, size=0.01,color = "black")+
+     
+     coord_sf(xlim = c(-5000000 , 3000000), ylim = c(-252303 , 5980000))+
+     
+     common_theme+
+     guides(color="none")+
+     annotation_custom(grob = smaller_panel_grob, xmin = -6040567 , xmax = -2509970, ymin =-907265.6, ymax = 3212262.7)+
+     
+     scale_color_manual("",breaks=c(0:4),
+                        labels=0:4,
+                        values=c("#32CD92", "#CD326D", "gray88","white" ))
+ }
+   
+ direction_map_both[[j]]=direction_map
+}
+   
+   
   
