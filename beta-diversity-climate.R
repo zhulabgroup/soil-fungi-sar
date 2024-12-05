@@ -115,7 +115,16 @@ setwd("/nfs/turbo/seas-zhukai/proj-soil-fungi/land-use-climate-historical")
 
 grid_biome=readRDS("grid_level_biomes.rds")
 
-species_composition_rcp585=data%>%data.frame()
+setwd("/nfs/turbo/seas-zhukai/proj-soil-fungi/SDM-present")
+
+species_composition_present=readRDS("species_composition_present.rds")
+
+species_composition_rcp585=data
+
+
+saveRDS(species_composition_rcp585,file="species_composition_rcp585.rds")
+
+species_composition_rcp585%>%data.frame()->species_composition_rcp585
 
 species_composition_rcp585=species_composition_rcp585%>%
   bind_cols(grid_biome)%>%filter(LABEL%in%c("Tropical & Subtropical Moist Broadleaf Forests",
@@ -136,7 +145,8 @@ species_composition_present=species_composition_present%>%
 
 bray_dist=numeric()
 for (i in 1:42048)
-{
+{cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
+  
 com1=species_composition_present[i,1:8597]
 com1=species_composition_rcp585[i,1:8597]
 combined_comm=rbind(com1,com2)
