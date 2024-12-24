@@ -1,11 +1,17 @@
 ##get species change rate under two scenarios
-#both climate and land use were considered
+##both climate and land cover were considered with four data
+
+species_change_climate_rcp245=readRDS("species_change_climate_rcp245.rds")
+species_change_climate_rcp585=readRDS("species_change_climate_rcp585.rds")
+
 
 data=c("species_change_land_rcp245","species_change_land_rcp585","species_change_climate_rcp245","species_change_climate_rcp585")
 
-scenario=c("RCP4.5-SSP2","RCP8.5-SSP5","RCP4.5-SSP2","RCP8.5-SSP5")
-  
-change_rate_guild_scenarios=list()# the j corresponds to four scenarios for both land and climate
+scenario=c("SSP2-4.5","SSP5-8.5","SSP2-4.5","SSP5-8.5")
+
+#(1) get the proportions of pixels that show either species gain or loss
+
+change_rate_guild_scenarios=list()# the j corresponds to four scenarios for both land cover and climate effect
 for (j in 1:4)
   {
 change_rate_guild=list()
@@ -15,7 +21,7 @@ for (m in 1:9)
   
   for (i in 1:5)
   {
-    if(i==5)
+    if(i==5)#all biomes were included
     {
       get(data[j])%>%filter(variable==guild_type[m])%>%
         bind_cols(grid_level_biomes%>%dplyr::select(LABEL))%>%
@@ -25,7 +31,7 @@ for (m in 1:9)
       df1%>%filter(value==0)%>%dim()%>%head(1)->no_change
       df1%>%filter(value<0)%>%dim()%>%head(1)->loss
     }
-    else{
+    else{# select just one biome
       get(data[j])%>%filter(variable==guild_type[m])%>%
         bind_cols(grid_level_biomes%>%dplyr::select(LABEL))%>%
         filter(LABEL== biomes_four[i]&!is.na(value))->df1
@@ -45,7 +51,9 @@ change_rate_guild_scenarios[[j]]=change_rate_guild
 
 }
 
-change_rate_guild_scenarios[[1]]#means land cover effect in the low-emission for all the guilds
+change_rate_guild_scenarios[[1]]#means land cover effect in the low-emission scenario for all guilds
+
+saveRDS(change_rate_guild_scenarios,file="change_rate_guild_scenarios.rds")
 
 #for each guild, to get the data to create the pie plot
 pie_data_guild=list()
@@ -66,10 +74,16 @@ for (m in 1:9){
 #pie_data_guild[[1]], means the first fungal guild
 #with four list, each correspond to land and cliamte effects under two scenarios
 
-
+saveRDS(pie_data_guild,file="pie_data_guild.rds")
 
 #to get the overall effect of both factors
 # it is based on the species change rate
+
+grid_level_biomes=readRDS(file="grid_level_biomes.rds")
+
+biomes_four=c( "Temperate Broadleaf & Mixed Forests","Temperate Conifer Forests" ,                    
+               "Temperate Grasslands, Savannas & Shrublands" ,"Tropical & Subtropical Dry Broadleaf Forests")
+
 
 change_rate_mean_guild_scenario=list()
 for (j in 1:4)
@@ -84,7 +98,7 @@ for (i in 1:5)
   {
     get(data[j])%>%filter(variable==guild_type[m])%>%
       bind_cols(grid_level_biomes%>%dplyr::select(LABEL))%>%
-      filter(LABEL%in%biomes_four&!is.na(value))->df1
+      filter(LABEL%in%biomes_four&!is.na(value))->df1# na cells were filtered
     
     df1%>%mutate(type=ifelse(value > 0, "Positive", "Negative"))%>%filter(!is.na(type))%>%group_by(variable,type)%>%
       summarise(mean_value = mean(value,na.rm=TRUE),sd_value = sd(value,na.rm=TRUE),count=n())->data_temp
@@ -116,15 +130,16 @@ change_rate_mean_guild[[m]]=change_rate
 change_rate_mean_guild_scenario[[j]]=change_rate_mean_guild
 }
 
-change_rate_mean_guild_scenario[[1]]#means for land cover effects in the low-emmission scenarios
+change_rate_mean_guild_scenario[[1]]#means for land cover effects in the low-emission scenarios
 
+#to combine the list into a dataframe to create the plots
 #for the two scenarios to get the replicates for the mean change
 # we only select the 9 th guild when all the guilds were combined
 data_biome_change_rate_guild=list()
 for (m in 1:9)
   {
   data_biome_change_rate=list()
-  for (i in 1:4)
+  for (i in 1:4)#i corresponds to the four data 2 scenarios x 2 effects(land and climate)
   {
     dimensions_matrix <- sapply(change_rate_mean_guild_scenario[[i]][[m]], dim)[1,]
     # the number of rows selected 
@@ -136,7 +151,11 @@ for (m in 1:9)
   data_biome_change_rate_guild[[m]]=data_biome_change_rate
 }
 
+saveRDS(data_biome_change_rate_guild,file="data_biome_change_rate_guild.rds")
+#each list has 9 lists with found data sets
 
+
+pie_data_guild=readRDS("pie_data_guild.rds")
 
 ## to create the pie plots
 pp_pie_guild=list()
@@ -166,10 +185,11 @@ for (m in 1:9){
                                      plot.title = element_text(size = 15, hjust = 0.5))+
                                facet_wrap(~biome,ncol=1)+
                                xlab("")+
-                               ylab(paste(full_name[m]))+
+                               ylab("")+
+                               #ylab(paste(full_name[m]))+
                                #ggtitle("")+
                                scale_fill_manual("",breaks=c("gain","no","loss"),
-                                                 labels=c("Gain","No change","Loss"),values=c("#1173EE","gray", "#ee8c11")))}
+                                                 labels=c("Gain","No change","Loss"),values=c( "#1b9e77","gray","#d95f02")))}
   }
   else{
     pp_pie=list()
@@ -196,14 +216,20 @@ for (m in 1:9){
                                      plot.title = element_text(size = 15, hjust = 0.5))+
                                facet_wrap(~biome,ncol=1)+
                                xlab("")+
-                               ylab(paste(full_name[m]))+
+                               ylab("")+
+                               #ylab(paste(full_name[m]))+
                                #ggtitle("")+
                                scale_fill_manual("",breaks=c("gain","no","loss"),
-                                                 labels=c("Gain","No change","Loss"),values=c("#1173EE","gray", "#ee8c11")))}
+                                                 labels=c("Gain","No change","Loss"),values=c("#1b9e77","gray","#d95f02")))}
   }
 pp_pie_guild[[m]]=pp_pie
 }
 
+# load in the data
+data_biome_change_rate_guild=readRDS("data_biome_change_rate_guild.rds")
+
+
+full_name=c("AM","EM","Soil saprotroph","Litter saprotroph","Wood saprotroph", "Plant pathogen", "Parasite","Epiphyte","All")
 
 #set different
 xlim_list=list(c(-30,30),c(-30,30),c(-60,60),c(-60,60))
@@ -261,7 +287,14 @@ for (m in 1:9)
                     label=c(paste0("(",sprintf("%.1f",data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Negative")%>%pull( mean_value )%>%round(3)*100,")"),")")))+
           geom_text(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive"),
                     aes(y=biome,x = 50),size=3,vjust=-1.6,
-                    label=c(paste0("(",sprintf("%.1f",data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive")%>%pull( mean_value )%>%round(3)*100,")"),")"))))
+                    label=c(paste0("(",sprintf("%.1f",data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive")%>%pull( mean_value )%>%round(3)*100,")"),")")))+
+            geom_text(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Negative"),
+                      aes(y=biome,x = -50),size=3,vjust=-3,
+                      label=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Negative")%>%pull(letter))+
+            geom_text(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive"),
+                      aes(y=biome,x = 50),size=3,vjust=-3,
+                      label=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive")%>%pull(letter))
+        )
       }
       else{
         pp_mean_effect[[i]]=ggplotGrob(ggplot(data=data_biome_change_rate_guild[[m]][[i]],aes(fill=type,y=biome ,x=100*mean_value))+
@@ -302,7 +335,14 @@ for (m in 1:9)
                     label=c(paste0("(",sprintf("%.1f",data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Negative")%>%pull( mean_value )%>%round(3)*100,")"),")")))+
           geom_text(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive"),
                     aes(y=biome,x = 30),size=3,vjust=-1.6,
-                    label=c(paste0("(",sprintf("%.1f",data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive")%>%pull( mean_value )%>%round(3)*100,")"),")"))))
+                    label=c(paste0("(",sprintf("%.1f",data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive")%>%pull( mean_value )%>%round(3)*100,")"),")")))+
+            geom_text(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Negative"),
+                      aes(y=biome,x = -30),size=3,vjust=-3,
+                      label=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Negative")%>%pull(letter))+
+            geom_text(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive"),
+                      aes(y=biome,x = 30),size=3,vjust=-3,
+                      label=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive")%>%pull(letter))
+        )
         
       }
       
@@ -354,7 +394,14 @@ for (m in 1:9)
                     label=c(paste0("(",sprintf("%.1f",data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Negative")%>%pull( mean_value )%>%round(3)*100,")"),")")))+
           geom_text(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive"),
                     aes(y=biome,x = 10),size=3,vjust=-1.6,
-                    label=c(paste0("(",sprintf("%.1f",data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive")%>%pull( mean_value )%>%round(3)*100,")"),")"))))
+                    label=c(paste0("(",sprintf("%.1f",data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive")%>%pull( mean_value )%>%round(3)*100,")"),")")))+
+            geom_text(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Negative"),
+                      aes(y=biome,x = -10),size=3,vjust=-3,
+                      label=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Negative")%>%pull(letter))+
+            geom_text(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive"),
+                      aes(y=biome,x = 10),size=3,vjust=-3,
+                      label=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive")%>%pull(letter))
+        )
       }
       else{
         pp_mean_effect[[i]]=ggplotGrob(ggplot(data=data_biome_change_rate_guild[[m]][[i]],aes(fill=type,y=biome ,x=100*mean_value))+
@@ -395,7 +442,14 @@ for (m in 1:9)
                     label=c(paste0("(",sprintf("%.1f",data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Negative")%>%pull( mean_value )%>%round(3)*100,")"),")")))+
           geom_text(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive"),
                     aes(y=biome,x = 30),size=3,vjust=-1.6,
-                    label=c(paste0("(",sprintf("%.1f",data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive")%>%pull( mean_value )%>%round(3)*100,")"),")"))))
+                    label=c(paste0("(",sprintf("%.1f",data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive")%>%pull( mean_value )%>%round(3)*100,")"),")")))+
+            geom_text(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Negative"),
+                      aes(y=biome,x = -30),size=3,vjust=-3,
+                      label=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Negative")%>%pull(letter))+
+            geom_text(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive"),
+                      aes(y=biome,x = 30),size=3,vjust=-3,
+                      label=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive")%>%pull(letter))
+        )
         
       }
       
@@ -406,9 +460,236 @@ for (m in 1:9)
 pp_mean_effect_guild[[m]]=pp_mean_effect
 }
 
+###for the overal fungal diversity
+
+pp_mean_effect_guild=list()
+for (m in 1:9)
+{
+  if(m<2){
+    pp_mean_effect=list()
+    for (i in 1:4)
+    {
+      if(i<3)
+      {
+        
+        pp_mean_effect[[i]]=ggplot(data=data_biome_change_rate_guild[[m]][[i]],aes(fill=type,y=biome ,x=100*mean_value))+
+                                         geom_col(width = 0.3)+
+                                         geom_segment(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Negative"), 
+                                                      aes(y=biome,yend=biome,xend= 100*mean_value- 100*sd_value, x = 100*mean_value),
+                                                      arrow = arrow(length = unit(0.1, "cm"),angle=90))+
+                                         geom_segment(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive"), 
+                                                      aes(y=biome,yend=biome,x = 100*mean_value, xend = 100*mean_value +100*sd_value),
+                                                      arrow = arrow(length = unit(0.1, "cm"),angle=90))+
+                                         scale_fill_manual("",breaks=c("Negative","Positive"),labels=c("Loss","Gain"),values=c("#d95f02", "#1b9e77"))+
+                                         theme(legend.position = "none",
+                                               legend.text = element_text(size=8),
+                                               legend.title  = element_text(size=10),
+                                               text = element_text(size = 18),
+                                               plot.title = element_text(size = 12, hjust = 0.5), 
+                                               axis.text.y = element_text(size = 10), 
+                                               axis.text.x = element_text(size = 10), 
+                                               axis.title.y = element_text(size = 10), 
+                                               axis.title.x = element_text(size = 10), 
+                                               legend.key.size = unit(0.3, "cm"),
+                                               plot.margin = unit(c(0, 0, 0.1, 0), "cm"),
+                                               panel.background = element_rect(fill = "NA"),
+                                               panel.border = element_rect(color = "black", size = 0.6, fill = NA))+
+                                         geom_vline(xintercept =0,color="gray",linetype="dashed")+
+                                         ylab("")+
+                                         #xlab(paste(full_name[m]))+
+                                         xlim(xlim_list_am[[i]])+
+                                          xlab("")+
+                                         scale_y_discrete(breaks=unique(data_biome_change_rate_guild[[m]][[i]]$biome),position="right",
+                                                          labels=paste0(rev(c("","","","","")),"(",sprintf("%.1f",data_biome_change_rate_guild[[m]][[i]]%>%distinct( overal_mean )%>%pull()%>%round(3)*100,")"),")"))+
+                                         geom_hline(yintercept = 9,color="gray48",size=10,alpha=0.2)+
+                                         #ggtitle(paste0(scenario[i]))+
+                                         geom_point(data=data_biome_change_rate_guild[[m]][[i]],aes(y=biome,x=100*overal_mean),pch=23,color="black",size=2,fill="#7570b3")+
+                                         
+                                         geom_text(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Negative"),
+                                                   aes(y=biome,x = -50),size=3,vjust=-1.6,
+                                                   label=c(paste0("(",sprintf("%.1f",data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Negative")%>%pull( mean_value )%>%round(3)*100,")"),")")))+
+                                         geom_text(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive"),
+                                                   aes(y=biome,x = 50),size=3,vjust=-1.6,
+                                                   label=c(paste0("(",sprintf("%.1f",data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive")%>%pull( mean_value )%>%round(3)*100,")"),")")))+
+                                         geom_text(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Negative"),
+                                                   aes(y=biome,x = -50),size=3,vjust=-3,
+                                                   label=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Negative")%>%pull(letter))+
+                                         geom_text(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive"),
+                                                   aes(y=biome,x = 50),size=3,vjust=-3,
+                                                   label=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive")%>%pull(letter))
+        
+      }
+      else{
+        pp_mean_effect[[i]]=ggplot(data=data_biome_change_rate_guild[[m]][[i]],aes(fill=type,y=biome ,x=100*mean_value))+
+                                         geom_col(width = 0.3)+
+                                         geom_segment(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Negative"), 
+                                                      aes(y=biome,yend=biome,xend= 100*mean_value- 100*sd_value, x = 100*mean_value),
+                                                      arrow = arrow(length = unit(0.1, "cm"),angle=90))+
+                                         geom_segment(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive"), 
+                                                      aes(y=biome,yend=biome,x = 100*mean_value, xend = 100*mean_value +100*sd_value),
+                                                      arrow = arrow(length = unit(0.1, "cm"),angle=90))+
+                                         scale_fill_manual("",breaks=c("Negative","Positive"),labels=c("Loss","Gain"),values=c("#d95f02", "#1b9e77"))+
+                                         theme(legend.position = "none",
+                                               legend.text = element_text(size=8),
+                                               legend.title  = element_text(size=10),
+                                               text = element_text(size = 18),
+                                               plot.title = element_text(size = 12, hjust = 0.5), 
+                                               axis.text.y = element_text(size = 10), 
+                                               axis.text.x = element_text(size = 10), 
+                                               axis.title.y = element_text(size = 10), 
+                                               axis.title.x = element_text(size = 10), 
+                                               legend.key.size = unit(0.3, "cm"),
+                                               plot.margin = unit(c(0, 0, 0.1, 0), "cm"),
+                                               panel.background = element_rect(fill = "NA"),
+                                               panel.border = element_rect(color = "black", size = 0.6, fill = NA))+
+                                         geom_vline(xintercept =0,color="gray",linetype="dashed")+
+                                         ylab("")+
+                                         #xlab(paste(full_name[m]))+
+                                         xlim(xlim_list_am[[i]])+
+                                         xlab("")+
+                                         scale_y_discrete(breaks=unique(data_biome_change_rate_guild[[m]][[i]]$biome),position="right",
+                                                          labels=paste0(rev(c("","","","","")),"(",sprintf("%.1f",data_biome_change_rate_guild[[m]][[i]]%>%distinct( overal_mean )%>%pull()%>%round(3)*100,")"),")"))+
+                                         geom_hline(yintercept = 9,color="gray48",size=10,alpha=0.2)+
+                                         #ggtitle(paste0(scenario[i]))+
+                                         geom_point(data=data_biome_change_rate_guild[[m]][[i]],aes(y=biome,x=100*overal_mean),pch=23,color="black",size=2,fill="#7570b3")+
+                                         
+                                         geom_text(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Negative"),
+                                                   aes(y=biome,x = -30),size=3,vjust=-1.6,
+                                                   label=c(paste0("(",sprintf("%.1f",data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Negative")%>%pull( mean_value )%>%round(3)*100,")"),")")))+
+                                         geom_text(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive"),
+                                                   aes(y=biome,x = 30),size=3,vjust=-1.6,
+                                                   label=c(paste0("(",sprintf("%.1f",data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive")%>%pull( mean_value )%>%round(3)*100,")"),")")))+
+                                         geom_text(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Negative"),
+                                                   aes(y=biome,x = -30),size=3,vjust=-3,
+                                                   label=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Negative")%>%pull(letter))+
+                                         geom_text(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive"),
+                                                   aes(y=biome,x = 30),size=3,vjust=-3,
+                                                   label=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive")%>%pull(letter))
+        
+        
+      }
+      
+    }
+  }
+  
+  else{
+    pp_mean_effect=list()
+    for (i in 1:4)
+    {
+      if(i<3)
+      {
+        
+        pp_mean_effect[[i]]=ggplot(data=data_biome_change_rate_guild[[m]][[i]],aes(fill=type,y=biome ,x=100*mean_value))+
+                                         geom_col(width = 0.3)+
+                                         geom_segment(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Negative"), 
+                                                      aes(y=biome,yend=biome,xend= 100*mean_value- 100*sd_value, x = 100*mean_value),
+                                                      arrow = arrow(length = unit(0.1, "cm"),angle=90))+
+                                         geom_segment(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive"), 
+                                                      aes(y=biome,yend=biome,x = 100*mean_value, xend = 100*mean_value +100*sd_value),
+                                                      arrow = arrow(length = unit(0.1, "cm"),angle=90))+
+                                         scale_fill_manual("",breaks=c("Negative","Positive"),labels=c("Loss","Gain"),values=c("#d95f02", "#1b9e77"))+
+                                         theme(legend.position = "none",
+                                               legend.text = element_text(size=8),
+                                               legend.title  = element_text(size=10),
+                                               text = element_text(size = 18),
+                                               plot.title = element_text(size = 12, hjust = 0.5), 
+                                               axis.text.y = element_text(size = 10), 
+                                               axis.text.x = element_text(size = 10), 
+                                               axis.title.y = element_text(size = 10), 
+                                               axis.title.x = element_text(size = 10), 
+                                               legend.key.size = unit(0.3, "cm"),
+                                               plot.margin = unit(c(0, 0, 0.1, 0), "cm"),
+                                               panel.background = element_rect(fill = "NA"),
+                                               panel.border = element_rect(color = "black", size = 0.6, fill = NA))+
+                                         geom_vline(xintercept =0,color="gray",linetype="dashed")+
+                                         ylab("")+
+                                         #xlab(paste(full_name[m]))+
+                                         xlim(xlim_list[[i]])+
+                                         xlab("")+
+                                         scale_y_discrete(breaks=unique(data_biome_change_rate_guild[[m]][[i]]$biome),position="right",
+                                                          labels=paste0(rev(c("","","","","")),"(",sprintf("%.1f",data_biome_change_rate_guild[[m]][[i]]%>%distinct( overal_mean )%>%pull()%>%round(3)*100,")"),")"))+
+                                         geom_hline(yintercept = 9,color="gray48",size=10,alpha=0.2)+
+                                         #ggtitle(paste0(scenario[i]))+
+                                         geom_point(data=data_biome_change_rate_guild[[m]][[i]],aes(y=biome,x=100*overal_mean),pch=23,color="black",size=2,fill="#7570b3")+
+                                         
+                                         geom_text(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Negative"),
+                                                   aes(y=biome,x = -10),size=3,vjust=-1.6,
+                                                   label=c(paste0("(",sprintf("%.1f",data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Negative")%>%pull( mean_value )%>%round(3)*100,")"),")")))+
+                                         geom_text(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive"),
+                                                   aes(y=biome,x = 10),size=3,vjust=-1.6,
+                                                   label=c(paste0("(",sprintf("%.1f",data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive")%>%pull( mean_value )%>%round(3)*100,")"),")")))+
+                                         geom_text(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Negative"),
+                                                   aes(y=biome,x = -10),size=3,vjust=-3,
+                                                   label=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Negative")%>%pull(letter))+
+                                         geom_text(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive"),
+                                                   aes(y=biome,x = 10),size=3,vjust=-3,
+                                                   label=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive")%>%pull(letter))
+        
+      }
+      else{
+        pp_mean_effect[[i]]=ggplot(data=data_biome_change_rate_guild[[m]][[i]],aes(fill=type,y=biome ,x=100*mean_value))+
+                                         geom_col(width = 0.3)+
+                                         geom_segment(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Negative"), 
+                                                      aes(y=biome,yend=biome,xend= 100*mean_value- 100*sd_value, x = 100*mean_value),
+                                                      arrow = arrow(length = unit(0.1, "cm"),angle=90))+
+                                         geom_segment(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive"), 
+                                                      aes(y=biome,yend=biome,x = 100*mean_value, xend = 100*mean_value +100*sd_value),
+                                                      arrow = arrow(length = unit(0.1, "cm"),angle=90))+
+                                         scale_fill_manual("",breaks=c("Negative","Positive"),labels=c("Loss","Gain"),values=c("#d95f02", "#1b9e77"))+
+                                         theme(legend.position = "none",
+                                               legend.text = element_text(size=8),
+                                               legend.title  = element_text(size=10),
+                                               text = element_text(size = 18),
+                                               plot.title = element_text(size = 12, hjust = 0.5), 
+                                               axis.text.y = element_text(size = 10), 
+                                               axis.text.x = element_text(size = 10), 
+                                               axis.title.y = element_text(size = 10), 
+                                               axis.title.x = element_text(size = 10), 
+                                               legend.key.size = unit(0.3, "cm"),
+                                               plot.margin = unit(c(0, 0, 0.1, 0), "cm"),
+                                               panel.background = element_rect(fill = "NA"),
+                                               panel.border = element_rect(color = "black", size = 0.6, fill = NA))+
+                                         geom_vline(xintercept =0,color="gray",linetype="dashed")+
+                                         ylab("")+
+                                         #xlab(paste(full_name[m]))+
+                                         xlim(xlim_list[[i]])+
+                                           xlab("")+
+                                         #ggtitle(paste0(scenario[i]))+
+                                         scale_y_discrete(breaks=unique(data_biome_change_rate_guild[[m]][[i]]$biome),position="right",
+                                                          labels=paste0(rev(c("","","","","")),"(",sprintf("%.1f",data_biome_change_rate_guild[[m]][[i]]%>%distinct( overal_mean )%>%pull()%>%round(3)*100,")"),")"))+
+                                         geom_hline(yintercept = 9,color="gray48",size=10,alpha=0.2)+
+                                         #ggtitle(paste0(scenario[i]))+
+                                         geom_point(data=data_biome_change_rate_guild[[m]][[i]],aes(y=biome,x=100*overal_mean),pch=23,color="black",size=2,fill="#7570b3")+
+                                         
+                                         geom_text(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Negative"),
+                                                   aes(y=biome,x = -30),size=3,vjust=-1.6,
+                                                   label=c(paste0("(",sprintf("%.1f",data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Negative")%>%pull( mean_value )%>%round(3)*100,")"),")")))+
+                                         geom_text(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive"),
+                                                   aes(y=biome,x = 30),size=3,vjust=-1.6,
+                                                   label=c(paste0("(",sprintf("%.1f",data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive")%>%pull( mean_value )%>%round(3)*100,")"),")")))+
+                                         geom_text(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Negative"),
+                                                   aes(y=biome,x = -30),size=3,vjust=-3,
+                                                   label=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Negative")%>%pull(letter))+
+                                         geom_text(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive"),
+                                                   aes(y=biome,x = 30),size=3,vjust=-3,
+                                                   label=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive")%>%pull(letter))
+        
+        
+      }
+      
+    }
+  }
+  
+  
+  pp_mean_effect_guild[[m]]=pp_mean_effect
+}
+
+
+
 
 # to combined the range and the magnitude of both effects
 # each i corresponds to land and climate effect with two climate change scenarios
+
 pp_combine_effect_guild=list()
 for (m in 1:9){
   
@@ -420,41 +701,74 @@ for (i in 1:4)
       annotation_custom(
         grob = pp_pie_guild[[m]][[i]],
         xmin = -32, xmax =-27, # Adjust x-axis position of the circle
-        ymin = 0.21, ymax = 5.5))
+        ymin = 0.21, ymax = 5.5)+
+        ggtitle(scenario[i])+
+        theme(
+          legend.text = element_text(size=8),
+          legend.title  = element_text(size=10),
+          text = element_text(size = 18),
+          plot.title = element_text(size = 15, hjust = 0.5), 
+          axis.text.y = element_text(size = 12), 
+          axis.text.x = element_text(size = 12), 
+          axis.title.y = element_text(size = 15), 
+          axis.title.x = element_text(size = 15), 
+          plot.margin = unit(c(0.3, 0.1, -0.5, 0.1), "cm"),
+          panel.background = element_rect(fill = "NA"),
+          panel.border = element_rect(color = "black", size = 0.6, fill = NA)))
   }
   else{
     pp_combine_effect[[i]]=ggplotGrob(pp_mean_effect_guild[[m]][[i]]+
       annotation_custom(
         grob = pp_pie_guild[[m]][[i]],
-        xmin = -90, xmax =-85, # Adjust x-axis position of the circle
-        ymin = 0.21, ymax = 5.5))
+        xmin = -68, xmax =-50, # Adjust x-axis position of the circle
+        ymin = 0.21, ymax = 5.5)+
+        ggtitle(scenario[i])+
+        theme(
+          legend.text = element_text(size=8),
+          legend.title  = element_text(size=10),
+          text = element_text(size = 18),
+          plot.title = element_text(size = 15, hjust = 0.5), 
+          axis.text.y = element_text(size = 12), 
+          axis.text.x = element_text(size = 12), 
+          axis.title.y = element_text(size = 15), 
+          axis.title.x = element_text(size = 15), 
+          plot.margin = unit(c(0.3, 0.1, -0.5, 0.1), "cm"),
+          panel.background = element_rect(fill = "NA"),
+          panel.border = element_rect(color = "black", size = 0.6, fill = NA)))
   }
 }
 pp_combine_effect_guild[[m]]=pp_combine_effect
 }
 
+# do not set the height of the map,
+# it is important to check the plot margin of the plots for better alignment
+
+#p_land_245$heights=pp_combine_effect[[1]]$heights
 
 p_land_latitude_245$heights=pp_combine_effect[[1]]$heights
+
 p_land_latitude_585$heights=pp_combine_effect[[2]]$heights
 
 p_climate_latitude_585$heights=pp_combine_effect[[4]]$heights
 
 
 
+pp_combine_effect[[3]]$widths=pp_combine_effect[[1]]$widths
 
 #p_climate_245$widths=pp_combine_effect[[1]]$widths
 
 
-p1=plot_grid(p_land_245,p_land_latitude_245, pp_combine_effect[[1]],ncol=3,rel_widths = c(1,0.3,0.7))
+p1=plot_grid(p_land_245,p_land_latitude_245, pp_combine_effect[[1]],ncol=3,rel_widths = c(1,0.3,0.5))
 
-p2=plot_grid(p_climate_245,p_climate_latitude_245, pp_combine_effect[[3]],ncol=3,rel_widths = c(1,0.3,0.7))
+p2=plot_grid(p_climate_245,p_climate_latitude_245, pp_combine_effect[[3]],ncol=3,rel_widths = c(1,0.3,0.5))
 
-p3=plot_grid(p_land_585,p_land_latitude_585, pp_combine_effect[[2]],ncol=3,rel_widths = c(1,0.3,0.7))
+p3=plot_grid(p_land_585,p_land_latitude_585, pp_combine_effect[[2]],ncol=3,rel_widths = c(1,0.3,0.5))
  
-p4=plot_grid(p_climate_585,p_climate_latitude_585, pp_combine_effect[[4]],ncol=3,rel_widths = c(1,0.3,0.7))
+p4=plot_grid(p_climate_585,p_climate_latitude_585, pp_combine_effect[[4]],ncol=3,rel_widths = c(1,0.3,0.5))
  
  
 plot_grid(p1,p2,p3,p4,ncol=1)
+
 
 
 pp_combine_effect_guild[[m]]
@@ -568,7 +882,7 @@ plot_grid(pp_pie_guild[[1]][[1]],
           pp_pie_guild[[6]][[4]],
           pp_pie_guild[[7]][[4]],
           pp_pie_guild[[8]][[4]],
-          ncol=8,label_x = -0.1,label_y = 1.08,
+          ncol=8,label_x = -0.01251,label_y = 1.07,
           label_size = 10,
           labels = paste0("(", c(letters, outer(letters, letters, paste0)), ")") [1:32]
       )
