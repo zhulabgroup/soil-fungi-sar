@@ -3,6 +3,7 @@ library(lme4)
 library(smplot2)
 library(glmm.hp)
 library(reshape2)
+library(tidyr)
 
 # create figure 2
 # an example to show the SAR for 10 randomly selected plots
@@ -131,6 +132,7 @@ full_neon_data_with_sd%>%filter(plotid%in%rand_plot&!is.na(mean_value) )->plot_d
 # to compare the z values among land use types
 
 load("~/soil-sar/plot-sar-permutation/model_comp.RData")
+
 model_comp%>%filter(guild=="all")%>%group_by(type)%>%dplyr::summarize(mean_value=mean(zvalue,na.rm=TRUE))
 
 model_comp%>%group_by(type)%>%summarize(mean_value=mean(zvalue,na.rm=TRUE))
@@ -139,27 +141,44 @@ model_comp%>%filter(guild=="all")%>%group_by(type)%>%summarise(count = n())
 
 model_comp%>%filter(guild!="all")->guild_mean
 
+guild_mean%>%filter(!guild%in%c("para","epiphy","littersap", "woodsap" ))->guild_mean
+
+
+
+# we updated the z value analysis by excluding the parasitic and epiphytic fungi
+# based on the model to test significant difference
+
+mod=lmer(zvalue~guild+(1 | plotID),data=guild_mean)
+# to compare the means
+library(emmeans)
+emmeans_model <- emmeans(mod, ~ guild)
+pairwise_comparisons <- contrast(emmeans_model, method = "pairwise")
+summary(pairwise_comparisons, adjust = "tukey") # Adjust for multiple testing
+
 k=aggregate(zvalue~guild,data=guild_mean,FUN=mean)
 od <- k[order(k$zvalue, decreasing = TRUE),] 
 guild_mean$guild <- factor(guild_mean$guild, levels = od$guild)
 
 p_z_guild=ggplot(guild_mean,aes(x=guild,y=zvalue,fill=guild),alpha=0.5)+
-  sm_raincloud(size=0.1,point.params =list(size=2),sep_level=2)+
-  geom_boxplot(width = 0.2, color = "black", size=0.1,outlier.size = 1)+
-  theme(legend.position =c(0.5,0.15) ,
-        legend.key.size = unit(0.5, "cm"),
-        plot.title = element_text(hjust = 0.5, vjust = 2),
-        legend.text = element_text(size = 10), 
-        text = element_text(size = 15), 
+  #sm_raincloud(size=0.1,point.params =list(size=2),sep_level=2)+
+  geom_boxplot(data=guild_mean,aes(x=guild,y=zvalue,fill=guild),width = 0.4, size=0.5,color = "black", size=0.1,outlier.size = 1)+
+  scale_fill_manual("", breaks = od$guild, values = c("chocolate1", "tan", "royalblue", "#c94e65"), 
+                    labels = c("AM (N=326)", "EM (N=415)", 
+                               "Plant pathogens (N=403)", 
+                               "Soil saprotrophs (N=416)"))+
+  theme(legend.position = c(0.5,0.12660),
+        
+        legend.text = element_text(size=12),
+        legend.title  = element_text(size=12),
+        text = element_text(size = 18),
+        plot.title = element_text(size = 16, hjust = 0.5), 
         axis.text.x = element_blank(), 
-        axis.text.y = element_text(angle=90,size=15,hjust=0.5), 
         axis.title.y = element_text(size = 18), 
         axis.title.x = element_text(size = 18), 
-        axis.ticks.x = element_blank(),
-        panel.grid.major = element_line(color="white"),  # Remove major grid lines
-        panel.grid.minor = element_blank(),  # Remove minor grid lines
-        panel.background = element_blank(),
-        panel.border  = element_rect(size=1),
+        axis.ticks.x = element_blank(), 
+        axis.ticks.y = element_blank(),
+        panel.background = element_rect(fill = "NA"),
+        panel.border = element_rect(color = "black", fill = NA, size = 1)
         )+
   guides(fill = guide_legend(nrow = 4, byrow = TRUE)) +
 
@@ -167,15 +186,18 @@ p_z_guild=ggplot(guild_mean,aes(x=guild,y=zvalue,fill=guild),alpha=0.5)+
   xlab("Trophic guilds")+
   geom_hline(yintercept = 0.71,color="red",linetype="dashed",size=0.8)+
   annotate("text", x = 1, y = 1.3, label = "a", size = 6) +
-  annotate("text", x = 2, y = 1.05, label = "ab", size = 6) +
-  annotate("text", x = 3, y = 1.05, label = "b", size = 6) +
-  annotate("text", x = 4, y = 1.15, label = "bc", size = 6) +
-  annotate("text", x = 5, y = 1.04, label = "c", size = 6) +
-  annotate("text", x = 6, y = 1.2, label = "d", size = 6) +
-  annotate("text", x = 7, y = 1.014, label = "d", size = 6) +
-  annotate("text", x = 8, y = 1.15, label = "d", size = 6) +
-  ylim(0,1.3)+
-  scale_fill_manual("", breaks = od$guild, values = c("chocolate1", "gray", "royalblue", "#f0a73a", "seagreen", "#7c1a97","#c94e65", "tan"), 
+  annotate("text", x = 2, y = 1, label = "ab", size = 6) +
+  annotate("text", x = 3, y = 1.02, label = "b", size = 6) +
+  annotate("text", x = 4, y = 1, label = "c", size = 6) +
+  #annotate("text", x = 5, y = 1.2, label = "d", size = 6) +
+  #annotate("text", x = 6, y = 0.95, label = "e", size = 6) +
+  #annotate("text", x = 7, y = 1.014, label = "d", size = 6) +
+  #annotate("text", x = 8, y = 1.15, label = "d", size = 6) +
+  ylim(0,1.3)
+
+
+  
+  #scale_fill_manual("", breaks = od$guild, values = c("chocolate1", "gray", "royalblue", "#f0a73a", "seagreen", "#7c1a97","#c94e65", "tan"), 
                     labels = c("EM (N=415)", "AM (N=326)", "Wood saprotroph (N=401)", 
                                "Epiphyte (N=337)" , 
                                "Litter saprotroph (N=414)", 
