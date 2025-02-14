@@ -1,4 +1,4 @@
-##
+##the below codes are disregard
 pp_guild=list()
 
 for(m in c(1,2,3,6))
@@ -62,82 +62,75 @@ pp[[i]]=ggplot(data=data_model_mean_guild[[m]][[i]],aes(fill=type,y=LABEL ,x=100
 pp_guild[[m]]=pp
 }
 
+#modified the first data list
 
+data_compare_LETTER[[1]]%>%filter(LABEL=="Tropical & Subtropical Dry Broadleaf Forests")%>%
+  mutate(across(where(is.numeric), ~ 0))->df
 
+df$type=gsub("Negative","Positive",df$type)
+
+data_compare_LETTER[[1]]%>%bind_rows(df)->df
+
+data_compare_LETTER[[1]]=df
 ##
+impact=c("Land use impact","Land use impact","Climate impact","Climate impact")
 
 
 
-data_compare_LETTER[[i]]$LABEL=factor(data_compare_LETTER[[i]]$LABEL,
-                      levels=rev(c("All",
-                               "Temperate Broadleaf & Mixed Forests",
-                               "Temperate Conifer Forests","Temperate Grasslands, Savannas & Shrublands",
-                               "Tropical & Subtropical Dry Broadleaf Forests")))
-
-  
-      
-    ggplot(data=data_compare_LETTER[[i]],aes(fill=guild,y=LABEL ,x=ori_mean,group=guild))+
-          geom_col(width = 0.6,position = "dodge",stat = "identity")+
-      geom_errorbar(aes(xmin = ori_lower, xmax = ori_upper), 
-                    position = position_dodge(width = 0.6), 
+pp=list()
+for (j in 1:4)
+  {
+  data_compare_LETTER[[j]]$LABEL=factor(data_compare_LETTER[[j]]$LABEL,
+                                        levels=rev(c("All",
+                                                     "Temperate Broadleaf & Mixed Forests",
+                                                     "Temperate Conifer Forests","Temperate Grasslands, Savannas & Shrublands",
+                                                     "Tropical & Subtropical Dry Broadleaf Forests")))
+pp[[j]]=ggplot(data=data_compare_LETTER[[j]],aes(fill=guild,y=LABEL ,x=ori_mean*100,group=guild))+
+          geom_col(width = 0.8,position = "dodge",stat = "identity",color="black",size=0.1,space=0.5)+
+      geom_errorbar(aes(xmin = ori_lower*100, xmax = ori_upper*100), 
+                    position = position_dodge(width = 0.8), 
                     width = 0.15,size=0.3) +
-          theme(legend.position = c(0.85,0.15),
-                legend.text = element_text(size=8),
-                legend.title  = element_text(size=10),
-                text = element_text(size = 18),
-                plot.title = element_text(size = 12, hjust = 0.6), 
-                axis.text.y = element_text(size = 10), 
-                axis.text.x = element_text(size = 10), 
-                axis.title.y = element_text(size = 10), 
-                axis.title.x = element_text(size = 10), 
-                legend.key.size = unit(0.3, "cm"),
-                plot.margin = unit(c(0, 0, 0.1, 0), "cm"),
-                panel.background = element_rect(fill = "NA"),
-                panel.border = element_rect(color = "black", size = 0.6, fill = NA))+
-          geom_vline(xintercept =0,color="gray",linetype="dashed")+
-          geom_text(aes(label=LETTER),position = position_dodge(width = 0.6),
-                    hjust = ifelse(data_compare_LETTER[[i]]$ori_mean > 0, -5.25, 8.25),size=2)+
-                   
-          geom_text(aes(label= c(paste0("(",sprintf("%.2f",data_compare_LETTER[[i]]$ori_mean*100,")"),")"))),
-                    position = position_dodge(width = 0.6),
-                    hjust = ifelse(data_compare_LETTER[[i]]$ori_mean > 0, -.25, 1.25),size=2)
-        
-                    
+      geom_text(aes(label=LETTER),position = position_dodge(width = 0.8),
+                hjust = ifelse(data_compare_LETTER[[j]]$ori_mean> 0, -5.5, 8),size=2)+
+      geom_text(aes(label= c(paste0("(",sprintf("%.2f",ori_mean*100,")"),")"))),
+                position = position_dodge(width = 0.8),
+                hjust = ifelse(data_compare_LETTER[[j]]$ori_mean > 0, -.25, 1.25),size=2)+
+      xlim(-30,30)+
+      scale_y_discrete(breaks=unique(data_compare_LETTER[[j]]$LABEL),position="right",
+                       labels=paste0(c("",""," ","","")))+
+      xlab("Richness change rate (%)")+
+      ylab("")+
+      ggtitle(scenario[j])+
+    theme(legend.position = c(0.8,0.25),
+          legend.text = element_text(size=8),
+          legend.title  = element_text(size=10),
+          text = element_text(size = 18),
+          plot.title = element_text(size = 12, hjust = 0.5), 
+          axis.text.y = element_text(size = 10),
+          axis.text.x = element_text(size = 10), 
+          axis.title.y = element_text(size = 12), 
+          axis.title.x = element_text(size = 12), 
+          legend.key.size = unit(0.3, "cm"),
+          plot.margin = unit(c(0, 0, 0.1, 0.1), "cm"),
+          panel.background = element_rect(fill = "NA"),
+          panel.border = element_rect(color = "black", size = 0.6, fill = NA))+
+    geom_vline(xintercept =0,color="gray",linetype="dashed")+
+    scale_fill_manual("",breaks=c("AM","EM","plapat","soilsap"),
+                      labels=c("AM","EM","Plant pathogens","Soil saprotrophs"),
+                      values=c("#c94e65","#037f77","royalblue","chocolate1"))
+    
+} 
+
+
+#to arrange the four plots           
+  plot_grid(pp[[3]],pp[[1]],pp[[4]],pp[[2]],
+            ncol=2,
+            label_x = 0,label_y = 1.03,
+            labels = paste0("(", c(letters, outer(letters, letters, paste0)), ")") [1:4])           
       
-       
-       
-      
-     plot_grid(pk,pp[[2]],pp[[3]],pp[[4]],ncol=2)           
-      
-     plot_grid(pp[[2]],ncol=2)           
      
-                
-                
-     pk=ggplot(data=data_compare_LETTER[[1]],aes(fill=guild,y=LABEL ,x=ori_mean))+
-         geom_col(width = 0.6,position = "dodge")+
-         xlim(-0.5,0.5)+
-         theme(legend.position = c(0.85,0.15),
-               legend.text = element_text(size=8),
-               legend.title  = element_text(size=10),
-               text = element_text(size = 18),
-               plot.title = element_text(size = 12, hjust = 0.5), 
-               axis.text.y = element_text(size = 10), 
-               axis.text.x = element_text(size = 10), 
-               axis.title.y = element_text(size = 10), 
-               axis.title.x = element_text(size = 10), 
-               legend.key.size = unit(0.3, "cm"),
-               plot.margin = unit(c(0, 0, 0.1, 0), "cm"),
-               panel.background = element_rect(fill = "NA"),
-               panel.border = element_rect(color = "black", size = 0.6, fill = NA))+
-         geom_vline(xintercept =0,color="gray",linetype="dashed")+
-         
-         geom_text(aes(label=LETTER),position = position_dodge(width = 0.6),
-                   hjust = ifelse(data_compare_LETTER[[1]]$ori_mean > 0, -5.25, 8.25),
-                   size=2)+
-         geom_text(aes(label= c(paste0("(",sprintf("%.2f",data_compare_LETTER[[1]]$ori_mean*100,")"),")"))),
-                   position = position_dodge(width = 0.6),
-                   hjust = ifelse(data_compare_LETTER[[1]]$ori_mean > 0, -.25, 1.25),
-                   size=2)
+    
        
+      
      
      
