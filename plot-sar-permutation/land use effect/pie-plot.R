@@ -712,9 +712,10 @@ for (i in 1:4)
           axis.text.x = element_text(size = 12), 
           axis.title.y = element_text(size = 15), 
           axis.title.x = element_text(size = 15), 
-          plot.margin = unit(c(0.3, 0.1, -0.5, 0.1), "cm"),
+          plot.margin = unit(c(0.3, 0.1, 1.5, 0.1), "cm"),
           panel.background = element_rect(fill = "NA"),
-          panel.border = element_rect(color = "black", size = 0.6, fill = NA)))
+          panel.border = element_rect(color = "black", size = 0.6, fill = NA))+
+        xlab(guild_type[m]))
   }
   else{
     pp_combine_effect[[i]]=ggplotGrob(pp_mean_effect_guild[[m]][[i]]+
@@ -723,6 +724,7 @@ for (i in 1:4)
         xmin = -68, xmax =-50, # Adjust x-axis position of the circle
         ymin = 0.21, ymax = 5.5)+
         ggtitle(scenario[i])+
+       
         theme(
           legend.text = element_text(size=8),
           legend.title  = element_text(size=10),
@@ -734,7 +736,8 @@ for (i in 1:4)
           axis.title.x = element_text(size = 15), 
           plot.margin = unit(c(0.3, 0.1, -0.5, 0.1), "cm"),
           panel.background = element_rect(fill = "NA"),
-          panel.border = element_rect(color = "black", size = 0.6, fill = NA)))
+          panel.border = element_rect(color = "black", size = 0.6, fill = NA))+
+        xlab(guild_type[m]))
   }
 }
 pp_combine_effect_guild[[m]]=pp_combine_effect
@@ -750,6 +753,8 @@ p_land_latitude_245$heights=pp_combine_effect[[1]]$heights
 p_land_latitude_585$heights=pp_combine_effect[[2]]$heights
 
 p_climate_latitude_585$heights=pp_combine_effect[[4]]$heights
+
+p_climate_latitude_245$heights=pp_combine_effect[[3]]$heights
 
 
 
@@ -769,12 +774,42 @@ p4=plot_grid(p_climate_585,p_climate_latitude_585, pp_combine_effect[[4]],ncol=3
  
 plot_grid(p1,p2,p3,p4,ncol=1)
 
+plot_grid(p2,p1,p4,p3,ncol=1)
 
+
+# for the individual guilds
 
 pp_combine_effect_guild[[m]]
 
-plot_grid(pp_combine_effect_guild[[1]][[1]],pp_combine_effect_guild[[2]][[1]],pp_combine_effect_guild[[3]][[1]],
-          pp_combine_effect_guild[[4]][[1]],ncol=2 )
+plot_grid(pp_combine_effect_guild[[1]][[3]],
+          pp_combine_effect_guild[[2]][[3]],
+          pp_combine_effect_guild[[3]][[3]],
+          pp_combine_effect_guild[[6]][[3]],
+          
+          pp_combine_effect_guild[[1]][[1]],
+          pp_combine_effect_guild[[2]][[1]],
+          pp_combine_effect_guild[[3]][[1]],
+          pp_combine_effect_guild[[6]][[1]],
+          
+          pp_combine_effect_guild[[1]][[4]],
+          pp_combine_effect_guild[[2]][[4]],
+          pp_combine_effect_guild[[3]][[4]],
+          pp_combine_effect_guild[[6]][[4]],
+          
+          pp_combine_effect_guild[[1]][[2]],
+          pp_combine_effect_guild[[2]][[2]],
+          pp_combine_effect_guild[[3]][[2]],
+          pp_combine_effect_guild[[6]][[2]],
+          
+          ncol=4,label_x = -0.1,label_y = 1.08,
+          label_size = 10,
+          labels = paste0("(", c(letters, outer(letters, letters, paste0)), ")") [1:16])
+
+
+#for 
+
+
+
 
 pp_mean_effect_guild[[1]][[1]]$widths=pp_mean_effect_guild[[2]][[1]]$widths
 pp_mean_effect_guild[[1]][[2]]$widths=pp_mean_effect_guild[[2]][[2]]$widths

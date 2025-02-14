@@ -26,31 +26,19 @@ observations=c(41725,41725,41394,41394)
         dplyr::select(guild,value,LABEL_all,plotid)%>%
         rename(LABEL=LABEL_all)%>%bind_rows(df1)->df1
       
-      df$LABEL=factor(df$LABEL,
-                           levels=c("All",
-                                    "Temperate Broadleaf & Mixed Forests",
-                                    "Temperate Conifer Forests","Temperate Grasslands, Savannas & Shrublands",
-                                    "Tropical & Subtropical Dry Broadleaf Forests"))
-      
-      
+       
           #to give a plot id for each cell
     
          # to test difference for species gains for the overall fungal diversity
         
         df1%>%filter(value>0&guild%in%c("all"))->df_gain
         
-        #need to transform the resposne variable
+        #need to transform the response variable
         
         df_gain$log_response <- log(df_gain$value)
         
-        # reorder the biomes
-        df_gain$LABEL=factor(df_gain$LABEL,
-                         levels=c("All",
-                                  "Temperate Broadleaf & Mixed Forests",
-                                                                    "Temperate Conifer Forests","Temperate Grasslands, Savannas & Shrublands",
-                                  "Tropical & Subtropical Dry Broadleaf Forests"))
-        
-        model_all <- gls(log_response ~ LABEL, data = df_gain)# performe the model and get the mean for all groups
+          
+        model_all <- lmer(log_response ~ LABEL*guild+(1|plotid), data = df_gain)# performe the model and get the mean for all groups
         
         pairwise_all=emmeans(model_all, ~ LABEL)# get the mean for each biome
         
@@ -177,10 +165,31 @@ observations=c(41725,41725,41394,41394)
          
          summary(model)
          
+      #to compare the mean among the guilds
+         
+         observations=c(41725,41725,41394,41394)
+         
+         get(data[j])%>%
+           bind_cols(rep(grid_level_biomes$LABEL,9))%>%
+           rename_all(~paste0(c("guild","value","LABEL")))%>%
+           filter(LABEL%in%biomes_four&!is.na(value))%>%
+           mutate(plotid=rep(1:observations[j],9))->df1# na cells were filtered
+         
+         all_biome=dim(df1)[1]
+         
+         # for all fungal guilds
+         
+         df1%>%mutate(LABEL_all=rep("All",all_biome))%>%
+           dplyr::select(guild,value,LABEL_all,plotid)%>%
+           rename(LABEL=LABEL_all)%>%bind_rows(df1)->df1
+         
+         
+        
+         
         
         df1%>%filter(value>0&!(guild%in%c("all","para","epiphy","littersap","woodsap")))->df1
         
-        df1%>%filter(value<0&guild%in%c("all"))->df1
+        #df1%>%filter(value<0&guild%in%c("all"))->df1
         
         df1$log_response <- log(df1$value)
         
@@ -201,6 +210,10 @@ observations=c(41725,41725,41394,41394)
         
     
     # when we look at species loss
+    
+    
+    
+    
     
     df1%>%filter(value<0&!(guild%in%c("all","para","epiphy","littersap","woodsap")))->df1
     
@@ -249,37 +262,47 @@ observations=c(41725,41725,41394,41394)
     
     
     
-    
-        
-        
-        #because the richness is based on the biomes we have, so we do not need to exclud the those biomes we did not consider
-        
-        df1%>%mutate(type=ifelse(value > 0, "Positive", "Negative"))%>%filter(!is.na(type))%>%group_by(variable,type)%>%
-          summarise(mean_value = mean(value,na.rm=TRUE),sd_value = sd(value,na.rm=TRUE),count=n())->data_temp
-        
-        df1%>%group_by(variable)%>%summarize(overal_mean=mean(value,na.rm=TRUE),overal_sd=sd(value,na.rm=TRUE),count0=n())%>%data.frame()->
-          overall_change
-        data_temp%>%left_join(overall_change%>%dplyr::select(variable,overal_mean,overal_sd,count0),by="variable")%>%
-          data.frame()->change_rate[[i]]
-      }
-      else
-      {
-        get(data[j])%>%filter(variable==guild_type[m])%>%
-          bind_cols(grid_level_biomes%>%dplyr::select(LABEL))%>%
-          filter(LABEL== biomes_four[i]&!is.na(value))->df1
-        
-        df1%>%mutate(type=ifelse(value > 0, "Positive", "Negative"))%>%filter(!is.na(type))%>%group_by(variable,type)%>%
-          summarise(mean_value = mean(value,na.rm=TRUE),sd_value = sd(value,na.rm=TRUE),count=n())->data_temp
-        
-        df1%>%group_by(variable)%>%summarize(overal_mean=mean(value,na.rm=TRUE),overal_sd=sd(value,na.rm=TRUE),count0=n())%>%data.frame()->
-          overall_change
-        data_temp%>%left_join(overall_change%>%dplyr::select(variable,overal_mean,overal_sd,count0),by="variable")%>%
-          data.frame()->change_rate[[i]]
-        
-      }
-      
-    }
-    change_rate_mean_guild[[m]]=change_rate
-  }
-  change_rate_mean_guild_scenario[[j]]=change_rate_mean_guild
-}
+#### for the species gain
+
+
+get(data[j])%>%
+  bind_cols(rep(grid_level_biomes$LABEL,9))%>%
+  rename_all(~paste0(c("guild","value","LABEL")))%>%
+  filter(LABEL%in%biomes_four&!is.na(value))%>%
+  mutate(plotid=rep(1:observations[j],9))->df1# na cells were filtered
+
+
+
+# select the guild of your interest
+# for species gain
+
+df1%>%filter(value>0&guild%in%c("EM","soilsap","AM","plapat"))->df2
+# need to transform the data 
+
+df2$log_response=log(df2$value)
+
+mod=lmer(log_response~LABEL*guild+(1 | plotid),data=df2)
+
+anova(mod, type = "III")
+
+compare_mean=emmeans(mod, pairwise ~ guild | LABEL,pbkrtest.limit = 71384)#the last parameter could change
+
+
+# get the values associated with the letters
+
+
+multcomp::cld(object = compare_mean$emmeans,
+              Letters = letters)->compare_data
+
+
+# need to get the overall mean and when all the guilds were combined
+
+get(data[j])%>%
+  bind_cols(rep(grid_level_biomes$LABEL,9))%>%
+  rename_all(~paste0(c("guild","value","LABEL")))%>%
+  filter(LABEL%in%biomes_four&!is.na(value))%>%
+  mutate(plotid=rep(1:observations[j],9))->df1# na cells were filtered
+
+
+
+

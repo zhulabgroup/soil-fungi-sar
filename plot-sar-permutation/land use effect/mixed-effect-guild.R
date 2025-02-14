@@ -8,6 +8,17 @@ species_change_climate_rcp245=species_change_climate_rcp245[,-c(1,2)]
 species_change_climate_rcp585=readRDS("species_change_climate_rcp585.rds")
 
 species_change_climate_rcp585=species_change_climate_rcp585[,-c(1,2)]
+
+species_change_land_rcp245=readRDS("species_change_land_rcp245.rds")
+species_change_land_rcp585=readRDS("species_change_land_rcp585.rds")
+
+grid_level_biomes=readRDS(file="grid_level_biomes.rds")
+
+biomes_four=c( "Temperate Broadleaf & Mixed Forests","Temperate Conifer Forests" ,                    
+               "Temperate Grasslands, Savannas & Shrublands" ,"Tropical & Subtropical Dry Broadleaf Forests")
+
+
+
 # for the climate change impact, 41394 cells were included
 
 observations=c(41725,41725,41394,41394)
@@ -45,7 +56,7 @@ df1%>%filter(guild==guild_type[m]&LABEL!="all")->df_overall
 
 # to test difference for species gains for the overall fungal diversity
 
-df1%>%filter(value>0&guild%in%c(guild_type[i]))->df_gain
+df1%>%filter(value>0&guild%in%c(guild_type[m]))->df_gain
 
 #need to transform the resposne variable
 
@@ -126,18 +137,25 @@ com_data_climate[[j]]=com_data
 com_data_climate_guild[[m]]=com_data_climate
 }
 
+## to combined the net effect based on the original value
+biome_mean_guild=list()
+for (m in 1:9){
+  biome_mean=list()
+  for (i in 1:4)
+  {
+    com_data_climate_guild[[m]][[i]]%>%
+      rename(biome=LABEL)->df1
+    
+    data_biome_change_rate_guild[[m]][[i]]%>%
+      select(biome,overal_mean)->df2
+    
+    df1%>%left_join(df2,by="biome")%>%distinct()->biome_mean[[i]]
+    
+  }
+  biome_mean_guild[[m]]=biome_mean
+}
 
-
-ggplot(data=com_data_climate[[j]],aes(fill=change,y=LABEL ,x=origin_mean))+
-  geom_col(width = 0.3)+
-  geom_segment(data=com_data_climate[[j]],
-               aes(y=LABEL,yend=LABEL,x= ori_low, xend = ori_up),
-               arrow = arrow(length = unit(0.1, "cm"),angle=90))+
-  
-  geom_text(aes(y=LABEL ,x=origin_mean*1.25,label=.group))
-
-
-
+com_data_climate_guild=biome_mean_guild
   
   
   # for individual guilds, we focused on testing difference in species loss and gains within each biome 
@@ -152,95 +170,10 @@ ggplot(data=com_data_climate[[j]],aes(fill=change,y=LABEL ,x=origin_mean))+
   
   # test the difference among biomes with one-way anova
   
-oneway.test(log_response~LABEL,data=df1, var.equal = FALSE)
-
-library(DescTools)
-
-dk=oneway.test(value ~ LABEL, data = df1, var.equal = FALSE)
-
-TukeyHSD(dk, method = "hsd")
-
-PostHocTest(aov(value ~ LABEL, data =df1), method = "hsd")
-
-tukey(df1$value,df1$guild,method="G")
-
-df1%>%group_by(LABEL)%>%summarise(m=mean(value))
-
-df1%>%group_by(LABEL)%>%summarise(m=mean(log_response))
 
 
-
-
-summary(model)
-
-
-df1%>%filter(value>0&!(guild%in%c("all","para","epiphy","littersap","woodsap")))->df1
-
-df1%>%filter(value<0&guild%in%c("all"))->df1
-
-df1$log_response <- log(df1$value)
-
-
-mod=lmer(log_response~guild*LABEL+(1 | plotid),data=df1)
-
-mod=lmer(log_response~LABEL,data=df1)
-
-mod=lmer(log_response~guild+(1 | plotid),data=df1)# compare the mean among
-
-emmeans(mod, pairwise ~ guild,pbkrtest.limit = 60649)
-
-emm <- emmeans(mod, ~ guild,pbkrtest.limit = 37377)
-
-
-
-comp_mean= emmeans(mod, pairwise ~ guild | LABEL,pbkrtest.limit = 60649)
-
-
-### for species loss
-
-df1%>%filter(value<0&!(guild%in%c("all","para","epiphy","littersap","woodsap")))->df1
-
-df1%>%filter(value<0&!(variable%in%c("all")))->df1
-
-df1$sqrt_response <- sqrt(abs(df1$value))
-
-mod=lmer(sqrt_response~guild*LABEL+(1 | plotid),data=df1)
-
-mod=lmer(sqrt_response~LABEL+(1 | plotid),data=df1)
-
-emm=emmeans(mod, ~ LABEL ,pbkrtest.limit = 250350)
-##
-
-mod=lm(sqrt_response~LABEL,data=df1)
-
-emmeans(mod, pairwise ~ LABEL)
 
 ## create the plots
-
-emm_df <- as.data.frame(emm)
-ggplot(emm_df, aes(x = LABEL, y = emmean)) +
-  geom_bar(stat = "identity", position = "dodge", fill = "skyblue") +
-  geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL), width = 0.2) +
-  labs(x = "Group", y = "Adjusted Mean Richness") +
-  theme_minimal()
-
-
-
-## when we look at the net effect
-
-df1%>%filter(!(guild%in%c("all","para","epiphy","woodsap","littersap")))->df1
-
-
-df1$log_response <- sign(df1$value) * log(abs(df1$value) + 1)
-
-
-mod=lmer(log_response~guild*LABEL+(1 | plotid),data=df1)
-
-comp_mean= emmeans(mod, pairwise ~ guild | LABEL,pbkrtest.limit = 250350)
-
-# if we do not consider the biomes
-
-mod=lmer(log_response~guild+(1 | plotid),data=df1)
 
 
 
@@ -250,6 +183,11 @@ mod=lmer(log_response~guild+(1 | plotid),data=df1)
 
 species_change_climate_rcp245=species_change_climate_rcp245[,-c(1,2)]
 species_change_climate_rcp585=species_change_climate_rcp585[,-c(1,2)]
+
+#the data should be the full data with nine guilds
+# climate effects come the first
+
+data=c("species_change_land_rcp245","species_change_land_rcp585","species_change_climate_rcp245","species_change_climate_rcp585")
 
 data_compare_LETTER=list()
 
@@ -399,7 +337,7 @@ data_biome_change_rate_guild=com_data_guild_letter
 
 #compare the mean among guilds within guilds
 # bind the data with the other data
-guild_type
+
 
 data_temp_final=list()
 for(j in 1:4)
@@ -454,13 +392,13 @@ for(j in 1:4)
     dplyr::select(guild,value,LABEL_all,plotid)%>%
     rename(LABEL=LABEL_all)%>%bind_rows(df1)->df1
   
-  # select the guild of your interest
+  # select the guild of interest
   # for species gain for across all the biomes
   # compare the mean among guilds
   
   df1%>%filter(value>0&guild%in%c("EM","soilsap","AM","plapat")&LABEL=="All")->df2
   
-  # need to transform the data 
+  # for species gains, transform the data 
   
   df2$log_response=log(df2$value)
   
@@ -471,7 +409,7 @@ for(j in 1:4)
   compare_mean=emmeans(mod, pairwise ~ guild ,pbkrtest.limit = 93160)#the last parameter could change
   
   # get the values associated with the letters
-  # the letetrs among guilds when all the guilds were combined
+  # the letters among guilds when all the guilds were combined
   
   multcomp::cld(object = compare_mean$emmeans,
                 Letters = letters)->compare_data_gain_all
@@ -543,7 +481,7 @@ for(j in 1:4)
     mutate(.group = toupper(.group))%>%
     rename(LETTER=.group,LABEL=biome)->data_compare_guild
   data_compare_guild$LETTER <- str_replace_all(data_compare_guild$LETTER, " ", "")
-  #based on the estimated values, we back transforme the values
+  #based on the estimated values, we back transform the values
   
   data_compare_guild%>%mutate(ori_mean = ifelse(type =="Positive", exp(emmean), -1*emmean^2),
                               ori_lower = ifelse(type =="Positive", exp(lower.CL), -1*lower.CL^2),
@@ -753,7 +691,7 @@ model_mean[[j]]=com_data
     # select the guild of your interest
     # for species gain for across all the biomes
     # compare the mean among guilds
-    
+    # for species gains
     df1%>%filter(value>0&guild%in%c("EM","soilsap","AM","plapat")&LABEL=="All")->df2
     
     # need to transform the data 
@@ -773,6 +711,7 @@ model_mean[[j]]=com_data
                   Letters = letters)->compare_data_gain_all
     
     # need to get the overall mean and when all the guilds were combined
+    
     #compare the mean values among guilds for each biome
     
     df1%>%filter(value>0&guild%in%c("EM","soilsap","AM","plapat")&LABEL!="All")->df2
@@ -790,10 +729,11 @@ model_mean[[j]]=com_data
                   Letters = letters)%>%data.frame()%>%
       mutate(ori_mean =exp(emmean),ori_lower =  exp(lower.CL), ori_upper = exp(upper.CL))->compare_gain_guild_biome
     
-    
+
     compare_gain_guild_biome%>%mutate(type=rep("Positive",length.out=nrow(compare_gain_guild_biome)))->compare_gain_guild_biome
     
-    ## for species loss
+    ## for species loss rate
+    # when all the biomes were considered
     
     df1%>%filter(value<0&guild%in%c("EM","soilsap","AM","plapat")&LABEL=="All")->df3
     
@@ -838,38 +778,25 @@ model_mean[[j]]=com_data
       mutate(biome=rep("All",8))%>%
       mutate(.group = toupper(.group))%>%
       rename(LETTER=.group,LABEL=biome)->data_compare_guild
-    data_compare_guild$LETTER <- str_replace_all(data_compare_guild$LETTER, " ", "")
-    #based on the estimated values, we back transforme the values
+    data_compare_guild$LETTER <- str_replace_all(data_compare_guild$LETTER, " ", "")#to replace the space
+    
+    #based on the estimated values, we back transformed the values when all the biomes were included
     
     data_compare_guild%>%mutate(ori_mean = ifelse(type =="Positive", exp(emmean), -1*emmean^2),
                                 ori_lower = ifelse(type =="Positive", exp(lower.CL), -1*lower.CL^2),
                                 ori_upper = ifelse(type =="Positive", exp(upper.CL), -1*upper.CL^2))%>%
       dplyr::select(guild, LABEL, emmean,   SE , df ,lower.CL,upper.CL, LETTER , type, LABEL,ori_mean,ori_lower,ori_upper)->data_compare_guild
-    
+    # to bind the biome-specific values and when all the biomes were considered
     compare_gain_guild_biome%>%bind_rows(compare_loss_guild_biome)%>%
       rename(LETTER=.group)%>%bind_rows(data_compare_guild)%>%mutate(LETTER = toupper(LETTER))%>%
       mutate(LETTER = str_replace_all(LETTER, " ", ""))%>%
       mutate(new=paste0(LABEL," * ",type))->data_among_guilds_biomes
     
     data_compare_LETTER[[j]]=data_among_guilds_biomes
+
   }
   
-  
- 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
+  saveRDS(data_compare_LETTER,file="data_compare_LETTER.RDS")
   
   
   

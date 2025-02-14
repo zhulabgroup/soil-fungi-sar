@@ -27,8 +27,8 @@ biome_labels <- data.frame(
     "Mediterranean Forests, Woodlands & Scrub",
     "Deserts & Xeric Shrublands",
     "Mangroves",
-    "Undefined",
-    "Undefined2"
+    "Lake",
+    "Rock and ice"
   ),
   stringsAsFactors = FALSE
 )
@@ -572,6 +572,16 @@ for(i in 1:9)
     bind_cols(coords_present) ->data_subset_land[[i]]
 }
 
+## for the scenario of rcp585
+
+data_subset_land_585=list()
+for(i in 1:9)
+{
+  species_change_land_rcp585%>%filter(variable==guild_type[i])%>%
+    bind_cols(coords_present) ->data_subset_land_585[[i]]
+}
+
+
 
 pp=list()
 for (i in 1:9)
@@ -629,6 +639,7 @@ richness_climate_rcp245=future_richness_rcp245_all%>%bind_cols(future_richness_r
 
 richness_climate_rcp585=future_richness_rcp585_all%>%bind_cols(future_richness_rcp585_guild)%>%data.frame()%>%dplyr::select(-x,-y)%>%
   rename_all(~paste0(c("all",guild_model)))
+
 ## mapping current richness 
 
 present_richness_all%>%rename_all(~paste0(c("lon","lat","richness")))->present_richness_all
@@ -651,10 +662,23 @@ climate_induced_species_change_rcp245= (richness_climate_rcp245-current_richness
 climate_induced_species_change_rcp245%>%melt()->df_rcp245_climate
 
 
+## change in richness in the scenario of rcp585
+
+climate_induced_species_change_rcp585= (richness_climate_rcp585-current_richness_climate)/current_richness_climate
+
+climate_induced_species_change_rcp585%>%melt()->df_rcp585_climate
+
+
 present_future_richness0=list()
 for (i in 1:9)
 {
   present_future_richness0[[i]]=bind_cols(current_richness_climate[,i],richness_climate_rcp245[,i])%>%data.frame()%>%rename_all(~paste0(c("x1","x2")))
+}
+
+present_future_richness0=list()
+for (i in 1:9)
+{
+  present_future_richness0[[i]]=bind_cols(current_richness_climate[,i],richness_climate_rcp585[,i])%>%data.frame()%>%rename_all(~paste0(c("x1","x2")))
 }
 
 # bind all the data.frames
@@ -666,6 +690,9 @@ for (i in 2:9)
 }
 
 present_future_richness%>%bind_cols(df_rcp245_climate)->species_change_climate_rcp245
+
+present_future_richness%>%bind_cols(df_rcp585_climate)->species_change_climate_rcp585
+
 
 # to see different scenarios in terms of changes in richness among the two time points
 
@@ -681,6 +708,11 @@ present_future_richness%>%bind_cols(df_rcp245_climate)->species_change_climate_r
 species_change_climate_rcp245%>%mutate(value=if_else(x1==0&x2!=0,1,value))%>%mutate(value=if_else(x1==0&x2==0,0,value))->
   species_change_climate_rcp245
 
+species_change_climate_rcp585%>%mutate(value=if_else(x1==0&x2!=0,1,value))%>%mutate(value=if_else(x1==0&x2==0,0,value))->
+  species_change_climate_rcp585
+
+
+
 guild_model=c("soil_saprotroph","plant_pathogen","ectomycorrhizal","litter_saprotroph","wood_saprotroph","arbuscular_mycorrhizal","epiphyte","para","all")
 
 
@@ -689,6 +721,14 @@ for(i in 1:9)
 {
   species_change_climate_rcp245%>%filter(variable==guild_model[i])%>%dplyr::select(variable, value)%>%
     bind_cols(coords_present) ->data_subset_climate[[i]]
+}
+
+
+data_subset_climate_585=list()
+for(i in 1:9)
+{
+  species_change_climate_rcp585%>%filter(variable==guild_model[i])%>%dplyr::select(variable, value)%>%
+    bind_cols(coords_present) ->data_subset_climate_585[[i]]
 }
 
 
@@ -730,7 +770,21 @@ bind_cols(data_subset[[i]]%>%rename_all(~paste0(c("guild","climate_effect","lon"
           data_subset_land[[i]]%>%dplyr::select(variable, value )%>%rename_all(~paste0(c("variable","land_effect"))))->data[[i]]
 }
 
+data_rcp585=list()
+for(i in 1:9){
+  
+  bind_cols(data_subset_climate_585[[i]]%>%rename_all(~paste0(c("guild","climate_effect","lon","lat"))),
+            data_subset_land_585[[i]]%>%dplyr::select(variable, value )%>%rename_all(~paste0(c("variable","land_effect"))))->data_rcp585[[i]]
+}
 
+
+
+## in the scenario of rcp585
+
+
+
+
+# the function to determine the species loss and gain category
 
 my_function_guild_loss=function(data){
 data%>%filter(climate_effect<0)->data_loss_climate
@@ -769,15 +823,26 @@ return(df4)
 }
 
 
+data_rcp245=list()
+for(i in 1:9){
+  
+  bind_cols(data_subset[[i]]%>%rename_all(~paste0(c("guild","climate_effect","lon","lat"))),
+            data_subset_land[[i]]%>%dplyr::select(variable, value )%>%rename_all(~paste0(c("variable","land_effect"))))->data_rcp245[[i]]
+}
+
+#data=my_function_guild_loss(data[[6]])
 
 
-df5=my_function_guild_loss(data[[1]])
+
+
+
 
 # the function to mask the great lakes
 my_function=function(data)
 {
   data$group<- as.numeric(as.factor(data$group))
   r <- rasterFromXYZ(data[, c("lon", "lat", "group")])
+  
   # to mask the object based on the NA map
   # to match the extent of the raster
   #r_present_northam <- raster::mask(raster::crop(r_present, north_america_cropped), north_america_cropped)
@@ -786,7 +851,7 @@ my_function=function(data)
   r <- crop(r, extent(r_present_northam)) 
   crs(r)="+proj=longlat +datum=WGS84 +no_defs"
   r=projectRaster(r, crs = projection(r_present_northam))
-  r <- resample(r, r_present_northam, method = "bilinear") # or "ngb"
+  r <- resample(r, r_present_northam, method = "ngb") # or "ngb"
   masked_raster_sf <- terra::mask(r, r_present_northam)
   data <- as.data.frame(masked_raster_sf , xy = TRUE)
   data$group=round(data$group,0)
@@ -796,26 +861,226 @@ my_function=function(data)
 }
 
 
+# to see if all the transformed will have 5 categories
+d=list()
+for(i in 1:9)
+{
+  df=my_function_guild_gain(data[[i]])
+  d[[i]]=unique(df$group)
+}
+
+
+d=list()
+for(i in 1:9)
+{
+  df=my_function_guild_gain(data_rcp585[[i]])
+  d[[i]]=unique(df$group)
+}
 
 
 
-ggplot()+
+
+pp_245_loss=list()
+for (i in 1:9){
+df5=my_function_guild_loss(data_rcp245[[i]])
+if(i%in%c(1,2,3,4,5,7,8,9)){
+  
+# get the proportion for each type
+  
+  100*table(df5$group)[1:5]/table(df5$group)[1:5]%>%sum()->pro_cell
+  
+  pp_245_loss[[i]]=ggplot()+
+  
   geom_point(data=df5,aes(x=x,y=y,color=group),size=0.01)+
   
   scale_color_manual("RCP4.5 & SSP2",breaks=c("1","2","3","4","5","other"),
-                     labels=c("Both high(0.80%)","Both low(0.70%)","Climate high(3.8%)","Land-use high(8.3%)","Other",""),
-                     values=c("violetred1","black","seagreen","tan1","darkseagreen2","white"))+
+                     labels=c(paste0("Both high","(",round(pro_cell[1],1),"%",")"),
+                              paste0("Both low","(",round(pro_cell[2],1),"%",")"),
+                              paste0("Climate high","(",round(pro_cell[3],1),"%",")"),
+                              paste0("Land-use high","(",round(pro_cell[4],1),"%",")"),
+                              "Other",""),
+                     values=c("violetred1","black","seagreen","tan1", "darkseagreen2","white"))+
   main_theme+
   geom_sf(data=st_as_sf(north_america_cropped),size=0.1, col="black", fill=alpha("white", 0),linetype = "solid")+
-  ggtitle("Species loss rate")+
+  ggtitle(paste0 (guild_names[i]))+
   guides(color = guide_legend(override.aes = list(size = 2)))+
-  ggtitle("Species loss rate")+
   xlab("")+
   ylab("")
+}
+
+else{
+  
+  100*table(df5$group)[1:4]/table(df5$group)[1:4]%>%sum()->pro_cell
+  
+  pp_245_loss[[i]]=ggplot()+
+    geom_point(data=df5,aes(x=x,y=y,color=group),size=0.01)+
+  scale_color_manual("RCP4.5 & SSP2",breaks=c("1","2","3","4","other"),
+                     labels=c(#paste0("Both high","(",round(pro_cell[1],1),"%",")"),
+                              paste0("Both low","(",round(pro_cell[1],1),"%",")"),
+                              paste0("Climate high","(",round(pro_cell[2],1),"%",")"),
+                              paste0("Land-use high","(",round(pro_cell[3],1),"%",")"),
+                              "Other",""),
+                     values=c("black","seagreen","tan1","darkseagreen2","white"))+
+    main_theme+
+    geom_sf(data=st_as_sf(north_america_cropped),size=0.1, col="black", fill=alpha("white", 0),linetype = "solid")+
+    ggtitle(paste0 (unique(data_rcp245[[i]]$guild)))+
+    guides(color = guide_legend(override.aes = list(size = 2)))+
+   
+    xlab("")+
+    ylab("")
+
+  }
+}
+
+p2=plot_grid(pp[[1]],pp[[2]],pp[[3]],pp[[4]],pp[[5]],pp[[6]],pp[[7]],pp[[8]],ncol=1)
+
+
+##
+
+my_function_guild_gain=function(data){
+  data%>%filter(climate_effect<0)->data_loss_climate
+  data%>%filter(climate_effect>0)->data_gain_climate
+  summary(data_loss_climate$climate_effect,na.rm=TRUE)->loss_percentile_climate
+  summary(data_gain_climate$climate_effect,na.rm=TRUE)->gain_percentile_climate
+  # to assign a category for each cell based on the magnitude
+  data%>%mutate(type_C=case_when(climate_effect<=loss_percentile_climate[2]%>%as.numeric()~"C-loss-high",
+                                 climate_effect>loss_percentile_climate[5]%>%as.numeric()&climate_effect<0~"C-loss-low",
+                                 climate_effect>=gain_percentile_climate[5]%>%as.numeric()~"C-gain-high",
+                                 climate_effect<gain_percentile_climate[2]%>%as.numeric()&climate_effect>0~"C-gain-low"))->df2
+  # for the impact of land use change 
+  data%>%filter(land_effect<0)->data_loss_land
+  data%>%filter(land_effect>0)->data_gain_land
+  summary(data_loss_land$land_effect,na.rm=TRUE)->loss_percentile
+  summary(data_gain_land$land_effect,na.rm=TRUE)->gain_percentile
+  data%>%mutate(type_L=case_when(land_effect<=loss_percentile[2]%>%as.numeric()~"L-loss-high",
+                                 land_effect>loss_percentile[5]%>%as.numeric()&land_effect<0~"L-loss-low",
+                                 land_effect>=gain_percentile[5]%>%as.numeric()~"L-gain-high",
+                                 land_effect<gain_percentile[2]%>%as.numeric()&land_effect>0~"L-gain-low"))->df1
+  # combing both effects of land use conversion and climate change
+  bind_cols(df2%>%dplyr::select(lon,lat,type_C),df1%>%dplyr::select(type_L))->df3
+  df3%>%mutate(joint_effect=paste(df3$type_L,"_", df3$type_C))%>%
+    mutate(group=case_when(joint_effect=="L-gain-high _ C-gain-high"~"both-high-gain",
+                           joint_effect=="L-gain-low _ C-gain-low"~"both-low-gain",
+                           joint_effect%in%c("L-gain-high _ C-loss-high",
+                                             "L-gain-high _ NA",
+                                             "L-gain-high _ C-gain-low",
+                                             "L-gain-high _ C-loss-low"
+                           )~"L-high-gain",
+                           joint_effect%in%c("NA _ C-gain-high",
+                                             "L-loss-low _ C-gain-high",
+                                             "L-gain-low _ C-gain-high",
+                                             "L-loss-high _ C-gain-high"
+                           )~"C-gain-high",
+                           TRUE~"other")) ->df4
+  df4=my_function(df4)
+  return(df4)
+}
+
+# to create the graphs for individual guilds
+# create the names of different guilds
+guild_names=c("Soi saprotroph","Plant pathogen","Ectomycorrhizal", "Litter saprotroph" , 
+              "Wood saprotroph","Arbuscular mycorrhizal", "Epiphyte" , "Parasite","All" )
+
+pp_245_gain=list()
+for (i in 1:9){
+  df5=my_function_guild_gain(data_rcp245[[i]])
+  if(i%in%c(1:9)){
+    
+    # get the proportion for each type
+    
+    100*table(df5$group)[1:5]/table(df5$group)[1:5]%>%sum()->pro_cell
+    
+    pp_245_gain[[i]]=ggplot()+
+      
+      geom_point(data=df5,aes(x=x,y=y,color=group),size=0.01)+
+      
+      scale_color_manual("RCP4.5 & SSP2",breaks=c("1","2","3","4","5","other"),
+                         labels=c(paste0("Both high","(",round(pro_cell[1],1),"%",")"),
+                                  paste0("Both low","(",round(pro_cell[2],1),"%",")"),
+                                  paste0("Climate high","(",round(pro_cell[3],1),"%",")"),
+                                  paste0("Land-use high","(",round(pro_cell[4],1),"%",")"),
+                                  "Other",""),
+                         values=c("violetred1","black","seagreen","tan1", "darkseagreen2","white"))+
+      main_theme+
+      geom_sf(data=st_as_sf(north_america_cropped),size=0.1, col="black", fill=alpha("white", 0),linetype = "solid")+
+      ggtitle(paste0 (guild_names[i]))+
+      guides(color = guide_legend(override.aes = list(size = 2)))+
+      xlab("")+
+      ylab("")
+  }
+}
+
+p1=plot_grid(pp[[1]],pp[[2]],pp[[3]],pp[[4]],pp[[5]],pp[[6]],pp[[7]],pp[[8]],ncol=1)
+
+  
+
+## for species loss in the scenario of rcp585
+
+pp_585_loss=list()
+for (i in 1:9){
+  df5=my_function_guild_loss(data_rcp585[[i]])
+  if(i%in%c(1:9)){
+    
+    # get the proportion for each type
+    
+    100*table(df5$group)[1:5]/table(df5$group)[1:5]%>%sum()->pro_cell
+    
+    pp_585_loss[[i]]=ggplot()+
+      
+      geom_point(data=df5,aes(x=x,y=y,color=group),size=0.01)+
+      
+      scale_color_manual("RCP8.5 & SSP5",breaks=c("1","2","3","4","5","other"),
+                         labels=c(paste0("Both high","(",round(pro_cell[1],1),"%",")"),
+                                  paste0("Both low","(",round(pro_cell[2],1),"%",")"),
+                                  paste0("Climate high","(",round(pro_cell[3],1),"%",")"),
+                                  paste0("Land-use high","(",round(pro_cell[4],1),"%",")"),
+                                  "Other",""),
+                         values=c("violetred1","black","seagreen","tan1", "darkseagreen2","white"))+
+      main_theme+
+      geom_sf(data=st_as_sf(north_america_cropped),size=0.1, col="black", fill=alpha("white", 0),linetype = "solid")+
+      ggtitle(paste0 (guild_names[i]))+
+      guides(color = guide_legend(override.aes = list(size = 2)))+
+      xlab("")+
+      ylab("")
+  }
+  
+}
+
+
+## for species gain in the scenario of rcp585
+
+pp_585_gain=list()
+for (i in 1:9){
+  df5=my_function_guild_gain(data_rcp585[[i]])
+  if(i%in%c(1:9)){
+    
+    # get the proportion for each type
+    
+    100*table(df5$group)[1:5]/table(df5$group)[1:5]%>%sum()->pro_cell
+    
+    pp_585_gain[[i]]=ggplot()+
+      
+      geom_point(data=df5,aes(x=x,y=y,color=group),size=0.01)+
+      
+      scale_color_manual("RCP8.5 & SSP5",breaks=c("1","2","3","4","5","other"),
+                         labels=c(paste0("Both high","(",round(pro_cell[1],1),"%",")"),
+                                  paste0("Both low","(",round(pro_cell[2],1),"%",")"),
+                                  paste0("Climate high","(",round(pro_cell[3],1),"%",")"),
+                                  paste0("Land-use high","(",round(pro_cell[4],1),"%",")"),
+                                  "Other",""),
+                         values=c("violetred1","black","seagreen","tan1", "darkseagreen2","white"))+
+      main_theme+
+      geom_sf(data=st_as_sf(north_america_cropped),size=0.1, col="black", fill=alpha("white", 0),linetype = "solid")+
+      ggtitle(paste0 (guild_names[i]))+
+      guides(color = guide_legend(override.aes = list(size = 2)))+
+      xlab("")+
+      ylab("")
+  }
+  
+}
 
 
 
-
-
-
+plot_grid(pp_245_loss[[9]],pp_245_gain[[9]],pp_585_loss[[9]],pp_585_gain[[9]],ncol=2,
+          labels = c("(a)","(b)","(c)","(d)"))
 
