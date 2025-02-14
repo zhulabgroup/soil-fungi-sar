@@ -340,11 +340,8 @@ p11=ggplot(data=effect_no_plant%>%filter(guild=="all"),aes(x=estimate,y=1:13))+
   xlim(-0.5,0.5)
 
 ## the variance partition 
-soil=c("soilInCaClpH", "nitrogenPercent", "organicCPercent","soilMoisture", "cec","sand")
-climate=c("bio1", "bio2",  "bio4", "bio8", "bio12", "bio15", "bio18")
 
-
-##for the variance partitioning, only the significant variables were selected. 
+## only significant variables were selected for the variance partitioning. 
 
 sel_vab_step=list()
 for (i in 1:9)
@@ -367,66 +364,15 @@ for (i in 1:9)
 }
 
 
-#
+# grouping the selected variables as climate and soil effects
+# the production of the variables were treated as a combined variable
+
 soil=c("soilInCaClpH", "nitrogenPercent", "organicCPercent","soilMoisture", "cec","sand")
 climate=c("bio1", "bio2",  "bio4", "bio8", "bio12", "bio15", "bio18")
 
-var_par=list()
-var_diff=matrix(ncol=2,nrow=9)
-for (i in 1:9)
-{
-  soil_n=which(sel_vab_step[[i]]%in%soil)%>%length()
-  climate_n=which(sel_vab_step[[i]]%in%climate)%>%length()
-  
-  if (soil_n>0&&climate_n>0)
-  {
-    soil_variable=data[[i]][,intersect( sel_vab_step[[i]],soil)]%>%data.frame()%>%rowwise() %>%
-      mutate(product = prod(c_across(everything())))%>%dplyr::select(product)%>%data.frame()
-    climate_variable=data[[i]][,intersect( sel_vab_step[[i]],climate)]%>%data.frame()%>%rowwise() %>%
-      mutate(product = prod(c_across(everything())))%>%dplyr::select(product)%>%data.frame()
-    data_temp=bind_cols(data[[i]],soil_variable,climate_variable)%>%rename(soil=product...19,climate=product...20)
-    mod=lmer(zvalue~logc+soil+climate+(1 |siteIDD),data=data_temp)
-    a=glmm.hp(mod,commonality=TRUE)
-    var_diff[i,]=a$r.squaredGLMM
-    var_par[[i]]=a$commonality.analysis
-  }
-  
-  # when climate variables are lacking
-  else if (soil_n>0&&climate_n<1)
-  {
-    soil_variable=data[[i]][,intersect( sel_vab_step[[i]],soil)]%>%data.frame()%>%rowwise() %>%
-      mutate(product = prod(c_across(everything())))%>%dplyr::select(product)%>%data.frame()
-    
-    data_temp=bind_cols(data[[i]],soil_variable)%>%rename(soil=product)
-    mod=lmer(zvalue~logc+soil+(1 |siteIDD),data=data_temp)
-    a=glmm.hp(mod,commonality=TRUE)
-    var_diff[i,]=a$r.squaredGLMM
-    var_par[[i]]=a$commonality.analysis
-  }
-  
-  # when soil variables are lacking
-  else if (soil_n<1&&climate_n>0)
-  {
-    climate_variable=data[[i]][,intersect( sel_vab_step[[i]],climate)]%>%data.frame()%>%rowwise() %>%
-      mutate(product = prod(c_across(everything())))%>%dplyr::select(product)%>%data.frame()
-    data_temp=bind_cols(data[[i]],climate_variable)%>%rename(climate=product)
-    mod=lmer(zvalue~logc+climate+(1 |siteIDD),data=data_temp)
-    a=glmm.hp(mod,commonality=TRUE)
-    var_diff[i,]=a$r.squaredGLMM
-    var_par[[i]]=a$commonality.analysis
-  }
-  # when both climate and soil variables are lacking
-  else 
-  {
-    mod=lmer(zvalue~logc+(1 |siteIDD),data=data[[i]])
-    #a=glmm.hp(mod,commonality=TRUE)
-    var_diff[i,]=r.squaredGLMM(mod)
-    var_par[[i]]=r.squaredGLMM(mod)
-  }
-}
-
-
-
+# the out put is based on the below codes
+# when soil and climate variable become constants, the model will drop these terms automatcally.
+# whether or not multiplying 10 does not affect the results
 
 var_par=list()
 var_diff=matrix(ncol=2,nrow=9)
