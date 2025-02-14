@@ -162,7 +162,7 @@ guild_mean$guild <- factor(guild_mean$guild, levels = od$guild)
 p_z_guild=ggplot(guild_mean,aes(x=guild,y=zvalue,fill=guild),alpha=0.5)+
   #sm_raincloud(size=0.1,point.params =list(size=2),sep_level=2)+
   geom_boxplot(data=guild_mean,aes(x=guild,y=zvalue,fill=guild),width = 0.4, size=0.5,color = "black", size=0.1,outlier.size = 1)+
-  scale_fill_manual("", breaks = od$guild, values = c("chocolate1", "tan", "royalblue", "#c94e65"), 
+  scale_fill_manual("", breaks = od$guild, values = c("chocolate1", "#037f77", "royalblue", "#c94e65"), 
                     labels = c("AM (N=326)", "EM (N=415)", 
                                "Plant pathogens (N=403)", 
                                "Soil saprotrophs (N=416)"))+
@@ -180,14 +180,14 @@ p_z_guild=ggplot(guild_mean,aes(x=guild,y=zvalue,fill=guild),alpha=0.5)+
         panel.background = element_rect(fill = "NA"),
         panel.border = element_rect(color = "black", fill = NA, size = 1)
         )+
-  guides(fill = guide_legend(nrow = 4, byrow = TRUE)) +
+  guides(fill = guide_legend(nrow = 2, byrow = TRUE)) +
 
   ylab(expression(italic(z)*" value")) +
   xlab("Trophic guilds")+
   geom_hline(yintercept = 0.71,color="red",linetype="dashed",size=0.8)+
   annotate("text", x = 1, y = 1.3, label = "a", size = 6) +
-  annotate("text", x = 2, y = 1, label = "ab", size = 6) +
-  annotate("text", x = 3, y = 1.02, label = "b", size = 6) +
+  annotate("text", x = 2, y = 1, label = "a", size = 6) +
+  annotate("text", x = 3, y = 1.2, label = "b", size = 6) +
   annotate("text", x = 4, y = 1, label = "c", size = 6) +
   #annotate("text", x = 5, y = 1.2, label = "d", size = 6) +
   #annotate("text", x = 6, y = 0.95, label = "e", size = 6) +
@@ -204,7 +204,7 @@ p_z_guild=ggplot(guild_mean,aes(x=guild,y=zvalue,fill=guild),alpha=0.5)+
                                "Plant pathogen (N=403)", 
                                "Parasite (N=391)","Soil saprotroph (N=416)"))
 
-# the impact of climate variables on the estimated z values
+# the impact of climate variables on the variablity of the estimated z values
 # plant richness was not included
 
 
@@ -342,9 +342,9 @@ p11=ggplot(data=effect_no_plant%>%filter(guild=="all"),aes(x=estimate,y=1:13))+
 ## the variance partition 
 soil=c("soilInCaClpH", "nitrogenPercent", "organicCPercent","soilMoisture", "cec","sand")
 climate=c("bio1", "bio2",  "bio4", "bio8", "bio12", "bio15", "bio18")
-## do we need to select the variables
 
 
+##for the variance partitioning, only the significant variables were selected. 
 
 sel_vab_step=list()
 for (i in 1:9)
