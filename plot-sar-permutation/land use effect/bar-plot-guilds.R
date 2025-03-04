@@ -1,8 +1,8 @@
 
 impact=c("Land use impact","Land use impact","Climate impact","Climate impact")
 
-
 scenario=c("SSP2-4.5","SSP5-8.5","SSP2-4.5","SSP5-8.5")
+
 
 pp=list()
 for (j in 1:4)
