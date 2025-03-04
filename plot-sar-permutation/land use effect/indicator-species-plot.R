@@ -48,7 +48,13 @@ species_presence[species_presence>0]=1
 
 isa_result[[i]] <- multipatt(species_presence, select_type, func = "IndVal.g", control = how(nperm = 999))
 
+#get the life style for each otu
 
+tax_table(rare_all_assign_type)%>%data.frame()->temp
+
+temp%>%select(ta2)%>%bind_cols(rownames(temp))%>%
+ rename_all(~paste0(c("primary_lifestyle","sp")))->species_life_style
+  
 
 
 
@@ -59,6 +65,7 @@ isa_result=readRDS("isa_result.RData")
 #to see how many habitat types are there for each biome
 # for the first biome, there were six groups
 habitat_type=list()
+result_biome=list()
 for (i in 1:4)
   {
  isa_result[[i]]$sign[which(isa_result[[i]]$sign$p.value < 0.05), ]%>%
@@ -240,12 +247,11 @@ for (i in 1:4)
     left_join(species_life_style,by="sp")%>%
     filter(primary_lifestyle%in%c("arbuscular_mycorrhizal",
                                   "ectomycorrhizal",
-                                  "epiphyte",
-                                  "litter_saprotroph",
-                                  "mycoparasite",
+                                  
+                                 
                                   "plant_pathogen",
-                                  "soil_saprotroph",
-                                  "wood_saprotroph"))->result_biome[[i]]
+                                  "soil_saprotroph"
+                                  ))->result_biome[[i]]
   unique(result_biome[[i]]$index)%>%sort()->habitat_type[[i]]
 }
 
@@ -383,14 +389,13 @@ for (m in 1:4){
           plot.title = element_text(size = 15, hjust = 0.5))+
     scale_fill_manual("Guild",breaks=c("arbuscular_mycorrhizal",
                                        "ectomycorrhizal",
-                                       "epiphyte",
-                                       "litter_saprotroph",
-                                       "mycoparasite",
+                                       
+                                       
                                        "plant_pathogen",
-                                       "soil_saprotroph",
-                                       "wood_saprotroph"),
-                      labels=c("AM","EM","Epiphyte","Litter saprotroph",
-                               "Parasite","Plant pathogen","Soil saprotroph","Wood saprotroph"),
+                                       "soil_saprotroph"
+                                       ),
+                      labels=c("AM","EM",
+                               "Plant pathogen","Soil saprotroph"),
                       values =colors )+
     theme(strip.text = element_text(size = 12, color = "black"),  # Customize facet titles
           strip.background = element_rect(fill = "white")  # Customize background color of facet titles
