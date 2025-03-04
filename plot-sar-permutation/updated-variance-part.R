@@ -190,21 +190,21 @@ guild_effect_with_plant$pva[guild_effect_with_plant$pva>0.05]=""
 
 
 
+guild_effect_no_plant%>%filter(guild%in%c("AM","EM","soilsap","plapat"))->guild_effect_no_plant_sub
 
 
-
-p1=ggplot(guild_effect_no_plant, aes(y =guild , x = var, fill = estimate)) +
+p1=ggplot(guild_effect_no_plant_sub, aes(y =guild , x = var, fill = estimate)) +
   geom_tile(color = "white", lwd = 1,linetype = 1)+
   scale_fill_gradient2("Effect size",low = "darkseagreen2", mid = "#FFFFCC", high = "violetred1",limits=c(-1,1))+
-  geom_text(aes(x = var, y = guild, label = guild_effect_no_plant$pva),size=6)+
+  geom_text(aes(x = var, y = guild, label = guild_effect_no_plant_sub$pva),size=6)+
 
   
-  scale_x_discrete(breaks=levels(guild_effect_no_plant$var),
+  scale_x_discrete(breaks=levels(guild_effect_no_plant_sub$var),
                    labels = c(expression(italic(C)),"pH", "SoilC", "Moisture", "CEC", "Sand" , "MAT" ,   
                               "MDR","Temp.seas." , "MTWQ" ,"MAP" , "Pre.seas." , "PWQ" ))+
-  scale_y_discrete(breaks=as.character(unique(guild_effect_no_plant$guild)),
-                   labels = c("ACM(N=329)","ECM(N=447)","Soil saprotroph(N=448)","Litter saprotroph(N=445)","Wood saprotroph(N=430)","Plant pathogen(N=430)","Parasite(N=416)",
-                              "Epiphyte(N=332)"))+
+  scale_y_discrete(breaks=as.character(unique(guild_effect_no_plant_sub$guild)),
+                   labels = c("AM (N=329)","EM (N=447)","Soil saprotrophs (N=448)","Plant pathogens (N=430)"
+                              ))+
   theme(panel.border = element_rect(fill=NA,size=1,color="black"),
         axis.title.x = element_text(size=15),
         axis.title.y = element_text(size=15),
@@ -215,7 +215,11 @@ p1=ggplot(guild_effect_no_plant, aes(y =guild , x = var, fill = estimate)) +
   #ggtitle("Guild-specific effect")+
   xlab("")+
   ylab("")+
-  geom_text(aes(x = var, y = guild, label = guild_effect_no_plant$pva),size=6)
+  geom_text(aes(x = var, y = guild, label = guild_effect_no_plant_sub$pva),size=6)
+###when only four guilds were considerd
+
+
+
 
 
 p2=ggplot(data=guild_effect_with_plant, aes(x =var , y = guild, fill = estimate)) +
@@ -256,9 +260,11 @@ plot_grid(p1,p2,ncol=1,label_x = 0.25,label_y = c(1,1,5))
 # use this data for modeling
 
 model_data_SAR_rarefaction$logc=2.71828^model_data_SAR_rarefaction$logc
+
 # do not include plotID
 # use this data for modeling
 model_data_SAR_climate=model_data_SAR_rarefaction%>%dplyr::select(siteIDD,plotID,guild,logc,  zvalue,  soilInCaClpH ,nitrogenPercent, organicCPercent, soilMoisture, cec, sand,  bio1, bio2,  bio4, bio8, bio12, bio15, bio18)
+
 model_data_SAR_climate=model_data_SAR_climate[complete.cases(model_data_SAR_climate),]
 
 guild_select=unique(model_data_SAR_climate$guild)
