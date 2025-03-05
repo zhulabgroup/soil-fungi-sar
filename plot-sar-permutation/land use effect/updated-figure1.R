@@ -19,7 +19,7 @@ species_com_guild=readRDS("species_com_guild.rds")
  
 # the above codes should be deleted
 
-# based on the biome to look at the difference in species among land use types
+# based on the biomes to look at the difference in species among land use types
 # all the data in the first biomes
 ordination_data_guild=list()
 for (m in 1:9){
@@ -129,7 +129,9 @@ for(m in 1:9)
 
 saveRDS(data_mean_richness_biome_model_guild,file="data_mean_richness_biome_model_guild.rds")
 
+
 data_mean_richness_biome_model_guild=readRDS("data_mean_richness_biome_model_guild.rds")
+
 biome_select=c("Temperate Broadleaf & Mixed Forests","Temperate Conifer Forests",
                "Temperate Grasslands, Savannas & Shrublands","Tropical & Subtropical Moist Broadleaf Forests")
 
@@ -173,11 +175,14 @@ for(i in 1:4)
 plot_grid(pp[[1]],pp[[2]],pp[[3]],pp[[4]],ncol=2,label_size = 8)
 
 
-# the response ratio
+# the response ratio of different guilds
 biome_site_level_richness_ratio=readRDS("biome_site_level_richness_ratio.rds")
+
+df_significance=readRDS("df_significance.rds")
 
 data=c("rare_all_guild_biome","data_AM","data_EM","data_plapat","data_soilsap","data_littersap","data_woodsap","data_epiphy","data_para")
 
+guild=c( "all", "AM" ,"EM","plapat","soilsap","littersap", "woodsap","epiphy", "para" )
 
 pp_response=list()
 for (i in 1:4)
@@ -186,7 +191,7 @@ for (i in 1:4)
   data$guild=factor(data$guild,levels=rev(c("all","AM" ,"EM","plapat","soilsap","littersap","woodsap","epiphy","para")))
   
   pp_response[[i]]=ggplotGrob(ggplot(data, aes(x=guild,y = mean_ratio)) +
-    geom_bar(stat = "identity",position = "dodge",width =0.7) +
+    geom_bar(stat = "identity",position = "dodge",width =0.5) +
     guides(fill="none")+
     geom_errorbar(aes(ymin = mean_ratio-sd_ratio, ymax = mean_ratio+sd_ratio), width = 0.1)+
     geom_hline(yintercept = 1,color="red",linetype="dashed")+
@@ -214,6 +219,46 @@ for (i in 1:4)
 }
 
 plot_grid(pp_response[[1]],pp_response[[2]],pp_response[[3]],pp_response[[4]],ncol=1)
+
+#if we focused on the four main fungal guilds
+
+guild=c( "all", "AM" ,"EM","plapat","soilsap" )
+
+
+
+pp_response=list()
+for (i in 1:4)
+{
+  data=biome_site_level_richness_ratio%>%filter( biome==biome_select[i])%>%filter(guild%in%c("all","AM","EM","soilsap","plapat"))
+  data$guild=factor(data$guild,levels=rev(c("all","AM" ,"EM","plapat","soilsap")))
+  
+  pp_response[[i]]=ggplotGrob(ggplot(data, aes(x=guild,y = mean_ratio)) +
+                                geom_bar(stat = "identity",position = "dodge",width =0.6) +
+                                guides(fill="none")+
+                                geom_errorbar(aes(ymin = mean_ratio-sd_ratio, ymax = mean_ratio+sd_ratio), width = 0.1)+
+                                geom_hline(yintercept = 1,color="red",linetype="dashed")+
+                                scale_x_discrete (breaks=guild,position = "top",labels = c("All", "AM","EM","Plant pathogens","Soil saprotrophs"))+
+                                #ggtitle("Response ratio")+
+                                xlab("")+
+                                ylab("Response ratio")+
+                                theme(legend.position = c(0.8,0.75),
+                                      legend.text = element_text(size=8),
+                                      legend.title  = element_text(size=10),
+                                      text = element_text(size = 18),
+                                      plot.title = element_text(size = 15, hjust = 0.5), 
+                                      axis.text.y = element_text(size=12), 
+                                      axis.text.x = element_text(size=12), 
+                                      axis.title.y = element_text(size = 15), 
+                                      axis.title.x = element_text(size = 15), 
+                                      legend.key.size = unit(0.3, "cm"),
+                                      plot.margin = unit(c(0.3, 0.5, 0, 0.1), "cm"),
+                                      panel.background = element_rect(fill = "NA"),
+                                      panel.border = element_rect(color = "black", size = 0.7, fill = NA))+
+                                geom_text(aes(x=guild,y=(mean_ratio+sd_ratio)*1.1),label =df_significance[c(1:5),][[i]],size=5)+
+                                coord_flip()+
+                                ylim(0,8))
+  
+}
 
 
 
