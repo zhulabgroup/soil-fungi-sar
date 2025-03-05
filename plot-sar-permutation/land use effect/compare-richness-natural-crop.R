@@ -115,6 +115,16 @@ for (m in 1:9)
   result[[m]]=summary(mod) 
 }
 
+#get the overall effect across biomes
+biomes_effect=list()
+for (i in 1:9)
+{
+  coef(result[[i]])%>%data.frame()%>%slice(2)->biomes_effect[[i]]
+  
+}
+
+do.call(rbind,biomes_effect)%>%bind_cols(guild)%>%round(digits = 2)
+
 #we need to test the difference for each biome
 #note changes in the random effect term in the fourth biome
 df_significance=list()
@@ -142,6 +152,8 @@ df_significance[[m]]=result
 }
 
 # to bind all the results
+
+guild=guild_select
 
 do.call(rbind,df_significance)%>%data.frame()%>%
 bind_cols(guild)%>%rename_all(~paste0(c(biome_select,"guild")))%>%
@@ -227,39 +239,17 @@ saveRDS(biome_site_level_richness_ratio_consider_nature_history,file="biome_site
 ## create figures for the updated data
 #
 
-pp_response=list()
-for (i in 1:4)
-{
-  data=biome_site_level_richness_ratio_consider_nature_history%>%filter( biome==biome_select[i])
-  data$guild=factor(data$guild,levels=rev(c("all","AM" ,"EM","plapat","soilsap","littersap","woodsap","epiphy","para")))
-  
-  pp_response[[i]]=ggplotGrob(ggplot(data, aes(x=guild,y = mean_ratio)) +
-                                geom_bar(stat = "identity",position = "dodge",width =0.7) +
-                                guides(fill="none")+
-                                geom_errorbar(aes(ymin = mean_ratio-sd_ratio, ymax = mean_ratio+sd_ratio), width = 0.1)+
-                                geom_hline(yintercept = 1,color="red",linetype="dashed")+
-                                scale_x_discrete (breaks=guild,position = "top",labels = c("All", "AM","EM","Pla. patho.", "Soil sapro.","Litter sapro.","Wood sapro.","Epiphyte","Parasite"))+
-                                #ggtitle("Response ratio")+
-                                xlab("")+
-                                ylab("Response ratio")+
-                                theme(legend.position = c(0.8,0.75),
-                                      legend.text = element_text(size=8),
-                                      legend.title  = element_text(size=10),
-                                      text = element_text(size = 18),
-                                      plot.title = element_text(size = 15, hjust = 0.5), 
-                                      axis.text.y = element_text(size=12), 
-                                      axis.text.x = element_text(size=12), 
-                                      axis.title.y = element_text(size = 15), 
-                                      axis.title.x = element_text(size = 15), 
-                                      legend.key.size = unit(0.3, "cm"),
-                                      plot.margin = unit(c(0.3, 0.5, 0, 0.1), "cm"),
-                                      panel.background = element_rect(fill = "NA"),
-                                      panel.border = element_rect(color = "black", size = 0.7, fill = NA))+
-                                geom_text(aes(x=guild,y=(mean_ratio+sd_ratio)*1.1),label =df_significance_plot[,i],size=5)+
-                                coord_flip()+
-                                ylim(0,8))
-  
-}
+biome_site_level_richness_ratio_consider_nature_history=readRDS(file="biome_site_level_richness_ratio_consider_nature_history.rds")
+# for the updated, we exclude some of the guilds
+
+guild=c("all","AM","EM","plapat","soilsap")
+
+df_significance_plot=df_significance_plot%>%filter(guild%in%c("all","AM" ,"EM","plapat","soilsap"))
+
+
+biome_site_level_richness_ratio_consider_nature_history_sub=biome_site_level_richness_ratio_consider_nature_history%>%
+  filter(guild%in%c("all","AM" ,"EM","plapat","soilsap"))
+
 
 
 ## the species composition plot among plots
@@ -331,7 +321,7 @@ for(i in 1:4)
   #Test for variance Differences
   test_parameter[i,3:4]=dispersion_test$tab[1,c(4,6)]%>%as.numeric()
   test_parameter[i,5]=nmds_result$stress
-  compare_land_cover[i]=TukeyHSD(dispersion)[1]$group
+  compare_land_cover[[i]]=TukeyHSD(dispersion)[1]$group
   #centroids[[i]]=aggregate(. ~ group, data = scores, FUN = mean)#get the centrid of different groups
 }
 ordination_data_guild_consider_natural[[m]]=ordination_data
@@ -345,202 +335,5 @@ saveRDS(test_parameter_consider_historical_natural,file="test_parameter_consider
 
 saveRDS(compare_land_cover_consider_historical_natural,file="compare_land_cover_consider_historical_natural.rds")
 
-###match the colors for different land cover types
-
-type=c("cultivatedCrops", "woodyWetlands", "evergreenForest" ,"deciduousForest",
-       "mixedForest","grasslandHerbaceous")
-type%>%data.frame()%>%mutate(color=c("#c94e65","royalblue","forestgreen", "#037f77","chocolate1","#7c1a97"))%>%
-  rename_all(~paste0(c("type","color")))->color_match
-
-
-pp_spcom=list()
-for(i in 1:4)
-{
-  ordination_data_guild[[1]][[i]]%>%distinct(type)%>%left_join(color_match,by="type")->color_select
-  if(i==1)
-  {
-    
-    pp_spcom[[i]]=ggplotGrob(ggplot(ordination_data_guild_consider_natural[[1]][[i]],aes(x=MDS1,  y= MDS2,color=type ))+
-                               geom_point(data=ordination_data_guild[[1]][[i]],pch=21,color="black",aes(x=MDS1,y= MDS2,fill=type ),size=3,alpha=0.75)+
-                               stat_ellipse(size=0.8,linetype="dashed")+
-                               theme(legend.position = c(0.3,0.4), 
-                                     legend.title = element_text(size=10),
-                                     #text = element_text(size = 18), 
-                                     legend.text = element_text(size=11),
-                                     plot.title = element_text(size = 15, hjust = 0.5), 
-                                     axis.text.y = element_text(hjust = 1,size=12), 
-                                     axis.text.x = element_text(hjust = 0.5,size=12), 
-                                     axis.title.y = element_text(size = 15), 
-                                     axis.title.x = element_text(size = 15),
-                                     panel.background = element_rect(fill = "NA"), 
-                                     panel.border = element_rect(color = "black", size = 0.7, fill = NA))+
-                               ylim(-0.5,1)+
-                               scale_fill_manual("",breaks = color_select$type,values = color_select$color)+
-                               scale_color_manual("",breaks = color_select$type,values = color_select$color))
-  }
-  else{
-    
-    pp_spcom[[i]]=ggplotGrob(ggplot(data=ordination_data_guild[[1]][[i]],aes(x=MDS1,  y= MDS2,color=type ))+
-                               geom_point(data=ordination_data_guild[[1]][[i]],pch=21,color="black",aes(x=MDS1,y= MDS2,fill=type ),size=3,alpha=0.75)+
-                               stat_ellipse(size=0.8,linetype="dashed")+
-                               theme(legend.position = c(0.3,0.4), 
-                                     legend.title = element_text(size=10),
-                                     #text = element_text(size = 18), 
-                                     legend.text = element_text(size=11),
-                                     plot.title = element_text(size = 15, hjust = 0.5), 
-                                     axis.text.y = element_text(hjust = 1,size=12), 
-                                     axis.text.x = element_text(hjust = 0.5,size=12), 
-                                     axis.title.y = element_text(size = 15), 
-                                     axis.title.x = element_text(size = 15),
-                                     panel.background = element_rect(fill = "NA"), 
-                                     panel.border = element_rect(color = "black", size = 0.7, fill = NA))+
-                               scale_fill_manual("",breaks = color_select$type,values = color_select$color)+
-                               scale_color_manual("",breaks = color_select$type,values = color_select$color))
-  }
-}
-
-
-
-# for the comparsion of the mean richness
-
-# compare the richness among natural and modified plots
-
-common_theme= theme(legend.position = c(0.75,0.28),
-                    legend.text = element_text(size=8),
-                    legend.title  = element_text(size=10),
-                    text = element_text(size = 18),
-                    plot.title = element_text(size = 15, hjust = 0.5), 
-                    axis.text.y = element_text(size=12), 
-                    axis.text.x = element_text(size = 12), 
-                    axis.title.y = element_text(size = 15), 
-                    axis.title.x = element_text(size = 15), 
-                    plot.margin = unit(c(0.3, 0.1, -.5, 0), "cm"),
-                    panel.background = element_rect(fill = "NA"),
-                    panel.border = element_rect(color = "black", size = 0.7, fill = NA))
-
-pp_compare=list()
-for(i in 1:4)
-{
-  d=data_mean_richness_guild_consider_nature_history_model[[1]]%>%filter(biome==biome_select[i])
-  d$type=factor(d$type,levels = c("nature","crop"))
-  d%>%group_by(type)%>%summarise(all_mean=mean(mean_rich),all_sd=sd(mean_rich))%>%data.frame()->all_data
-  if(i==4){
-    
-  
-  pp_compare[[i]]= ggplotGrob(ggplot()+
-                                geom_point(data=d, pch=21,aes(x = type,y = mean_rich, group = plotIDM),color="gray",fill=rep(c("#32CD92","#CD326D"),each=dim(d)[1]/2),size=4,alpha=0.4) +
-                                geom_line(data=d, aes(x = type, y = mean_rich, group = plotIDM),color=rep(c("gray","gray"),each=dim(d)[1]/2),alpha=0.5) +
-                                guides(color="none")+
-                                ylab("Richness")+
-                                xlab("Land use")+
-                                scale_x_discrete(labels=c("Natural","Modified"))+
-                                geom_segment(data=all_data, aes(x = type[1], y = all_mean[1],xend=type[2],yend=all_mean[2]),color="#E3A72F",linetype="dashed",size=1)+
-                                geom_errorbar(data=all_data,aes(x=type,ymin = all_mean-all_sd, ymax = all_mean+all_sd), width = 0.061)+
-                                geom_point(data=all_data,pch=24,aes(x=type,y=all_mean),color="black",fill=c("#32CD92","#CD326D"),size=5)+
-
-                                common_theme+
-                                ylim(400,1500))
-  }
-  else if(i==3)
-    {
-      pp_compare[[i]]= ggplotGrob(ggplot()+
-                                    geom_point(data=d, pch=21,aes(x = type,y = mean_rich, group = plotIDM),color="gray",fill=rep(c("#32CD92","#CD326D"),each=dim(d)[1]/2),size=4,alpha=0.4) +
-                                    geom_line(data=d, aes(x = type, y = mean_rich, group = plotIDM),color=rep(c("gray","gray"),each=dim(d)[1]/2),alpha=0.5) +
-                                    guides(color="none")+
-                                    ylab("Richness")+
-                                    xlab("Land use")+
-                                    scale_x_discrete(labels=c("Natural","Modified"))+
-                                    geom_segment(data=all_data, aes(x = type[1], y = all_mean[1],xend=type[2],yend=all_mean[2]),color="#E3A72F",linetype="dashed",size=1)+
-                                    geom_errorbar(data=all_data,aes(x=type,ymin = all_mean-all_sd, ymax = all_mean+all_sd), width = 0.061)+
-                                    geom_point(data=all_data,pch=24,aes(x=type,y=all_mean),color="black",fill=c("#32CD92","#CD326D"),size=5)+
-                                    common_theme+
-                                  ylim(0,2000))
-    }
-  
-  
-  else
-  {
-    pp_compare[[i]]= ggplotGrob(ggplot()+
-                                  geom_point(data=d, pch=21,aes(x = type,y = mean_rich, group = plotIDM),color="gray",fill=rep(c("#32CD92","#CD326D"),each=dim(d)[1]/2),size=4,alpha=0.4) +
-                                  geom_line(data=d, aes(x = type, y = mean_rich, group = plotIDM),color=rep(c("gray","gray"),each=dim(d)[1]/2),alpha=0.5) +
-                                  guides(color="none")+
-                                  ylab("Richness")+
-                                  xlab("Land use")+
-                                  scale_x_discrete(labels=c("Natural","Modified"))+
-                                  geom_segment(data=all_data, aes(x = type[1], y = all_mean[1],xend=type[2],yend=all_mean[2]),color="#E3A72F",linetype="dashed",size=1)+
-                                  geom_errorbar(data=all_data,aes(x=type,ymin = all_mean-all_sd, ymax = all_mean+all_sd), width = 0.061)+
-                                  geom_point(data=all_data,pch=24,aes(x=type,y=all_mean),color="black",fill=c("#32CD92","#CD326D"),size=5)+
-                                  common_theme)
-  }
-}
-
-### get the response ratio
-
-pp_response=list()
-for (i in 1:4)
-{
-  data=biome_site_level_richness_ratio_consider_nature_history%>%filter( biome==biome_select[i])
-  data$guild=factor(data$guild,levels=rev(c("all","AM" ,"EM","plapat","soilsap","littersap","woodsap","epiphy","para")))
-  
-  pp_response[[i]]=ggplotGrob(ggplot(data, aes(x=guild,y = mean_ratio)) +
-                                geom_bar(stat = "identity",position = "dodge",width =0.7) +
-                                guides(fill="none")+
-                                geom_errorbar(aes(ymin = mean_ratio-sd_ratio, ymax = mean_ratio+sd_ratio), width = 0.1)+
-                                geom_hline(yintercept = 1,color="red",linetype="dashed")+
-                                scale_x_discrete (breaks=guild,position = "top",labels = c("All", "AM","EM","Plant pathogen", "Soil saprotroph","Litter saprotroph","Wood saprotroph","Epiphyte","Parasite"))+
-                                 #ggtitle("Response ratio")+
-                                xlab("")+
-                                ylab("Response ratio")+
-                                theme(legend.position = c(0.8,0.75),
-                                      legend.text = element_text(size=8),
-                                      legend.title  = element_text(size=10),
-                                      text = element_text(size = 18),
-                                      plot.title = element_text(size = 15, hjust = 0.5), 
-                                      axis.text.y = element_text(size=12), 
-                                      axis.text.x = element_text(size=12), 
-                                      axis.title.y = element_text(size = 15), 
-                                      axis.title.x = element_text(size = 15), 
-                                      legend.key.size = unit(0.3, "cm"),
-                                      plot.margin = unit(c(0.3, 0.5, 0, 0.1), "cm"),
-                                      panel.background = element_rect(fill = "NA"),
-                                      panel.border = element_rect(color = "black", size = 0.7, fill = NA))+
-                                geom_text(aes(x=guild,y=(mean_ratio+sd_ratio)*1.2),label =df_significance_plot[[i]],size=5)+
-                                coord_flip()+
-                                ylim(0,8))
-  
-}
-##combine all the plots
-
-
-pp_spcom[[1]]$heights=pp_compare[[1]]$heights
-pp_spcom[[1]]$heights=pp_response[[1]]$heights
-pp_compare[[1]]$heights=pp_response[[1]]$heights
-
-pp_spcom[[2]]$heights=pp_compare[[2]]$heights
-pp_spcom[[2]]$heights=pp_response[[2]]$heights
-pp_compare[[2]]$heights=pp_response[[2]]$heights
-
-pp_spcom[[3]]$heights=pp_compare[[3]]$heights
-pp_spcom[[3]]$heights=pp_response[[3]]$heights
-pp_compare[[3]]$heights=pp_response[[3]]$heights
-
-pp_spcom[[4]]$heights=pp_compare[[4]]$heights
-pp_spcom[[4]]$heights=pp_response[[4]]$heights
-pp_compare[[4]]$heights=pp_response[[4]]$heights
-
-
-pp_spcom[[2]]$widths=pp_spcom[[3]]$widths
-
-pp_spcom[[3]]$widths=pp_spcom[[4]]$widths
-pp_spcom[[1]]$widths=pp_spcom[[2]]$widths
-
-
-plot_grid(pp_spcom[[1]],pp_compare[[1]],pp_response[[1]],
-          pp_spcom[[2]],pp_compare[[2]],pp_response[[2]],
-          pp_spcom[[3]],pp_compare[[3]],pp_response[[3]],
-          pp_spcom[[4]],pp_compare[[4]],pp_response[[4]],
-          ncol=3,rel_widths = c(0.7,0.6,0.8),
-          label_size = 15,label_x = rep(c(0.12,0.2,0.00011),time=4),
-          label_y = 1.1,labels = paste0("(", letters[1:12], ")"))
-
+ordination_data_guild_consider_natural=readRDS(ordination_data_guild_consider_natural,file="ordination_data_guild_consider_natural.rds")
 
