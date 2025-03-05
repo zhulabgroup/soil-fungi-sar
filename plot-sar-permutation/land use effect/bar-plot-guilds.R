@@ -34,7 +34,7 @@ for(j in 1:4)
     bind_cols(rep(grid_level_biomes$LABEL,9))%>%
     rename_all(~paste0(c("guild","value","LABEL")))%>%
     filter(LABEL%in%biomes_four&!is.na(value))%>%
-    mutate(plotid=rep(1:observations[j],9))->df1# na cells were filtered
+    mutate(plotid=rep(1:observations[j],9))->df1# na cells were filtered out
   
   #when all the biomes were included
   
@@ -47,8 +47,9 @@ for(j in 1:4)
     rename(LABEL=LABEL_all)%>%bind_rows(df1)->df1
   
   # select the guild of your interest
-  # for species gain for across all the biomes
+  # for species gains for across all the biomes
   # compare the mean among guilds
+  
   # for species gains
   df1%>%filter(value>0&guild%in%c("EM","soilsap","AM","plapat")&LABEL=="All")->df2
   
@@ -58,12 +59,11 @@ for(j in 1:4)
   
   mod=lmer(log_response~guild+(1 | plotid),data=df2)# compare the means among guilds across all biomes
   
-  anova(mod, type = "III")
   
   compare_mean=emmeans(mod, pairwise ~ guild ,pbkrtest.limit = 93160)#the last parameter could change
   
   # get the values associated with the letters
-  # the letetrs among guilds when all the guilds were combined
+  # the letters among guilds when all the guilds were combined
   
   multcomp::cld(object = compare_mean$emmeans,
                 Letters = letters)->compare_data_gain_all
@@ -101,12 +101,10 @@ for(j in 1:4)
   
   mod=lmer(sqrt_response~guild+(1 | plotid),data=df3)# across biomes
   
-  anova(mod, type = "III")
-  
   compare_mean=emmeans(mod, pairwise ~ guild ,pbkrtest.limit = 125497)#the last parameter could change
   
   # get the values associated with the letters
-  # the letetrs among guilds when all the guilds were combined
+  # the letters among guilds when all the guilds were combined
   
   multcomp::cld(object = compare_mean$emmeans,
                 Letters = letters)->compare_data_loss_all
@@ -154,9 +152,6 @@ for(j in 1:4)
 }
 
 saveRDS(data_compare_LETTER,file="data_compare_LETTER.RDS")
-
-
-
 
 
 
