@@ -117,6 +117,8 @@ else{
 
 ## ad the pie plot
 
+pie_data_guild=readRDS("pie_data_guild.rds")
+
 pp_pie_guild=list()
 for (m in 1:9){
   if(m==1){
