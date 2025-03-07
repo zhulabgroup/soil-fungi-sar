@@ -43,13 +43,26 @@ my_function_project=function(data)
     raster_template <- rast(ext(points), resolution = 0.17, crs = "EPSG:4326")  # Resolution of 1 degree
     raster <- rasterize(points, raster_template, field = "group")
   }
+  else if ("binary"%in%colnames(data))
+  {
+    points <- vect(data, geom = c("lon", "lat"), crs = "EPSG:4326")  # Assuming WGS84 coordinates
+    raster_template <- rast(ext(points), resolution = 0.17, crs = "EPSG:4326")  # Resolution of 1 degree
+    raster <- rasterize(points, raster_template, field = "binary")
+  }
   
+  else if ("type"%in%colnames(data))
+  {
+    points <- vect(data, geom = c("lon", "lat"), crs = "EPSG:4326")  # Assuming WGS84 coordinates
+    raster_template <- rast(ext(points), resolution = 0.17, crs = "EPSG:4326")  # Resolution of 1 degree
+    raster <- rasterize(points, raster_template, field = "type")
+  }
   else{
     points <- vect(data, geom = c("lon", "lat"), crs = "EPSG:4326")  # Assuming WGS84 coordinates
     raster_template <- rast(ext(points), resolution = 0.17, crs = "EPSG:4326")  # Resolution of 1 degree
     
     raster <- rasterize(points, raster_template, field = "group")
   }
+  
   target_crs <- "EPSG:5070"
   raster_equal_area <- project(raster, target_crs,method="near")# there are options for the method used
   raster_df <- as.data.frame(raster_equal_area, xy = TRUE,)
@@ -123,49 +136,6 @@ my_function_guild_gain=function(data){
 
 
 
-#to get the sf object of the several states
-# to crop part of the canada map based on the ranges
-
-
-us_states <- states(cb = TRUE)
-canadian_provinces <- ne_states(country = "Canada", returnclass = "sf")
-cuba_provinces <- ne_states(country = "Cuba", returnclass = "sf")
-mexico_states <- ne_states(country = "Mexico", returnclass = "sf")
-rico_provinces <- ne_countries(scale = "medium", returnclass = "sf") %>%
-  dplyr::filter(admin == "Puerto Rico")
-haiti_provinces <- ne_countries(scale = "medium", returnclass = "sf") %>%
-  dplyr::filter(admin == "Puerto Rico")
-
-haiti_sf <- ne_countries(scale = "medium", country = "Haiti", returnclass = "sf")
-dominican_republic <- ne_countries(scale = "medium", returnclass = "sf", country = "Dominican Republic")
-
-baha_sf <- ne_countries(scale = "medium", country = "The Bahamas", returnclass = "sf")
-jama_sf <- ne_countries(scale = "medium", country = "Jamaica", returnclass = "sf")
-
-
-# to make projection for the sf objects
-
-target_crs <- "EPSG:5070"
-us_projected <- st_transform(us_states, crs = target_crs)
-canadian_projected <- st_transform(canadian_provinces, crs = target_crs)
-mexico_projected <- st_transform(mexico_states, crs = target_crs)
-rico_projected <- st_transform(rico_provinces, crs = target_crs)
-cuba_projected <- st_transform(cuba_provinces, crs = target_crs)
-
-haiti_projected <- st_transform(haiti_sf, crs = target_crs)
-
-dominican_projected <- st_transform(dominican_republic, crs = target_crs)
-
-baha_projected <- st_transform(baha_sf, crs = target_crs)
-jama_projected <- st_transform(jama_sf, crs = target_crs)
-
-# to clip the canada map
-bbox <- st_bbox(c(xmin = -2665004, ymin = 2157670 , xmax = 3188701, ymax = 5400000 ), crs = st_crs(canadian_projected))
-bbox_sf <- st_as_sfc(bbox)
-cropped_province <- st_crop(canadian_projected, bbox_sf)
-canada_clipped=cropped_province
-
-
 
 
 
@@ -179,7 +149,7 @@ species_change_climate_rcp245=readRDS("species_change_climate_rcp245.rds")
 
 species_change_climate_rcp585=readRDS("species_change_climate_rcp585.rds")
 
-
+# for the climate effects, to mask the study regions
 crop_data=list()
 for (i in 1:9)
 {
@@ -233,14 +203,14 @@ common_theme=theme(legend.position = c(0.02611,0.4660),
                    legend.text = element_text(size=12),
                    legend.title  = element_text(size=12),
                    text = element_text(size = 18),
-                   plot.title = element_text(size = 22, hjust = 0.5), 
+                   plot.title = element_text(size = 15, hjust = 0.5), 
                    axis.text.y = element_blank(), 
                    axis.text.x = element_blank(), 
-                   axis.title.y = element_text(size = 18), 
-                   axis.title.x = element_text(size = 18), 
+                   axis.title.y = element_text(size = 15), 
+                   axis.title.x = element_text(size = 15), 
                    axis.ticks.x = element_blank(), 
                    axis.ticks.y = element_blank(),
-                   plot.margin = unit(c(0,0.3, 0, 0), "cm"),
+                   plot.margin = unit(c(0,0.2, -2, 0.2), "cm"),
                    panel.background = element_rect(fill = "NA"),
                    panel.border = element_blank())
 
@@ -536,6 +506,49 @@ for (i in 1:2)
 }
 different_guilds[[m]]=map_loss_overall
 }
+#get the species gain and loss rate for each biome
+
+select_biomes=c("Temperate Grasslands, Savannas & Shrublands",
+                "Temperate Conifer Forests",
+                "Temperate Broadleaf & Mixed Forests",
+                "Tropical & Subtropical Moist Broadleaf Forests")
+
+readRDS("grid_level_biomes.rds")->grid_level_biomes
+
+#get the proportional cells exibit either both species gain or loss
+species_change_biome=list()
+for (j in 1:4)
+{
+  data=get(map_data[2])[[9]]    
+  df5=my_function_guild_loss_overall(data)  
+  
+  df5%>%bind_cols(grid_level_biomes)%>%
+    filter(LABEL%in%c("Temperate Grasslands, Savannas & Shrublands",
+                      "Temperate Conifer Forests",
+                      "Temperate Broadleaf & Mixed Forests",
+                      "Tropical & Subtropical Moist Broadleaf Forests"))->df# the total regions evaluated
+  
+  df%>%filter(LABEL==select_biomes[j])%>%count(group)%>%
+    mutate(percent=n/sum(n))%>%
+    filter(group%in%c("Climate gain.Land gain","Climate loss.Land loss"))->species_change_biome[[j]]
+  
+}
+
+
+
+
+df%>%filter(group=="Climate loss.Land loss")->cell_loss
+
+df%>%filter(group=="Climate gain.Land gain")->cell_gain
+
+table(cell_loss$LABEL)%>%data.frame()%>%filter(Var1%in%select_biomes)%>%
+  dplyr::select(Freq)%>%pull()/dim(df)[1]
+
+table(cell_gain$LABEL)%>%data.frame()%>%filter(Var1%in%select_biomes)%>%
+  dplyr::select(Freq)%>%pull()/dim(df)[1]
+
+
+
 
 different_guilds_gain=list()
 
