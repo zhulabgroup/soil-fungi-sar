@@ -16,8 +16,6 @@ coarser_raster <- aggregate(r_cropped, fact = 3, fun = mean) # convert it to a c
 coords_present <- xyFromCell(coarser_raster, cell = 1:ncell(coarser_raster)) 
 cell_values <- raster::extract(coarser_raster, coords_present) %>% as.matrix()
 
-
-
 equal_area_crs <- "EPSG:5070"
 
 raster_equal<- terra::project(coarser_raster, equal_area_crs)
@@ -41,9 +39,9 @@ points.t <- terra::vect(points)
 values <- terra::extract(biomes.t, points.t)
 
 
-# get the biomes type for each grid
+# get the biomes type for each grid cell where we model species richness
 
-setwd("/Users/luowenqi/soil-sar/plot-sar-permutation/land use effect")
+setwd("/Volumes/seas-zhukai/proj-soil-fungi/land-use-effect")
 
 biomes <- st_read("wwf_terr_ecos.shp")
 
@@ -83,6 +81,7 @@ biomes <- st_crop(biomes, c(xmin=-170,xmax=-55,ymin=17,ymax=72))
 
 
 # just create an empty raster to save the values.
+# the resolution is different 
 r <- rast(ext(biomes),resolution = res(coarser_raster),   # the resolution of your targeted raster
            crs = "EPSG:4326")
 #r <- rasterize(biomes, r, field = "BIOME")  # 'field' can be a column name or a constant value
@@ -94,12 +93,17 @@ df <- as.data.frame(r, xy = TRUE)
 writeRaster(r,"/Users/luowenqi/soil-sar/plot-sar-permutation/biomes.tif",overwrite=T)
 
 # get the c and z values for different biomes
+
 # add the coordinates for each plot for the determination of the plot-level biomes
 
-load("~/soil-sar/plot-sar-permutation/rare_all_assign.RData")
 
-sample_data(rare_all_assign)%>%data.frame()%>%dplyr::select(plotIDM,lon,lat)%>%group_by(plotIDM)%>%
-  summarise(lon=mean(lon),lat=mean(lat))%>%rename(plotID=plotIDM)->plot_coordinates
+#(2) to get the c and z value for the plot level values
+
+full_parameter_data <- readRDS("full_parameter_data.rds")
+
+
+
+plot_coordinates=readRDS("plot_coordinates.rds")
 
 full_parameter_data%>%left_join(plot_coordinates,by="plotID")->full_parameter_data
 
@@ -167,6 +171,40 @@ full_parameter_data%>%dplyr::select(logc,zvalue,plotID,guild)%>%
   group_by(LABEL,guild)%>%summarise(mean_cvalue=mean(cvalue,na.rm=TRUE),mean_zvalue=mean(zvalue,na.rm=TRUE))->parameter_CZ_no_landuse
   
 
+# to merge with the response ratio
+
+trend_biome_ratio=readRDS(file="trend_biome_ratio.rds")
+
+do.call(rbind,trend_biome_ratio)%>%
+  mutate(guild=rep(c("all","AM","EM","plapat","soilsap","littersap","woodsap","epiphy","para"),each=4))->df2
+
+trend_biome_ratio=df2
+
+parameter_CZ_no_landuse%>%left_join(trend_biome_ratio,by="guild")
+
+parameter_CZ_no_landuse%>%mutate(guild_biome=paste(LABEL,"_",guild))->df1
+
+trend_biome_ratio%>%mutate(guild_biome=paste(LABEL,"_",guild))->df2
+
+df2$guild_biome=gsub("Tropical & Subtropical Moist Broadleaf Forests","Tropical & Subtropical Dry Broadleaf Forests",df2$guild_biome)
+
+df1%>%left_join(df2%>%dplyr::select(mean_value,guild_biome),by="guild_biome")%>%
+  filter(!is.na( mean_value))%>%mutate(affinity=mean_value^(1/mean_zvalue))->habitat_affinity_with_land_history
+
+saveRDS(habitat_affinity_with_land_history,file="habitat_affinity_with_land_history.rds")
+
+# based on the response with rarefection
+biome_site_level_richness_ratio%>%rename(LABEL=biome)
+
+parameter_CZ_no_landuse%>%mutate(guild_biome=paste(guild,"_",LABEL))->df1
+# mismatch of the biomes because the choic of the resolution
+biome_site_level_richness_ratio$guild_biome=gsub("Moist","Dry",biome_site_level_richness_ratio$guild_biome)
+
+biome_site_level_richness_ratio%>%left_join(df1,by="guild_biome")%>%
+  filter(!is.na( mean_ratio))%>%mutate(affinity=mean_ratio^(1/mean_zvalue))%>%
+  rename(guild=guild.x)->habitat_affinity_with_land_history_rarefy
+
+saveRDS(habitat_affinity_with_land_history_rarefy,file="habitat_affinity_with_land_history_rarefy.rds")
 
 
 # the richness among seven different guilds
@@ -180,6 +218,7 @@ load("~/soil-sar/plot-sar-permutation/land use effect/land_rich_para_updated.RDa
 load("~/soil-sar/plot-sar-permutation/land use effect/land_rich_plapat_updated.RData")
 load("~/soil-sar/plot-sar-permutation/land use effect/land_rich_plapt_updated.RData")
 load("~/soil-sar/plot-sar-permutation/land use effect/land_rich_soilsap_updated.RData")
+load("~/soil-sar/plot-sar-permutation/land use effect/land_rich_woodsap_updated.RData")
 
 
 mean_richness_guild=bind_rows(land_rich_AM_updated%>%group_by(variable)%>%summarize(mean=mean(value,na.rm=TRUE)),
@@ -195,7 +234,7 @@ mean_richness_guild=bind_rows(land_rich_AM_updated%>%group_by(variable)%>%summar
 
 guild_type=c("AM","EM","soilsap","littersap","woodsap","plapat","para","epiphy","all")
 
-# sensitivity isdefined as the richness ratio between the natural and human-modified landscapes
+# sensitivity was defined as the richness ratio between the natural and human-modified landscapes
 
 sensitivity=numeric()
 for (i in 1:9)
@@ -204,9 +243,45 @@ for (i in 1:9)
   sensitivity[i]=df[1,2]/df[2:7,2] %>%mean()
 }
 
+# to test the significance of the response ratio
+
+pvalue=numeric()
+for (i in 1:9)
+{
+  df=mean_richness_guild%>%filter(guild==guild_type[i])
+  test=t.test(df[1,2]/df[2:7,2], mu = 1, alternative = "two.sided")
+  pvalue[i]=test$p.value
+}
+
+
 
 sensitivity%>%data.frame()%>%bind_cols(guild_type)%>%data.frame()%>%rename_all(~paste0(c("sensitivity","guild")))%>%
   left_join(parameter_CZ_no_landuse,by="guild")%>%mutate(affinity=sensitivity^(1/mean_zvalue))->affinity_no_landuse
+
+# in the analysis, we measured the sensitivity and then get the mean
+# alternatively, we can determined the richness between broadly-defined natural and human-modified landscapes
+my_function_response_ratio=function(data)
+{
+  data%>%mutate(type=if_else(!variable%in% c("cultivatedCrops"),"modified","Natural"))->d
+  # to compare the means among the modified and the natural natural communities
+  #mod=aov(value~type,data=d)
+  d%>%group_by(type)%>%summarise(mean_value=mean(value,na.rm=TRUE))->d
+
+  ratio=d[2,2]/d[1,2]
+  return(ratio)
+}
+
+leveneTest(zvalue~guild,data=guild_mean)
+
+oneway.test(zvalue~guild,data=guild_mean,na.action = na.omit,var.equal = FALSE)
+
+source("http://aoki2.si.gunma-u.ac.jp/R/src/tukey.R", encoding="euc-jp")
+
+tukey(guild_mean$zvalue,guild_mean$guild,method="G")
+
+
+
+
 
 
 
@@ -251,11 +326,10 @@ ggplot() +
 affinity_no_landuse%>%filter(guild=="soilsap")%>%dplyr::select(LABEL, mean_cvalue, mean_zvalue , affinity)%>%melt->habitat_affinity_map
 
 
-ggplot(habitat_affinity_map%>%filter(variable!="mean_cvalue"), aes(y =variable , x = LABEL, fill = value)) +
+a=ggplot(habitat_affinity_map%>%filter(variable!="mean_cvalue"), aes(y =variable , x = LABEL, fill = value)) +
   geom_tile(color = "white", lwd = 1,linetype = 1)+
   scale_fill_gradient2("",low = "blue", mid = "#FFFFCC", high = "red",midpoint = 0.65)+
-  theme(axis.text.x = element_text(angle=90,size=12),
-        axis.text.y = element_text(size = 12))+
+  
   scale_y_discrete(breaks=c("affinity","mean_zvalue"),labels=c("Habitat affinity",expression("Mean "*italic(Z))))+
   theme(legend.position = "right",
         legend.text = element_text(size=8),
@@ -264,25 +338,37 @@ ggplot(habitat_affinity_map%>%filter(variable!="mean_cvalue"), aes(y =variable ,
         plot.title = element_text(size = 15, hjust = 0.5), 
         axis.text.y = element_text(hjust = 0), 
         axis.text.x = element_text(hjust = 1,angle=90), 
-        axis.title.y = element_text(size = 18), 
-        axis.title.x = element_text(size = 18), 
+        axis.title.y = element_text(size = 10), 
+        axis.title.x = element_text(size = 10), 
         axis.ticks.x = element_blank(), 
         legend.key.size = unit(0.3, "cm"),
         panel.background = element_rect(fill = "NA"),
-        panel.border = element_rect(color = "black", size = 1, fill = NA))
+        panel.border = element_rect(color = "black", size = 1, fill = NA))+
+  coord_flip()+
+  ylab("")
 
   
+ # create a graph to show the difference in the habitat affinity among different guilds 
   
   
-  
-ggplot(habitat_affinity_map%>%filter(variable=="mean_cvalue"), aes(y =variable , x = LABEL, fill = value)) +
+b=ggplot(habitat_affinity_map%>%filter(variable=="mean_cvalue"), aes(y =variable , x = LABEL, fill = value)) +
   geom_tile(color = "white", lwd = 1,linetype = 1)+
   scale_fill_gradient2("",low = "blue", mid = "#FFFFCC", high = "red",midpoint = 0.7)+
-  theme(axis.text.x = element_text(angle=90,size=12),
-        axis.text.y = element_text(size = 12))+
-  scale_y_discrete(breaks=c("affinity","mean_zvalue"),labels=c("Habitat affinity",expression("Mean "*italic(Z))))
-
+  theme(axis.text.y = element_blank(),
+        axis.ticks = element_blank(),
+        panel.background = element_rect(fill = "NA"),
+        panel.border = element_rect(color = "black", size = 1, fill = NA))+
+  scale_y_discrete(breaks=c("mean_cvalue"),labels=c(expression("Mean "*italic(c))))+
+  coord_flip()+
+  ylab("")+
+  xlab("")
+a=ggplotGrob(a)
+b=ggplotGrob(b)
+a$heights=b$heights
   
+
+
+
 
 sensitivity%>%data.frame()%>%bind_cols(guild_type)%>%data.frame()%>%rename_all(~paste0(c("sensitivity","guild")))->sensitivity_guild
 
@@ -343,6 +429,8 @@ new_raster[[i]]=temp#each returns a transformed raster
 
 load("~/soil-sar/plot-sar-permutation/land use effect/coords_present_new.RData")
 
+load("coords_present_new.RData")
+
 coords_present%>%data.frame()%>%rename_all(~paste0(c("lon","lat")))->coords_present
 
 land_use_data=matrix(ncol=33,nrow=dim(coords_present)[1])
@@ -365,7 +453,7 @@ land_use_data[,i]=extracted_values[,2]
 apply(land_use_data,1,sum)%>%data.frame()%>%rename_all(~paste0("cover"))->total_area
 
 
-# get the natural and human-dominated land use type cover for each grid
+# get the coverage of natural and human-dominated land use type for each grid
 
 PFT_2015=coords_present%>%bind_cols(land_use_data%>%data.frame()%>%rename_all(~paste0(names(raster1))))
 
@@ -379,7 +467,7 @@ names(No_crop)="No_crop"
 
 PFT_2015%>%bind_cols(No_crop)%>%mutate(area=11637.87^2)->PFT_2015
 
-# the area is fixed for each grid 11637.87 m^2 at the resolution of 10 min
+# the area is fixed for each grid 11637.87 m^2 at the resolution of 10 min of a degree
 
 
 #get the richness within each grid based on the SAR
@@ -390,16 +478,16 @@ grid_level_biomes=terra::extract(r,PFT_2015[,c("lon","lat")])
 
 PFT_2015%>%bind_cols(biomes=grid_level_biomes%>%dplyr::select(LABEL))->PFT_2015
 
-# based on the SAR parameters to determine the richness for each grid
+# based on the SAR parameters to determine the total fungal richness for each grid
 
 # if we do not consider the habitat affinity and focused on the total richness
 
 # the best way is not to differentiate the natural and modified habitats
 
 
-
+# do not consider the land use composition to estimated the richness
 guild_type=c("AM","EM","soilsap","littersap","woodsap","plapat","para","epiphy","all")
-# just based on the total area to determine the richness， this was not included in in the analysis
+#just based on the total area to determine the richness， this was not included in in the analysis
 richness_2015_no_landuse=matrix(ncol=9,nrow=dim(PFT_2015)[1])
 for (i in 1:9)
 {
@@ -424,7 +512,7 @@ for (i in 1:9)
 }
 
 
-# for future richness in 2100 for the scenario of rcp245
+# for future richness in 2100 in the scenario of rcp245
 
 setwd("/Users/luowenqi/soil-sar/plot-sar-permutation/land use effect")
 
@@ -463,7 +551,7 @@ for (i in 1:33)
   land_use_data_2100[,i]=extracted_values[,2]
 }
 
-# check if the total land use cover is about 100%
+# check if the total land use cover approximates 100%
 #apply(land_use_data,1,sum)%>%data.frame()%>%rename_all(~paste0("cover"))->oop
 
 
@@ -506,7 +594,7 @@ for (i in 1:9)
   richness_2100[,i]=richness_temp[,10]
 }
 
-# difference in the richness among the two time points
+# differences in the richness among the two time points in the 
 
 richness_2100=richness_2100%>%data.frame%>%mutate(across(everything(), ~ as.numeric(as.character(.))))
 
@@ -523,7 +611,7 @@ colnames(richness_2015_no_landuse)=guild_type
 
 species_change_land_rcp245=(richness_2100-richness_2015)/richness_2015
 
-species_change_land_rcp245_no_landuse=(richness_2100-richness_2015_no_landuse )/richness_2015_no_landuse
+#species_change_land_rcp245_no_landuse=(richness_2100-richness_2015_no_landuse )/richness_2015_no_landuse
 
 
 # differences in the richness for each guild
@@ -603,12 +691,12 @@ species_change_land_rcp245%>%melt()->species_change_land_rcp245
 # for all the guilds were combined
 species_change_land_rcp245%>%filter(variable=="all")%>%
   bind_cols(coords_present) ->change_richness_rcp245
+# for each of the eight individual guilds
 
 
 
 #species_change_land_rcp245_no_landuse%>%melt()->species_change_land_rcp245_no_landuse
-3species_change_land_rcp245_no_landuse%>%filter(variable=="all")%>%bind_cols(coords_present) ->change_richness_rcp245_no_landuse
-
+species_change_land_rcp245_no_landuse%>%filter(variable=="all")%>%bind_cols(coords_present) ->change_richness_rcp245_no_landuse
 
 
 #species_change_land_rcp245%>%mutate(value=if_else(x1==0&x2==0,0,value))->species_change_land_rcp245
@@ -648,12 +736,15 @@ tem_df_rcp245_land%>%left_join(T_test_result,by="variable")->tem_df_rcp245_land
 
 # to add a polygon of the north america
 
+r_present <- worldclim_global(var = "bio", res = 10,path=getwd())
 
-r_present <- raster::getData("worldclim", var = "bio", res = 10)
+#r_present <- raster::getData("worldclim", var = "bio", res = 10)
+
 r_present <- r_present[[c(1, 4, 12)]]
+
 # Run necessary transformations on wordclim-provided temperature data
-r_present$bio1 <- r_present$bio1 / 10
-r_present$bio4 <- r_present$bio4 / 1000 # no need for further transformation
+#r_present$bio1 <- r_present$bio1 / 10
+#r_present$bio4 <- r_present$bio4 / 1000 # no need for further transformation
 # Crop climate data to study region
 # Let's use North America between 18 and 72 degrees North, excluding Greenland
 north_america <- ne_countries(continent = "North America",type="map_units")
@@ -669,12 +760,26 @@ plot(north_america_cropped)
 # Crop to region
 r_present_northam <- raster::mask(raster::crop(r_present, north_america_cropped), north_america_cropped)
 
+greatlakes <- rnaturalearth::ne_download(
+  scale = 110, type = "lakes", category = "physical"
+) %>%
+  sf::st_as_sf(lakes110, crs = 4269) %>%
+  dplyr::filter(name_en %in% c("Superior", "Michigan", "Huron", "Erie", "Ontario"))
+
+clipOutPoly <- function(r, poly) {
+  r_poly <- raster::mask(r, poly)
+  r[which(!is.na(as.matrix(r_poly)))] <- NA
+  r
+}
+
+
+r_present_northam <- clipOutPoly(r_present_northam, greatlakes) # the map based on climates so no need to add variables
 
 
 
 
 
-p1=ggplot(change_richness_rcp245) +
+ggplot(change_richness_rcp245) +
   geom_point(data = change_richness_rcp245, pch=21,aes(x = lon, y = lat, color = value), size = 0.275) +
   scale_color_gradient2(expression("Change %"), low = "seagreen", mid="yellow",high = "purple", na.value = "white")+ 
   xlab("Predicted species loss") +
@@ -697,7 +802,8 @@ p1=ggplot(change_richness_rcp245) +
   xlab("")+
   ylab("Land-use impact")+
 
-  #ggtitle("RCP4.5 & SSP2")+
+  #ggtitle("RCP4.5 & SSP2")
+  
   geom_sf(data=st_as_sf(north_america_cropped),size=0.1, col="black", fill=alpha("gray80", 0.2),linetype = "solid")+
   scale_size(range = c(0.5, 2))
 
@@ -845,7 +951,7 @@ theme(legend.position = c(0.8,0.87),
   geom_vline(xintercept =0,color="gray",linetype="dashed")+
   ylab("")+
   xlab("")+
-  scale_y_discrete(breaks=guild_type,position="right",labels=c("AM(+4.1%)","EM(-4.7%)","Soil saprotroph(+4.5%)","Litter saprotroph(+3.2%)","Wood saprotroph(-0.6%)","Plant pathogen(+4.2%)","Parasite(-1.8%)","Epiphyte(-4.6%)","All(-1.2%)"))+
+  scale_y_discrete(breaks=guild_type,position="right",labels=c("AM(+4.1%)","EM(-4.7%)","Soil saprotroph(-4.5%)","Litter saprotroph(+3.2%)","Wood saprotroph(-0.6%)","Plant pathogen(+4.2%)","Parasite(-1.8%)","Epiphyte(-4.6%)","All(-1.2%)"))+
   geom_segment(data=tem_df_rcp245_land,size=0.35,color="black",aes(x=overal_mean-low,xend=overal_mean+up,y=variable,yend=variable))+
   geom_point(aes(y=variable,x=overal_mean),pch=23,color="black",size=2,fill="seagreen1",alpha=0.5)+
   geom_hline(yintercept = 8.5,color="red",size=1,alpha=0.3,linetype="dotted")+
@@ -870,7 +976,7 @@ p7=plot_grid(p1,p2,p3,ncol=3,rel_heights = c(1,0.6,0.6),rel_widths  = c(1,0.5,0.
 
 ###
 
-# for future richness in the year of 2100
+# for future richness in the year of 2100 in the scenario of RCP585
 
 setwd("/Users/luowenqi/soil-sar/plot-sar-permutation/land use effect")
 
@@ -879,12 +985,9 @@ raster2 <- rast("GCAM_Demeter_LU_ssp5_rcp85_hadgem_2100.nc")# use the 2015 data 
 ext(raster2) <- c(-90, 90, -180, 180)
 crs(raster2) <- "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
 b <- as(extent (-72, -18, -170, -55), "SpatialPolygons")
-
 coarser_raster <- aggregate(raster2, fact = 3, fun = mean) # convert it to a coarse resolution
 cropped_raster<- crop(coarser_raster, b)
 cropped_raster=flip(t(cropped_raster),direction = "horizontal")# transpose the raster to a right position
-
-
 new_raster =list()
 for (i in 1:33){
   temp<- rast(nrows=nrow(cropped_raster), ncols=ncol(cropped_raster), 
@@ -896,23 +999,16 @@ for (i in 1:33){
 }
 
 # make equal area projection for each raster and extract the values
-
 land_use_data_2100=matrix(ncol=33,nrow=dim(coords_present)[1])
 for (i in 1:33)
 {
   cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
-  
   r_projected <- terra::project(new_raster[[i]], "EPSG:5070")
   # transformed the coordinates
-  
   #points <- vect(coords_present%>%data.frame()%>%rename_all(~paste0(c("lon","lat")), crs=crs(r_projected )))
-  
   points_sf <- st_as_sf(coords_present, coords = c("lon", "lat"), crs = 4326) # CRS 4326 is WGS84
-  
   coordinates_equal_area <- st_transform(points_sf, "EPSG:5070")
-
   extracted_values <- terra::extract(r_projected, coordinates_equal_area)%>%as.matrix()
-  
   land_use_data_2100[,i]=extracted_values[,2]
 }
 
@@ -922,16 +1018,11 @@ for (i in 1:33)
 
 
 PFT_2100_rcp585=coords_present%>%bind_cols(land_use_data_2100%>%data.frame()%>%rename_all(~paste0(names(raster2))))
-
-
 PFT_2100_rcp585=PFT_2100_rcp585%>%mutate(tree=PFT1+PFT2+PFT3+PFT4+PFT5+PFT6+PFT7+PFT8,shrup=PFT9+PFT10+PFT11,grass=PFT12+PFT13+PFT14,
                            crop=PFT15+PFT16+PFT17+PFT18+PFT19+PFT20+PFT21+PFT22+PFT23+PFT24+PFT25+PFT26+PFT27+PFT28+PFT29+PFT30)
-
 temp=PFT_2100_rcp585[,c("PFT1","PFT2","PFT3","PFT4","PFT5","PFT6","PFT7","PFT8","PFT9","PFT10","PFT11","PFT12","PFT13","PFT14")]
-
 No_crop=apply(temp, 1, sum)%>%data.frame()
 names(No_crop)="No_crop"
-
 PFT_2100_rcp585%>%bind_cols(No_crop)%>%mutate(area=11637.87^2)->PFT_2100_rcp585
 
 # the area is fixed 11637.87^2 with a resolution of 10 min
@@ -942,10 +1033,7 @@ PFT_2100_rcp585%>%bind_cols(No_crop)%>%mutate(area=11637.87^2)->PFT_2100_rcp585
 # get the biomes for each gird
 
 grid_level_biomes=terra::extract(r,PFT_2100_rcp585[,c("lon","lat")])
-
 PFT_2100_rcp585%>%bind_cols(biomes=grid_level_biomes%>%dplyr::select(LABEL))->PFT_2100_rcp585
-
-
 
 # get the richness for each guild and each grid
 
@@ -955,10 +1043,13 @@ richness_2100_rcp585=matrix(ncol=9,nrow=dim(PFT_2100_rcp585)[1])
 for (i in 1:9)
 {
   richness_temp=PFT_2100_rcp585%>%dplyr::select(crop,No_crop,LABEL,area)%>%
-    left_join(affinity_no_landuse%>%filter(guild==guild_type[i]),by="LABEL")%>%
+    left_join(full_guild_affinity_data%>%dplyr::select(guild, mean_zvalue, mean_cvalue,LABEL,affinity)%>%
+                filter(guild==guild_type[i]),by="LABEL")%>%
     mutate(richness=mean_cvalue*(affinity*crop/100*area+No_crop/100*area)^mean_zvalue)%>%as.matrix()
-  richness_2100_rcp585[,i]=richness_temp[,10]
+  richness_2100_rcp585[,i]=richness_temp[,"richness"]
 }
+
+
 
 # difference in the richness among the two time points
 
@@ -972,7 +1063,9 @@ colnames(richness_2015)=c("AM","EM","soilsap","littersap","woodsap","plapat","pa
 
 
 species_change_land_rcp585=(richness_2100_rcp585-richness_2015)/richness_2015
+
 species_change_land_rcp585%>%melt()->species_change_land_rcp585
+
 species_change_land_rcp585%>%filter(variable=="all")%>%bind_cols(coords_present) ->change_richness_rcp585
 
 
@@ -1072,6 +1165,7 @@ p6=ggplot(data=tem_df_rcp585_land,aes(fill=type,y=variable ,x=mean_value))+
   geom_col(width = 0.5,color="black")+
   #geom_errorbar(data=tem_df_rcp585_land, aes(xmin = mean_value- sd_value/sqrt(count), xmax = mean_value +sd_value/sqrt(count)),width=0.2)+
   scale_fill_manual("",breaks=c("Negative","Positive"),labels=c("Loss","Gain"),values=c("#8fd1e1","#fedc5e"))+
+
   theme(legend.position = c(0.8,0.87),
         legend.text = element_text(size=8),
         legend.title  = element_text(size=10),
@@ -1096,7 +1190,7 @@ p6=ggplot(data=tem_df_rcp585_land,aes(fill=type,y=variable ,x=mean_value))+
   ggtitle("RCP8.5 & SSP5")+
   geom_hline(yintercept = 8.5,color="red",size=1,alpha=0.3,linetype="dotted")+
   xlim(-0.15,0.15)+
-  geom_text(data=tem_df_rcp585_land,size=6,color="black",
+  geom_text(data=tem_df_rcp585_land,size=4,color="black",
             aes(x=rep(c(0.032182824253641, -0.0315022376859, -0.03021121617,  0.03022191932, -0.03004074219,  0.03030850445, -0.03010492210,
                          -0.03021995706, -0.03007214357),each=2),y=variable),label="***")
 
@@ -1302,75 +1396,13 @@ p2=ggplot(data, aes(x = log_area, y = log_richness)) +
 plot_grid(p1,p2,ncol=1)
 
 
-### the importance
-
-
-
-north_america <- ne_countries(continent = "North America", scale = "medium", returnclass = "sf")
-
-north_america <- north_america %>% filter(iso_a3 != "CAN")
-
-# Extract Alaska
-alaska <- north_america %>% filter(iso_a3 == "USA" & name == "Alaska")
-
-# Move Alaska
-alaska <- st_transform(alaska, st_crs(north_america)) %>%
-  st_set_geometry(alaska$geometry + c(30, -50))
-
-# Combine Alaska back with the res
-
-
-world <- ne_countries(scale = "medium", returnclass = "sf")
-north_america <- world[world$continent == "North America", ]
-
-
-ggplot(data = north_america) +
-  geom_sf() +
-  coord_sf(xlim = c(-170, -30), ylim = c(5, 85), expand = FALSE) +
-  theme_minimal()
-
-
-###
-
-alaska <- north_america[north_america$admin == "United States of America" & north_america$subunit == "Alaska", ]
-
-# Main map without Alaska
-main_map <- north_america[!(north_america$admin == "United States of America" & north_america$subunit == "Alaska"), ]
-
-main_plot <- ggplot(data = main_map) +
-  geom_sf() +
-  coord_sf(xlim = c(-170, -30), ylim = c(5, 85), expand = FALSE) +
-  theme_minimal()
-
-alaska_plot <- ggplotGrob(
-  ggplot(data = alaska) +
-    geom_sf() +
-    coord_sf(xlim = c(-180, -120), ylim = c(50, 75), expand = FALSE) +
-    theme_void()
-)
-
-main_plot + 
-  annotation_custom(grob = alaska_plot, xmin = -130, xmax = -60, ymin = -70, ymax = -40)
 
 ###
 
 
-
-# Load US map
-# Load US map
-us <- st_as_sf(maps::map("state", plot = FALSE, fill = TRUE))
-
-# Filter out Alaska and the rest of the US
-alaska <- us %>% filter(ID == "alaska")
-mainland_us <- us %>% filter(ID != "alaska")
+ggplot()+
+  geom_point(data=dk,aes( y=zvalue.y,x=zvalue.x ))+
+  ylab("standardized sampling\n 1,4,9,16 cores in the 100,400,900,1600 m^2 scales")+
+  xlab("unstandardized sampling\n (1,3,4,6,10 cores in the 25, 100,400,900,1600m^2 scales)")
 
 
-p1 <- ggplot() +
-  geom_sf(data = mainland_us, fill = "white", color = "black") +
-  theme_void() +
-  ggtitle("Mainland US")
-
-p2 <- ggplot() +
-  geom_sf(data = alaska, fill = "white", color = "black") +
-  theme_void() +
-  ggtitle("Alaska")
