@@ -161,7 +161,6 @@ ggplot()+
 
 ### when only soil and climate variables were considered, more plots were included
 
-
 effect_guild_specific=bind_rows(modified_effect[[2]][,c(1,2,4)],
                                 modified_effect[[3]][,c(1,2,4)],
                                 modified_effect[[4]][,c(1,2,4)],
@@ -264,7 +263,7 @@ for (i in 1:9)
 
 
 
-### we just focus on the soil and climate variables, load in the initial data
+### if we just focus on the soil and climate variables, load in the initial data
 
 load("~/soil-sar/plot-sar-permutation/model_data_SAR.RData")
 
@@ -328,23 +327,24 @@ for (i in 1:9)
   }
 }
 
-### if we do not do model selection
+
 
 ### if we don't do model selection and just to see all the significant variables
+
 
 sel_vab_step=list()
 for (i in 1:9)
 {
   if(i<9)
   {
-    mod <- lmer(zvalue ~ logc+soilInCaClpH +organicCPercent +cec+ sand +bio1+ bio2 +bio4 + bio8+bio12 + bio15 + bio18  + (1 |siteIDD), data = data[[i]])
+    mod <- lmer(zvalue ~ logc+soilInCaClpH +soilMoisture +organicCPercent +cec+ sand +bio1+ bio2 +bio4 + bio8+bio12 + bio15 + bio18  + (1 |siteIDD), data = data[[i]])
     mod=summary(mod)
     kk=mod$coefficients%>%data.frame()%>%filter(!Pr...t..>0.05)
     sel_vab_step[[i]]=rownames(kk)[1:dim(kk)[1]]
   }
   else{
     {
-      mod <- lmer(zvalue ~ logc+soilInCaClpH +organicCPercent +cec+ sand +bio1+ bio2+bio8  + bio12 + bio15 + bio18 + (1 |siteIDD), data = data[[i]])
+      mod <- lmer(zvalue ~ logc+soilInCaClpH +soilMoisture +organicCPercent +cec+ sand +bio1+ bio2+bio8  + bio12 + bio15 + bio18 + (1 |siteIDD), data = data[[i]])
       mod=summary(mod)
       kk=mod$coefficients%>%data.frame()%>%filter(!Pr...t..>0.05)
       sel_vab_step[[i]]=rownames(kk)[1:dim(kk)[1]]
@@ -352,11 +352,50 @@ for (i in 1:9)
   }
 }
 
+## when plant was not included and we do not do model selection
+
+effect=list()
+for (i in 1:9)
+{
+  if(i<9)
+  {
+    mod <- lmer(zvalue ~ logc+soilInCaClpH+soilMoisture +organicCPercent +cec+ sand +bio1+ bio2 +bio4 + bio8+bio12 + bio15 + bio18  + (1 |siteIDD), data = data[[i]])
+    mod=summary(mod)
+    kk=mod$coefficients%>%data.frame()
+    effect[[i]]=kk[2:14,][,c(1,2,5)]
+  }
+  else{
+    {
+      mod <- lmer(zvalue ~ logc+soilInCaClpH+soilMoisture +organicCPercent +cec+ sand +bio1+ bio2+bio4+bio8  + bio12 + bio15 + bio18 + (1 |siteIDD), data = data[[i]])
+      mod=summary(mod)
+      kk=mod$coefficients%>%data.frame()# for i=9, bio4 was excluded to avoid colinearity
+      effect[[i]]=kk[2:14,][,c(1,2,5)]
+    }
+  }
+}
+
+
+## to bind all the effect sizes
+effect[[1]]%>%mutate(var=rownames(effect[[1]]))%>%
+  bind_rows(effect[[2]]%>%mutate(var=rownames(effect[[2]])))%>%
+  bind_rows(effect[[3]]%>%mutate(var=rownames(effect[[3]])))%>%
+  bind_rows(effect[[4]]%>%mutate(var=rownames(effect[[4]])))%>%
+  bind_rows(effect[[5]]%>%mutate(var=rownames(effect[[5]])))%>%
+  bind_rows(effect[[6]]%>%mutate(var=rownames(effect[[6]])))%>%
+  bind_rows(effect[[7]]%>%mutate(var=rownames(effect[[7]])))%>%
+  bind_rows(effect[[8]]%>%mutate(var=rownames(effect[[8]])))%>%
+  bind_rows(effect[[9]]%>%mutate(var=rownames(effect[[9]])))%>%
+  mutate(guild=rep(guild_select,each=13))%>%
+  rename_all(~paste0(c("estimate","sd","pva","var","guild")))-> effect_no_plant
+  
+
+
 
 
 
 
 ## extract the effect size
+## seems to be the process of variable selection
 
 effect=list()
 for (i in 1:9)
@@ -364,13 +403,14 @@ for (i in 1:9)
   cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
   random_effect <- "(1|siteIDD)"
   response="zvalue"
-  fixed_effects=sel_vab_step[[i]]
+  fixed_effects=sel_vab_step[[i]]%>%data.frame()%>%rename_all(~paste0("var"))%>%filter(var!="(Intercept)")%>%pull()
   fixed_effects_formula <- paste(fixed_effects, collapse = " + ")# the selected variables
   formula_string <- paste(response, "~", fixed_effects_formula, "+", random_effect)%>%as.formula()
   mod <- lmer(formula_string, data = data[[i]])
   mod2=summary(mod)
   effect[[i]]=mod2$coefficients[,c(1,2,5)]%>%data.frame()%>%mutate(var=rownames(mod2$coefficients))
 }
+
 
 ## to create a data.frame with all variables shown
 
@@ -402,43 +442,66 @@ save(effect_non_plant,file="effect_non_plant.RData")
 ## when all the guilds were included
 
 
+effect_no_plant$var=factor(effect_no_plant$var,levels=c("logc","soilInCaClpH", "organicCPercent", "soilMoisture" , "cec", "sand" , "bio1" , "bio2","bio4" , "bio8" ,"bio12" , "bio15" , "bio18"))        
+effect_no_plant$guild=factor(effect_no_plant$guild,levels=c("all","AM","EM","epiphy","littersap","para","plapat","soilsap","woodsap"))                           
+effect_no_plant$pva[effect_no_plant$pva<0.01]="**"
+effect_no_plant$pva[effect_no_plant$pva>0.01&effect_no_plant$pva<0.05]="*"
+effect_no_plant$pva[effect_no_plant$pva>0.05]=""
 
-effect_non_plant%>%filter(guild!="all")%>%select(var,estimate,guild,pva)->guild_effect_no_plant
-
-guild_effect_no_plant$var=factor(guild_effect_no_plant$var,levels=c("soilInCaClpH", "organicCPercent", "soilMoisture" , "cec", "sand" , "bio1" , "bio2","bio4" , "bio8" ,"bio12" , "bio15" , "bio18"))        
-guild_effect_no_plant$guild=factor(guild_effect_no_plant$guild,levels=c("AM","EM","epiphy","littersap","para","plapat","soilsap","woodsap"))                           
-
-
-guild_effect_no_plant$pva[guild_effect_no_plant$pva<0.01]="**"
-guild_effect_no_plant$pva[guild_effect_no_plant$pva>0.01&guild_effect_no_plant$pva<0.05]="*"
-guild_effect_no_plant$pva[guild_effect_no_plant$pva>0.05]=""
+# when all the guilds were combined
 
 
+p1=ggplot(data=effect_no_plant%>%filter(guild=="all"),aes(x=estimate,y=1:13))+
+  geom_point(size=3,pch=21,color="black",fill=rep(c("red","tan","skyblue"),times=c(1,5,7)))+
 
-p2=ggplot(guild_effect_no_plant, aes(y =guild , x = var, fill = estimate)) +
+  geom_errorbar(aes(xmin = estimate-1.96*sd, xmax = 1.96*sd+estimate,width=0.2),
+                color=rep(c("red","tan","skyblue"),times=c(1,5,7)))+
+  geom_vline(xintercept = 0,linetype="dashed")+
+  scale_y_continuous (breaks=1:13,labels = c(expression(italic(C)),"pH", "SoilC", "Moisture", "CEC", "Sand" , "MAT" ,   
+                                             "MDR","Temp.seas." , "MTWQ" ,"MAP" , "Pre.seas." , "PWQ" ))+
+  theme(panel.border = element_rect(fill=NA,size=1,color="black"),
+        axis.title.x = element_text(size=15),
+        axis.title.y = element_text(size=15),
+        axis.ticks.length = unit(-0.150, "cm"),
+        axis.text.y  = element_text(size=12,hjust=0,margin = margin(r=-70)),
+        plot.title=element_text(hjust=0.5,size=18),
+        axis.text.x = element_text(angle=90,size=15,hjust = 1),
+        panel.background = element_blank(),
+        plot.margin = unit(c(0.5, 0.5, 1.5, 0), "cm"))+
+  ylab("")+
+  xlab("Effect size ± 95%CI")+
+  xlim(-1.2,0.6)+
+  ggtitle("Climate+Soil(N=304)")
+
+
+###
+
+
+
+
+p1=ggplot(guild_effect_no_plant, aes(y =guild , x = var, fill = estimate)) +
   geom_tile(color = "white", lwd = 1,linetype = 1)+
-  scale_fill_gradient2("Eeffect size",low = "#075AFF", mid = "#FFFFCC", high = "#FF0000")+
+  scale_fill_gradient2("Eeffect size",low = "olivedrab1", mid = "#FFFFCC", high = "magenta",midpoint = -0.2)+
 
   scale_x_discrete(breaks=as.character(unique(guild_effect_no_plant$var)),
-                   labels = c("pH", "SoilC", "Moisture", "CEC", "Sand" , "MAT" ,   
-                              "MDR","Tem.seas." , "MTWQ" ,"MAP" , "Pre.seas." , "PWQ" ))+
+                   labels = c(expression(italic(C)),"pH", "SoilC", "Moisture", "CEC", "Sand" , "MAT" ,   
+                              "MDR","Temp.seas." , "MTWQ" ,"MAP" , "Pre.seas." , "PWQ" ))+
   scale_y_discrete(breaks=as.character(unique(guild_effect_no_plant$guild)),
                    labels = c("ECM(N=304)","Litter saprotroph(N=304)","Parasite(N=301)",
                    "Soil saprotroph(N=304)","Wood saprotroph(N=304)","Plant pathogen(N=303)","ACM(N=268)", "Epiphyte(N=270)"))+
-
   theme(panel.border = element_rect(fill=NA,size=1,color="black"),
         axis.title.x = element_text(size=15),
         axis.title.y = element_text(size=15),
         axis.text.y  = element_text(size=15,color="black"),
         plot.title=element_text(hjust=0.5,face="bold",size=18),
         axis.text.x = element_text(angle=90,size=15,hjust = 1),
-        plot.margin = margin(b=-0.5, unit="cm"))+
+        plot.margin = unit(c(1, 0.5, -0.5, 1.5), "cm"))+
   #ggtitle("Guild-specific effect")+
   xlab("")+
   ylab("")+
   geom_text(aes(x = var, y = guild, label = guild_effect_no_plant$pva),size=6)
 
-plot_grid(p1,p3,ncol=2,labels=c("(a)","(b)"),label_x = 0.25)
+plot_grid(p1,p2,ncol=1,labels=c("(a)","(b)"),label_x = 0.25,label_y = c(1,1,5))
   
 
 ##if we do not do model selection for the data that include 
@@ -467,21 +530,7 @@ for (i in 1:9)
 
 ## when richness was included in the model
 
-load("~/soil-sar/plot-sar-permutation/model_data_SAR.RData")
 
-model_data_SAR_rich=model_data_SAR%>%dplyr::select(siteIDD,plotID,guild,lon, lat,logc,  zvalue,  soilInCaClpH ,nitrogenPercent, organicCPercent, soilMoisture, cec, sand,  bio1, bio2,  bio4, bio8, bio12, bio15, bio18,richness)
-
-model_data_SAR_rich=model_data_SAR_rich[complete.cases(model_data_SAR_rich),]
-
-data=list()
-for (i in 1:9)
-{
-  d=model_data_SAR_rich%>%filter(guild==guild_select[i]) 
-  
-  d[,c(6:21)]=apply(d[,c(6:21)],2,range01)
-  
-  data[[i]]=d
-}
 
 # construct the model
 
@@ -507,7 +556,49 @@ for (i in 1:9)
   }
 }
 
-###
+### extract the effects
+
+
+effect=list()
+for (i in 1:9)
+{
+  if(i<9)
+  {
+    mod <- lmer(zvalue ~ logc+soilInCaClpH+soilMoisture +organicCPercent +cec+ sand +bio1+ bio2 +bio4 + bio8+bio12 + bio15 + bio18  + richness+(1 |siteIDD), data = data[[i]])
+    mod=summary(mod)
+    kk=mod$coefficients%>%data.frame()
+    effect[[i]]=kk[2:15,][,c(1,2,5)]
+  }
+  else{
+    {
+      mod <- lmer(zvalue ~ logc+soilInCaClpH+soilMoisture +organicCPercent +cec+ sand +bio1+ bio2+bio4+bio8  + bio12 + bio15 + bio18 + richness+(1 |siteIDD), data = data[[i]])
+      mod=summary(mod)
+      kk=mod$coefficients%>%data.frame()# for i=9, bio4 was excluded to avoid co-linearity
+      effect[[i]]=kk[2:15,][,c(1,2,5)]
+    }
+  }
+}
+
+# combine all the effects
+
+effect[[1]]%>%mutate(var=rownames(effect[[1]]))%>%
+  bind_rows(effect[[2]]%>%mutate(var=rownames(effect[[2]])))%>%
+  bind_rows(effect[[3]]%>%mutate(var=rownames(effect[[3]])))%>%
+  bind_rows(effect[[4]]%>%mutate(var=rownames(effect[[4]])))%>%
+  bind_rows(effect[[5]]%>%mutate(var=rownames(effect[[5]])))%>%
+  bind_rows(effect[[6]]%>%mutate(var=rownames(effect[[6]])))%>%
+  bind_rows(effect[[7]]%>%mutate(var=rownames(effect[[7]])))%>%
+  bind_rows(effect[[8]]%>%mutate(var=rownames(effect[[8]])))%>%
+  bind_rows(effect[[9]]%>%mutate(var=rownames(effect[[9]])))%>%
+  mutate(guild=rep(guild_select,each=14))%>%
+  rename_all(~paste0(c("estimate","sd", "pva","var","guild")))-> effect_with_plant
+
+
+
+
+
+
+#### below are the old-version codes
 
 effect=list()
 for (i in 1:9)
@@ -515,16 +606,13 @@ for (i in 1:9)
   cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
   random_effect <- "(1|siteIDD)"
   response="zvalue"
-  fixed_effects=sel_vab_step[[i]]
+  fixed_effects=sel_vab_step[[i]]#just select the significant
   fixed_effects_formula <- paste(fixed_effects, collapse = " + ")# the selected variables
   formula_string <- paste(response, "~", fixed_effects_formula, "+", random_effect)%>%as.formula()
   mod <- lmer(formula_string, data = data[[i]])
   mod2=summary(mod)
   effect[[i]]=mod2$coefficients[,c(1,2,5)]%>%data.frame()%>%mutate(var=rownames(mod2$coefficients))
 }
-
-
-
 
 
 
@@ -554,13 +642,8 @@ effect_with_plant=bind_rows(modified_effect[[1]],
 
 ## for individual guilds
 
-
-
-effect_with_plant%>%filter(guild!="all")%>%select(var,estimate,guild,pva)->guild_effect_with_plant
-
 guild_effect_no_plant$var=factor(guild_effect_no_plant$var,levels=c("soilInCaClpH", "organicCPercent", "soilMoisture" , "cec", "sand" , "bio1" , "bio2","bio4" , "bio8" ,"bio12" , "bio15" , "bio18"))        
 guild_effect_no_plant$guild=factor(guild_effect_no_plant$guild,levels=c("AM","EM","epiphy","littersap","para","plapat","soilsap","woodsap"))                           
-
 
 guild_effect_no_plant$pva[guild_effect_no_plant$pva<0.01]="**"
 guild_effect_no_plant$pva[guild_effect_no_plant$pva>0.01&guild_effect_no_plant$pva<0.05]="*"
@@ -595,9 +678,11 @@ p2=ggplot(guild_effect_no_plant, aes(x =var , y = guild, fill = estimate)) +
 
 ####
 
-guild_effect_with_plant$var=factor(guild_effect_with_plant$var,levels=c("soilInCaClpH", "organicCPercent", "soilMoisture" , "cec", "sand" , "bio1" , "bio2","bio4" , "bio8" ,"bio12" , "bio15" , "bio18","richness"))        
-guild_effect_with_plant$guild=factor(guild_effect_with_plant$guild,levels=c("AM","EM","epiphy","littersap","para","plapat","soilsap","woodsap"))                           
+effect_with_plant%>%select(var,estimate,sd,guild,pva)->guild_effect_with_plant
 
+
+guild_effect_with_plant$var=factor(guild_effect_with_plant$var,levels=c("logc","soilInCaClpH", "organicCPercent", "soilMoisture" , "cec", "sand" , "bio1" , "bio2","bio4" , "bio8" ,"bio12" , "bio15" , "bio18","richness"))        
+guild_effect_with_plant$guild=factor(guild_effect_with_plant$guild,levels=c("AM","EM","epiphy","littersap","para","plapat","soilsap","woodsap","all"))                           
 
 guild_effect_with_plant$pva[guild_effect_with_plant$pva<0.01]="**"
 guild_effect_with_plant$pva[guild_effect_with_plant$pva>0.01&guild_effect_with_plant$pva<0.05]="*"
@@ -605,28 +690,65 @@ guild_effect_with_plant$pva[guild_effect_with_plant$pva>0.05]=""
 
 
 
-p4=ggplot(guild_effect_with_plant, aes(x =var , y = guild, fill = estimate)) +
+
+
+ggplot(data=guild_effect_with_plant%>%filter(guild!="all"), aes(x =var , y = guild, fill = estimate)) +
   geom_tile(color = "white", lwd = 1,linetype = 1)+
-  scale_fill_gradient2("Eeffect size",low = "#075AFF", mid = "#FFFFCC", high = "#FF0000")+
+  scale_fill_gradient2("Eeffect size",low = "olivedrab1", mid = "#FFFFCC", high = "magenta")+
   
   scale_x_discrete(breaks=as.character(unique(guild_effect_with_plant$var)),
-                   labels = c("pH", "SoilC", "Moisture", "CEC", "Sand" , "MAT" ,   
-                              "MDR","Tem.seas." , "MTWQ" ,"MAP" , "Pre.seas." , "PWQ","Pla.rich" ))+
-  scale_y_discrete(breaks=as.character(unique(guild_effect_with_plant$guild)),
+                   labels = c(expression(italic(C)),"pH", "SoilC", "Moisture", "CEC", "Sand" , "MAT" ,   
+                              "MDR","Temp.seas." , "MTWQ" ,"MAP" , "Pre.seas." , "PWQ","Pla.rich" ))+
+
+  scale_y_discrete(breaks=c("EM","littersap", "para" , "soilsap" ,"woodsap" ,  "plapat" ,   "AM" ,"epiphy"),
                    labels = c("ECM(N=279)","Litter saprotroph(N=279)","Parasite(N=279)",
                               "Soil saprotroph(N=276)","Wood saprotroph(N=279)","Plant pathogen(N=278)","ACM(N=245)", "Epiphyte(N=245)"))+
-  
+
   theme(panel.border = element_rect(fill=NA,size=1,color="black"),
         axis.title.x = element_text(size=15),
         axis.title.y = element_text(size=15),
         axis.text.y  = element_text(size=15,color="black"),
         plot.title=element_text(hjust=0.5,face="bold",size=18),
         axis.text.x = element_text(angle=90,size=15,hjust = 1),
-        plot.margin = margin(b=-0.5, unit="cm"))+
+        plot.margin = unit(c(0, 0.5, 1, 1.5), "cm"))+
   #ggtitle("Guild-specific effect")+
   xlab("")+
   ylab("")+
-  geom_text(aes(x = var, y = guild, label = guild_effect_with_plant$pva),size=6)
+  geom_text(data=guild_effect_with_plant%>%filter(guild!="all"),aes(x = var, y = guild, label = guild_effect_with_plant%>%filter(guild!="all")%>%
+                                                                      dplyr::select(pva)%>%pull()),size=6)
+
+
+
+## when all the guilds were combined
+
+ggplot(data=guild_effect_with_plant%>%filter(guild=="all"),aes(x=estimate,y=1:14))+
+         geom_point(size=3,pch=21,color="black",fill=rep(c("red","tan","skyblue","seagreen1"),times=c(1,5,7,1)))+
+  geom_errorbar(aes(xmin = estimate-1.96*sd, xmax = 1.96*sd+estimate,width=0.2),
+                color=rep(c("red","tan","skyblue","seagreen1"),times=c(1,5,7,1)))+
+  geom_vline(xintercept = 0,linetype="dashed")+
+  scale_y_continuous (breaks=1:14,labels = c(expression(italic(C)),"pH", "SoilC", "Moisture", "CEC", "Sand" , "MAT" ,   
+                              "MDR","Temp.seas." , "MTWQ" ,"MAP" , "Pre.seas." , "PWQ","Pla.rich." ))+
+  theme(panel.border = element_rect(fill=NA,size=1,color="black"),
+        axis.title.x = element_text(size=15),
+        axis.title.y = element_text(size=15),
+        axis.text.y  = element_text(size=13,color="black"),
+        plot.title=element_text(hjust=0.5,face="bold",size=18),
+        axis.text.x = element_text(angle=90,size=15,hjust = 1),
+        panel.background = element_blank(),
+        plot.margin = unit(c(0, 0.5, 1, 1.5), "cm"))+
+  ylab("")+
+  xlab("Effect size ± 95%CI")+
+  ggtitle("Climate+Soil(N=279)")
+  
+## need to add the variance partitioning result
+
+
+
+
+
+
+
+
 
 a=numeric()
 for (i in 1:9){
