@@ -119,8 +119,8 @@ full_neon_data_with_sd%>%filter(plotid%in%rand_plot&!is.na(mean_value) )->plot_d
          plot.margin = unit(c(0.2, 2, 0, 1), "cm"),
          panel.background = element_rect(fill = "NA"),
          panel.border = element_rect(color = "black", size = 1, fill = NA))+
-   xlab(expression(Area *" " * m^2))+
-   ylab("Richness")+
+   xlab(expression(Area *" " * (m^2)))+
+   ylab("Taxonomic diversity")+
    guides(color = guide_legend(nrow = 10))+
    ylim(0,3500)
    
@@ -176,7 +176,7 @@ p_z_guild=ggplot(guild_mean,aes(x=guild,y=zvalue,fill=guild),alpha=0.5)+
         axis.title.y = element_text(size = 18), 
         axis.title.x = element_text(size = 18), 
         axis.ticks.x = element_blank(), 
-        axis.ticks.y = element_blank(),
+        #axis.ticks.y = element_blank(),
         panel.background = element_rect(fill = "NA"),
         panel.border = element_rect(color = "black", fill = NA, size = 1)
         )+
@@ -194,7 +194,6 @@ p_z_guild=ggplot(guild_mean,aes(x=guild,y=zvalue,fill=guild),alpha=0.5)+
   #annotate("text", x = 7, y = 1.014, label = "d", size = 6) +
   #annotate("text", x = 8, y = 1.15, label = "d", size = 6) +
   ylim(0,1.3)
-
 
   
   #scale_fill_manual("", breaks = od$guild, values = c("chocolate1", "gray", "royalblue", "#f0a73a", "seagreen", "#7c1a97","#c94e65", "tan"), 
@@ -329,7 +328,7 @@ p11=ggplot(data=effect_no_plant%>%filter(guild=="all"),aes(x=estimate,y=1:13))+
         panel.background = element_blank(),
         plot.margin = unit(c(0.5, 0.5, 0.5, 0.3), "cm"))+
   ylab("")+
-  xlab("Effect size ± 95%CI (N=453)")+
+  xlab("Effect size ± 95% CI (N=453)")+
   xlim(-0.6,0.6)+
   #ggtitle("Climate+Soil(N=453)")+
   annotate("text",x=-0.31,y=1,label="***",size=8)+
@@ -465,38 +464,36 @@ p_z_distribu=ggplot(full_parameter_data%>%filter(guild=="all"&!is.na(zvalue)), a
 
 
 
-p_effects=plot_grid(p1,p11,ncol=2,rel_widths = c(1,2))
+
 
 p1=ggplotGrob(p1)
 p11=ggplotGrob(p11)
 
 p1$heights=p11$heights
 
+p_effects=plot_grid(p1,p11,ncol=2,rel_widths = c(1,2))
+
 
 p_z_pva=ggplotGrob(p_zvalue)
 p_effects=ggplotGrob(p_effects)
 p_z_guild=ggplotGrob(p_z_guild)
 p_z_distribu=ggplotGrob(p_z_distribu)
-
+#align the heights
 p_z_pva$heights=p_z_distribu$heights
-
 p_z_pva$heights=p_z_guild$heights
-
 p_z_pva$heights=p_z_distribu$heights
 p_z_guild$heights=p_effects$heights
 
 
 
 p_z_pva$widths=p_z_distribu$widths
-
 p_z_pva$widths=p_z_guild$widths
-
-p_z_pva$widths=p_z_distribu$widths
 p_z_guild$widths=p_effects$widths
 p_z_guild$widths=p_z_pva$widths
-p_z_guild$heights=p1$heights
 
-p_effects=plot_grid(p1,p11,ncol=2,rel_widths = c(1,2))
+p_z_guild$heights=p_z_distribu$heights#important to align the heights
+
+
 
 
 
@@ -505,4 +502,4 @@ plot_grid(p_z_pva,p_z_distribu,p_z_guild,p_effects,ncol=2, label_size = 18, labe
           label_y = c(1.01,1.01,1.03,1.03),
           labels = paste0("(", letters[1:4], ")"))
 
-plot_grid(p_z_guild,p_effects,ncol=2)
+plot_grid(p_z_guild,p_z_distribu)
