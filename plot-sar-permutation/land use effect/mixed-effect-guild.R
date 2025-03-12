@@ -137,9 +137,9 @@ com_data_climate[[j]]=com_data
 com_data_climate_guild[[m]]=com_data_climate
 }
 
+## to combined the net effect based on the raw data
 data_biome_change_rate_guild=readRDS("data_biome_change_rate_guild.rds")
 
-## to combined the net effect based on the raw data
 biome_mean_guild=list()
 for (m in 1:9){
   biome_mean=list()
