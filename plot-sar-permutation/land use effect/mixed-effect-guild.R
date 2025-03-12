@@ -159,6 +159,8 @@ for (m in 1:9){
 
 com_data_climate_guild=biome_mean_guild#data used to compared the mean among biomes
 
+saveRDS(com_data_climate_guild,file="com_data_climate_guild.rds")
+
  ##################################################################################
 ######################codes below this line shoud be disregarded##################################
 
