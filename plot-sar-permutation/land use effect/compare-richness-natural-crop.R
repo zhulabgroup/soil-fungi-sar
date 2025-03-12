@@ -307,7 +307,7 @@ for(i in 1:4)
   
   #scores$group <- groups
   
-  
+
   adonis_test <- adonis2(vege_dist  ~ groups, permutations = 999)
   
   dispersion <- betadisper(vege_dist, groups)
