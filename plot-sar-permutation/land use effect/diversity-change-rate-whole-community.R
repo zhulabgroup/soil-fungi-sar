@@ -4,7 +4,7 @@
 
 ##
 
-# the north american map
+#############these codes are for the north america sf object and were not used############
 library(sf)
 library(tidyverse)
 library(rnaturalearth)
@@ -40,15 +40,77 @@ ggplot(data = north_america_proj) +
     axis.title = element_blank()   # Remove axis titles (longitude/latitude)
   )
 
-# figure 4 in the main text
+################ coded assocaied with figure 4 in the main text#########################
 
 setwd("/Volumes/seas-zhukai/proj-soil-fungi/land-use-climate-historical")
-climate_induced_change_richness_rcp245=readRDS(file="climate_induced_change_richness_rcp245.rds")
-species_change_land_rcp245_all=readRDS("species_change_land_rcp245_all.rds")
-summary_data_climate_rcp245=readRDS(file="summary_data_climate_rcp245.rds")
-climate_induced_change_richness_rcp585=readRDS(file="climate_induced_change_richness_rcp585.rds")
-summary_data_climate_rcp585=readRDS(file="summary_data_climate_rcp585.rds")
 
+climate_induced_change_richness_rcp245=readRDS(file="climate_induced_change_richness_rcp245.rds")
+climate_induced_change_richness_rcp585=readRDS(file="climate_induced_change_richness_rcp585.rds")
+summary_data_climate_rcp245=readRDS(file="summary_data_climate_rcp245.rds")
+
+species_change_land_rcp585_all=readRDS(file="species_change_land_rcp585_all.rds")
+species_change_land_rcp245_all=readRDS("species_change_land_rcp245_all.rds")
+
+summary_data_climate_rcp585=readRDS(file="summary_data_climate_rcp585.rds")
+summary_data_climate_rcp245=readRDS("summary_data_climate_rcp245.rds")
+
+#set different them for the maps
+theme_map=theme(legend.spacing.y = unit(32, "pt"), 
+                legend.position = c(0.15,0.35),
+                legend.margin = margin(t = -30, r = 0, b = -1, l = 0),
+                legend.text = element_text(size=8,angle=0),
+                legend.box = "vertical",
+                legend.justification = "center",
+                legend.title = element_text(margin = margin(b = 4),size=10),
+                text = element_text(size = 18),
+                plot.title = element_text(size = 15, hjust = 0.5), 
+                axis.text.y = element_blank(), 
+                axis.text.x = element_blank(), 
+                axis.title.y = element_text(size = 18), 
+                axis.title.x = element_text(size = 18), 
+                axis.ticks.x = element_blank(), 
+                axis.ticks.y = element_blank(),
+                plot.margin = unit(c(0.3, -5, -0.5, 0.5), "cm"),
+                panel.background = element_rect(fill = "NA"),
+                panel.border = element_blank())
+
+theme_latitude=theme(legend.position = c(0.75,0.28),
+                     legend.text = element_text(size=8),
+                     legend.title  = element_text(size=10),
+                     text = element_text(size = 18),
+                     plot.title = element_text(size = 15, hjust = 0.5), 
+                     axis.text.y = element_text(size=12), 
+                     axis.text.x = element_text(size = 12), 
+                     axis.title.y = element_text(size = 15), 
+                     axis.title.x = element_text(size = 15), 
+                     plot.margin = unit(c(0.3, 0.1, -.5, 0), "cm"),
+                     panel.background = element_rect(fill = "NA"),
+                     panel.border = element_rect(color = "black", size = 0.6, fill = NA))
+
+##save the sf object
+
+sf_layers <- list(
+  dominican_projected, us_projected, canada_clipped, rico_projected,
+  cuba_projected, mexico_projected, haiti_projected, baha_projected, jama_projected
+)
+
+# Create base plot
+
+add_sf_layers <- function() {
+  list(
+    geom_sf(data = dominican_projected, fill = NA, size = 0.01, color = "gray80"),
+    geom_sf(data = us_projected, fill = NA, size = 0.01, color = "gray80"),
+    geom_sf(data = canada_clipped, fill = NA, size = 0.01, color = "gray80"),
+    geom_sf(data = rico_projected, fill = NA, size = 0.01, color = "gray80"),
+    geom_sf(data = cuba_projected, fill = NA, size = 0.01, color = "gray80"),
+    geom_sf(data = mexico_projected, fill = NA, size = 0.01, color = "gray80"),
+    geom_sf(data = haiti_projected, fill = NA, size = 0.01, color = "gray80"),
+    geom_sf(data = baha_projected, fill = NA, size = 0.01, color = "gray80"),
+    geom_sf(data = jama_projected, fill = NA, size = 0.01, color = "gray80")
+  )
+}
+
+#add a new column to transforme the loss and gain value
 climate_induced_change_richness_rcp245%>%mutate(change=100*last)->climate_induced_change_richness_rcp245
 
 p_climate_245=ggplot(climate_induced_change_richness_rcp245) +
@@ -66,67 +128,26 @@ p_climate_245=ggplot(climate_induced_change_richness_rcp245) +
   geom_tile(data = filter(climate_induced_change_richness_rcp245, change < -70), mapping = aes(x=x,y=y,fill = last< -0.7)) +
   scale_fill_manual(NULL, values = "gold", labels = "< -70", 
                     guide = guide_legend(order = 3,keywidth = unit(0.5, "cm"), keyheight = unit(0.5, "cm")))+
-  theme(legend.spacing.y = unit(32, "pt"), 
-        legend.position = c(0.15,0.35),
-        legend.margin = margin(t = -30, r = 0, b = -1, l = 0),
-        legend.text = element_text(size=8,angle=0),
-        legend.box = "vertical",
-        legend.justification = "center",
-        legend.title = element_text(margin = margin(b = 4),size=10),
-        text = element_text(size = 18),
-        plot.title = element_text(size = 15, hjust = 0.5), 
-        axis.text.y = element_blank(), 
-        axis.text.x = element_blank(), 
-        axis.title.y = element_text(size = 18), 
-        axis.title.x = element_text(size = 18), 
-        axis.ticks.x = element_blank(), 
-        axis.ticks.y = element_blank(),
-        plot.margin = unit(c(0.3, -5, -0.5, 0.5), "cm"),
-        panel.background = element_rect(fill = "NA"),
-        panel.border = element_blank(),
-        )+
-  geom_sf(data = dominican_projected, fill = NA, size=0.01,color = "gray80")+
-  geom_sf(data = us_projected, fill = NA, size=0.01,color = "gray80")+
-  geom_sf(data = canada_clipped, fill=NA,size=0.01,color = "gray80")+
-  geom_sf(data = rico_projected, fill = NA, size=0.01,color = "gray80")+
-  geom_sf(data = cuba_projected, fill = NA, size=0.01,color = "gray80")+
-  geom_sf(data = mexico_projected, fill = NA, size=0.01,color = "gray80")+
-  geom_sf(data = haiti_projected, fill = NA, size=0.01,color = "gray80")+
-  geom_sf(data = baha_projected, fill = NA, size=0.01,color = "gray80")+
-  geom_sf(data = jama_projected, fill = NA, size=0.01,color = "gray80")+
+  theme_map+ 
+  add_sf_layers()+
   coord_sf(xlim = c(-5000000 , 3000000), ylim = c(-252303 , 5980000))+
   xlab("")+
   ylab("Climate impact")+
   ggtitle("SSP2−4.5")
 
   
-
-
 p_climate_latitude_245=ggplotGrob(ggplot()+
-                                    geom_ribbon(data = summary_data_climate_rcp245, aes(x = lat, ymin = 100*mean_value - 100*sd_value, ymax = 100*mean_value + 100*sd_value), fill = "gray80")+
-                                    geom_line(data = summary_data_climate_rcp245, aes(x = lat, y = 100*mean_value), color = "#1E61A5", size = 0.5) +  # Mean trend line
-                                    theme(
-                                      legend.text = element_text(size=8),
-                                      legend.margin = margin(t = -30, r = -5, b = -1, l = 0),
-                                      legend.title  = element_text(size=10),
-                                      text = element_text(size = 18),
-                                      plot.title = element_text(size = 15, hjust = 0.5), 
-                                      axis.text.y = element_text(size=12), 
-                                      axis.text.x = element_text(size = 12), 
-                                      axis.title.y = element_text(size = 15), 
-                                      axis.title.x = element_text(size = 15), 
-                                      
-                                      plot.margin = unit(c(0.3, 0.1, -0.5, 0), "cm"),
-                                      panel.background = element_rect(fill = "NA"),
-                                      panel.border = element_rect(color = "black", size = 0.6, fill = NA))+
-                                    xlab("Latitude")+
-                                    ylab("")+
-                                    ggtitle("")+
-                                    coord_flip()+
-                                    geom_hline(yintercept = 0,linetype="dashed")+
-                                    ggtitle("SSP2−4.5")+
-                                    xlim(15,65)+
-              ylim(-40,40))
+geom_ribbon(data = summary_data_climate_rcp245, aes(x = lat, ymin = 100*mean_value - 100*sd_value, ymax = 100*mean_value + 100*sd_value), fill = "gray80")+
+geom_line(data = summary_data_climate_rcp245, aes(x = lat, y = 100*mean_value), color = "#1E61A5", size = 0.5) +  # Mean trend line
+ theme_latitude+
+xlab("Latitude")+
+ylab("")+
+ggtitle("")+
+ coord_flip()+
+geom_hline(yintercept = 0,linetype="dashed")+
+ ggtitle("SSP2−4.5")+
+ xlim(15,65)+
+ ylim(-40,40))
 
 
 
@@ -147,34 +168,8 @@ p_climate_585=ggplotGrob(ggplot(climate_induced_change_richness_rcp585) +
   geom_tile(data = filter(climate_induced_change_richness_rcp585, change < -70), mapping = aes(x=x,y=y,fill = last< -0.7)) +
   scale_fill_manual(NULL, values = "gold", labels = "< -70", 
                     guide = guide_legend(order = 3,keywidth = unit(0.5, "cm"), keyheight = unit(0.5, "cm")))+
-  theme(legend.spacing.y = unit(32, "pt"), 
-        legend.position = c(0.15,0.35),
-        legend.margin = margin(t = -30, r = 0, b = -1, l = 0),
-        legend.text = element_text(size=8,angle=0),
-        legend.box = "vertical",
-        legend.justification = "center",
-        legend.title = element_text(margin = margin(b = 4),size=10),
-        text = element_text(size = 18),
-        plot.title = element_text(size = 15, hjust = 0.5), 
-        axis.text.y = element_blank(), 
-        axis.text.x = element_blank(), 
-        axis.title.y = element_text(size = 18), 
-        axis.title.x = element_text(size = 18), 
-        axis.ticks.x = element_blank(), 
-        axis.ticks.y = element_blank(),
-        plot.margin = unit(c(0.3, -5, -0.5, 0.5), "cm"),
-        panel.background = element_rect(fill = "NA"),
-        panel.border = element_blank(),
-  )+
-  geom_sf(data = dominican_projected, fill = NA, size=0.01,color = "gray80")+
-  geom_sf(data = us_projected, fill = NA, size=0.01,color = "gray80")+
-  geom_sf(data = canada_clipped, fill=NA,size=0.01,color = "gray80")+
-  geom_sf(data = rico_projected, fill = NA, size=0.01,color = "gray80")+
-  geom_sf(data = cuba_projected, fill = NA, size=0.01,color = "gray80")+
-  geom_sf(data = mexico_projected, fill = NA, size=0.01,color = "gray80")+
-  geom_sf(data = haiti_projected, fill = NA, size=0.01,color = "gray80")+
-  geom_sf(data = baha_projected, fill = NA, size=0.01,color = "gray80")+
-  geom_sf(data = jama_projected, fill = NA, size=0.01,color = "gray80")+
+    theme_map+
+    add_sf_layers()+
   coord_sf(xlim = c(-5000000 , 3000000), ylim = c(-252303 , 5980000))+
   xlab("")+
   ylab("Climate impact")+
@@ -182,26 +177,10 @@ p_climate_585=ggplotGrob(ggplot(climate_induced_change_richness_rcp585) +
 
 
 
-
-# latitude patterns for the rcp585
-saveRDS(summary_data_climate_rcp585,file="summary_data_climate_rcp585.rds")
-
 p_climate_latitude_585=ggplotGrob(ggplot()+
                                     geom_ribbon(data = summary_data_climate_rcp585, aes(x = lat, ymin = 100*mean_value - 100*sd_value, ymax = 100*mean_value + 100*sd_value), fill = "gray80")+
                                     geom_line(data = summary_data_climate_rcp585, aes(x = lat, y = 100*mean_value), color = "#1E61A5", size = 0.5) +  # Mean trend line
-                                    
-                                    theme(
-                                      legend.text = element_text(size=8),
-                                      legend.title  = element_text(size=10),
-                                      text = element_text(size = 18),
-                                      plot.title = element_text(size = 15, hjust = 0.5), 
-                                      axis.text.y = element_text(size = 12), 
-                                      axis.text.x = element_text(size = 12), 
-                                      axis.title.y = element_text(size = 15), 
-                                      axis.title.x = element_text(size = 15), 
-                                      plot.margin = unit(c(0.3, 0.1, -0.5, 0), "cm"),
-                                      panel.background = element_rect(fill = "NA"),
-                                      panel.border = element_rect(color = "black", size = 0.6, fill = NA))+
+                                    theme_latitude+
                                     xlab("Latitude")+
                                     ylab("")+
                                     ggtitle("SSP5−8.5")+
@@ -231,35 +210,9 @@ p_land_245=ggplotGrob(ggplot(species_change_land_rcp245_all) +
   scale_fill_manual(NULL, values = "gold", labels = "< -15", 
                     guide = guide_legend(order = 3,keywidth = unit(0.5, "cm"), keyheight = unit(0.5, "cm")))+
   
-  theme(legend.spacing.y = unit(32, "pt"), 
-        legend.position = c(0.15,0.35),
-        legend.margin = margin(t = -30, r = 0, b = -1, l = 0),
-        legend.text = element_text(size=8,angle=0),
-        legend.box = "vertical",
-        legend.justification = "center",
-        legend.title = element_text(margin = margin(b = 4),size=10),
-        text = element_text(size = 18),
-        plot.title = element_text(size = 15, hjust = 0.5), 
-        axis.text.y = element_blank(), 
-        axis.text.x = element_blank(), 
-        axis.title.y = element_text(size = 18), 
-        axis.title.x = element_text(size = 18), 
-        axis.ticks.x = element_blank(), 
-        axis.ticks.y = element_blank(),
-        plot.margin = unit(c(0.3, -5, -0.5, 0.5), "cm"),
-        panel.background = element_rect(fill = "NA"),
-        panel.border = element_blank(),
-  )+
-  geom_sf(data = dominican_projected, fill = NA, size=0.01,color = "gray80")+
-  geom_sf(data = us_projected, fill = NA, size=0.01,color = "gray80")+
-  geom_sf(data = canada_clipped, fill=NA,size=0.01,color = "gray80")+
-  geom_sf(data = rico_projected, fill = NA, size=0.01,color = "gray80")+
-  geom_sf(data = cuba_projected, fill = NA, size=0.01,color = "gray80")+
-  geom_sf(data = mexico_projected, fill = NA, size=0.01,color = "gray80")+
-  geom_sf(data = haiti_projected, fill = NA, size=0.01,color = "gray80")+
-  geom_sf(data = baha_projected, fill = NA, size=0.01,color = "gray80")+
-  geom_sf(data = jama_projected, fill = NA, size=0.01,color = "gray80")+
-  coord_sf(xlim = c(-5000000 , 3000000), ylim = c(-252303 , 5980000))+
+    theme_map+
+    add_sf_layers()+
+    coord_sf(xlim = c(-5000000 , 3000000), ylim = c(-252303 , 5980000))+
   
   xlab("")+
   ylab("Land-use impact")+
@@ -270,18 +223,7 @@ p_land_latitude_245=ggplotGrob(ggplot()+
                                   # Mean trend line
                                  geom_ribbon(data = summary_data, aes(x = lat, ymin = 100*mean_value - 100*sd_value, ymax = 100*mean_value +100*sd_value), fill = "gray80")+
                                  geom_line(data = summary_data, aes(x = lat, y = 100*mean_value), color = "#1E61A5", size = 0.5) + 
-                                 theme(legend.position = c(0.75,0.28),
-                                       legend.text = element_text(size=8),
-                                       legend.title  = element_text(size=10),
-                                       text = element_text(size = 18),
-                                       plot.title = element_text(size = 15, hjust = 0.5), 
-                                       axis.text.y = element_text(size=12), 
-                                       axis.text.x = element_text(size = 12), 
-                                       axis.title.y = element_text(size = 15), 
-                                       axis.title.x = element_text(size = 15), 
-                                       plot.margin = unit(c(0.3, 0.1, -.5, 0), "cm"),
-                                       panel.background = element_rect(fill = "NA"),
-                                       panel.border = element_rect(color = "black", size = 0.6, fill = NA))+
+                                 theme_latitude+
                                  xlab("Latitude")+
                                  ylab("")+
                                  ggtitle("SSP2−4.5")+
@@ -302,43 +244,15 @@ p_land_585=ggplotGrob(ggplot(species_change_land_rcp585_all) +
   ggnewscale::new_scale_fill() +
   geom_tile(data = filter(species_change_land_rcp585_all, change > 15), mapping = aes(x=x,y=y,fill = last > 0.7)) +
   scale_fill_manual("Change (%)", values = "navy", labels = "> 15", 
-                    guide = guide_legend(order = 1,keywidth = unit(0.5, "cm"), keyheight = unit(0.5, "cm"))
+  guide = guide_legend(order = 1,keywidth = unit(0.5, "cm"), keyheight = unit(0.5, "cm"))
   ) +
   
   ggnewscale::new_scale_fill() +
   geom_tile(data = filter(species_change_land_rcp585_all, change < -15), mapping = aes(x=x,y=y,fill = last< -0.7)) +
   scale_fill_manual(NULL, values = "gold", labels = "< -15", 
                     guide = guide_legend(order = 3,keywidth = unit(0.5, "cm"), keyheight = unit(0.5, "cm")))+
-  
-  theme(legend.spacing.y = unit(32, "pt"), 
-        legend.position = c(0.15,0.35),
-        legend.margin = margin(t = -30, r = 0, b = -1, l = 0),
-        legend.text = element_text(size=8,angle=0),
-        legend.box = "vertical",
-        legend.justification = "center",
-        legend.title = element_text(margin = margin(b = 4),size=10),
-        text = element_text(size = 18),
-        plot.title = element_text(size = 15, hjust = 0.5), 
-        axis.text.y = element_blank(), 
-        axis.text.x = element_blank(), 
-        axis.title.y = element_text(size = 18), 
-        axis.title.x = element_text(size = 18), 
-        axis.ticks.x = element_blank(), 
-        axis.ticks.y = element_blank(),
-        plot.margin = unit(c(0.3, -5, -0.5, 0.5), "cm"),
-        panel.background = element_rect(fill = "NA"),
-        panel.border = element_blank(),
-  )+
-  geom_sf(data = dominican_projected, fill = NA, size=0.01,color = "gray80")+
-  geom_sf(data = us_projected, fill = NA, size=0.01,color = "gray80")+
-  geom_sf(data = canada_clipped, fill=NA,size=0.01,color = "gray80")+
-  geom_sf(data = rico_projected, fill = NA, size=0.01,color = "gray80")+
-  geom_sf(data = cuba_projected, fill = NA, size=0.01,color = "gray80")+
-  geom_sf(data = mexico_projected, fill = NA, size=0.01,color = "gray80")+
-  geom_sf(data = haiti_projected, fill = NA, size=0.01,color = "gray80")+
-  geom_sf(data = baha_projected, fill = NA, size=0.01,color = "gray80")+
-  geom_sf(data = jama_projected, fill = NA, size=0.01,color = "gray80")+
-  
+    theme_map+
+    add_sf_layers()+
   coord_sf(xlim = c(-5000000 , 3000000), ylim = c(-252303 , 5980000))+
   
   xlab("")+
@@ -350,18 +264,7 @@ p_land_latitude_585=ggplotGrob(ggplot()+
                                  # Mean trend line
                                  geom_ribbon(data = summary_data_land_rcp585, aes(x = lat, ymin = 100*mean_value - 100*sd_value, ymax = 100*mean_value + 100*sd_value), fill = "gray80")+
                                  geom_line(data = summary_data_land_rcp585, aes(x = lat, y = 100*mean_value), color = "#1E61A5", size = 0.5) +  
-                                 theme(
-                                   legend.text = element_text(size=8),
-                                   legend.title  = element_text(size=10),
-                                   text = element_text(size = 18),
-                                   plot.title = element_text(size = 15, hjust = 0.5), 
-                                   axis.text.y = element_text(size = 12), 
-                                   axis.text.x = element_text(size = 12), 
-                                   axis.title.y = element_text(size = 15), 
-                                   axis.title.x = element_text(size = 15), 
-                                   plot.margin = unit(c(0.3, 0.1, -0.5, 0), "cm"),
-                                   panel.background = element_rect(fill = "NA"),
-                                   panel.border = element_rect(color = "black", size = 0.6, fill = NA))+
+                                 theme_latitude+
                                  xlab("Latitude")+
                                  ylab("")+
                                  ggtitle("SSP5−8.5")+
