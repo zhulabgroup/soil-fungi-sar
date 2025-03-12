@@ -106,20 +106,6 @@ observations=c(41725,41725,41394,41394)
   
         
         
-        ggplot(data=com_data,aes(fill=change,y=LABEL ,x=origin_mean))+
-          geom_col(width = 0.3)+
-          geom_segment(data=com_data,
-                       aes(y=LABEL,yend=LABEL,x= ori_low, xend = ori_up),
-                       arrow = arrow(length = unit(0.1, "cm"),angle=90))+
-        
-          geom_text(aes(y=LABEL ,x=origin_mean*1.25,label=.group))+
-          xlim(-0.1,0.1)
-          
-          
-          geom_segment(data=data_biome_change_rate_guild[[m]][[i]]%>%filter(type=="Positive"), 
-                       aes(y=biome,yend=biome,x = 100*mean_value, xend = 100*mean_value +100*sd_value),
-                       arrow = arrow(length = unit(0.1, "cm"),angle=90))+
-          scale_fill_manual("",breaks=c("Negative","Positive"),labels=c("Loss","Gain"),values=c("#ee8c11","#1173EE"))+
           
         
          
@@ -141,29 +127,10 @@ observations=c(41725,41725,41394,41394)
         #based on the difference to label letters
         
         
+          
+         
+         
         
-        # test the difference among biomes with one-way anova
-        
-        oneway.test(log_response~LABEL,data=df1, var.equal = FALSE)
-        
-        library(DescTools)
-       
-        dk=oneway.test(value ~ LABEL, data = df1, var.equal = FALSE)
-        
-         TukeyHSD(dk, method = "hsd")
-         
-         PostHocTest(aov(value ~ LABEL, data =df1), method = "hsd")
-        
-         tukey(df1$value,df1$guild,method="G")
-         
-         df1%>%group_by(LABEL)%>%summarise(m=mean(value))
-         
-         df1%>%group_by(LABEL)%>%summarise(m=mean(log_response))
-         
-         
-         
-         
-         summary(model)
          
       #to compare the mean among the guilds
          
@@ -235,11 +202,6 @@ observations=c(41725,41725,41394,41394)
  ## create the plots
      
      emm_df <- as.data.frame(emm)
-     ggplot(emm_df, aes(x = LABEL, y = emmean)) +
-           geom_bar(stat = "identity", position = "dodge", fill = "skyblue") +
-            geom_errorbar(aes(ymin = lower.CL, ymax = upper.CL), width = 0.2) +
-            labs(x = "Group", y = "Adjusted Mean Richness") +
-           theme_minimal()
      
      
     
