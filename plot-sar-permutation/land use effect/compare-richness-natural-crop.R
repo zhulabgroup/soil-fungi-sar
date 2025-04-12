@@ -231,7 +231,7 @@ guild=c("all","AM","EM","plapat","soilsap","littersap","woodsap","epiphy","para"
 do.call(cbind,richness_ratio_rarefy_guild_site_consider_nature_history)%>%data.frame()%>%rename_all(~paste0(guild))%>%
   mutate(biome=rep(biome_select,times=c(plot_number)))%>%melt()%>%group_by(biome,variable)%>%
   summarise(mean_ratio=mean(value),sd_ratio=sd(value))%>%mutate(guild_biome=paste(variable,"_",biome))%>%
-  rename(guild=variable)->biome_site_level_richness_ratio_consider_nature_history
+  dplyr::rename(guild=variable)->biome_site_level_richness_ratio_consider_nature_history
 
 saveRDS(biome_site_level_richness_ratio_consider_nature_history,file="biome_site_level_richness_ratio_consider_nature_history.rds")
 
