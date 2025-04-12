@@ -120,42 +120,7 @@ change_richness_land_rcp585_all=my_function_project(change_richness_land_rcp585_
 
 
 
-p_land_245
-
-ggplot(change_richness_land_rcp245_all) +
-  geom_point(data = change_richness_land_rcp245_all, pch=15,aes(x = x, y = y, color = last*100), size = 0.175) +
-  scale_color_gradient2(expression("Change %"), high = "#1173EE", mid="white",low = "#ee8c11", na.value = "white")+
-  geom_sf(data = us_projected, fill = NA, size=0.01,color = "black")+
-  geom_sf(data = canada_clipped, fill=NA,size=0.01,color = "black")+
-  geom_sf(data = rico_projected, fill = NA, size=0.01,color = "black")+
-  geom_sf(data = cuba_projected, fill = NA, size=0.01,color = "black")+
-  geom_sf(data = mexico_projected, fill = NA, size=0.01,color = "black")+
-  geom_sf(data = haiti_projected, fill = NA, size=0.01,color = "black")+
-  geom_sf(data = dominican_projected, fill = NA, size=0.01,color = "black")+
-  geom_sf(data = baha_projected, fill = NA, size=0.01,color = "black")+
-  geom_sf(data = jama_projected, fill = NA, size=0.01,color = "black")+
-  
-  coord_sf(xlim = c(-5000000 , 3000000), ylim = c(-252303 , 5980000))+
-  theme(legend.position = c(0.2,0.35),
-        legend.margin = margin(t = -30, r = -4, b = -1, l = 0),
-        legend.text = element_text(size=8,angle=0),
-        legend.title  = element_text(size=10),
-        text = element_text(size = 18),
-        plot.title = element_text(size = 15, hjust = 0.5), 
-        axis.text.y = element_blank(), 
-        axis.text.x = element_blank(), 
-        axis.title.y = element_text(size = 18), 
-        axis.title.x = element_text(size = 18), 
-        axis.ticks.x = element_blank(), 
-        axis.ticks.y = element_blank(),
-        plot.margin = unit(c(0.3, -5, -.5, 0.5), "cm"),
-        panel.background = element_rect(fill = "NA"),
-        panel.border = element_blank())+
-  xlab("")+
-  ylab("Land-use impact")+
-  ggtitle("RCP4.5-SSP2")
-
-# for the latitude patterns
+or the latitude patterns
 p_land_latitude_245=ggplot()+
   geom_line(data = summary_data, aes(x = lat, y = mean_value), color = "#1173EE", size = 0.5) +  # Mean trend line
   geom_ribbon(data = summary_data, aes(x = lat, ymin = mean_value - sd_value, ymax = mean_value +sd_value), fill = "#1173EE", alpha = 0.2)+
