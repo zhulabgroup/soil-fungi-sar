@@ -86,6 +86,8 @@ canada_clipped=cropped_province
 
 setwd("/Volumes/seas-zhukai/proj-soil-fungi/land-use-climate-historical")
 
+land_induced_change_richness_rcp245=readRDS(file="land_induced_change_richness_rcp245.rds")
+
 climate_induced_change_richness_rcp245=readRDS(file="climate_induced_change_richness_rcp245.rds")
 climate_induced_change_richness_rcp585=readRDS(file="climate_induced_change_richness_rcp585.rds")
 summary_data_climate_rcp245=readRDS(file="summary_data_climate_rcp245.rds")
@@ -246,13 +248,13 @@ p_land_245=ggplotGrob(ggplot(species_change_land_rcp245_all) +
                       
                        guide = guide_colorbar(order = 2,barwidth = unit(0.5, "cm"), barheight = unit(2, "cm")))+
   ggnewscale::new_scale_fill() +
-  geom_tile(data = filter(species_change_land_rcp245_all, change > 15), mapping = aes(x=x,y=y,fill = last > 0.7)) +
+  geom_tile(data = species_change_land_rcp245_all%>%filter(change > 5), mapping = aes(x=x,y=y,fill = last > 0.7)) +
   scale_fill_manual("Change (%)", values = "navy", labels = "> 15", 
                     guide = guide_legend(order = 1,keywidth = unit(0.5, "cm"), keyheight = unit(0.5, "cm"))
   ) +
   
   ggnewscale::new_scale_fill() +
-  geom_tile(data = filter(species_change_land_rcp245_all, change < -15), mapping = aes(x=x,y=y,fill = last< -0.7)) +
+  geom_tile(data = species_change_land_rcp245_all%>%filter(change < -15), mapping = aes(x=x,y=y,fill = last< -0.7)) +
   scale_fill_manual(NULL, values = "gold", labels = "< -15", 
                     guide = guide_legend(order = 3,keywidth = unit(0.5, "cm"), keyheight = unit(0.5, "cm")))+
   
