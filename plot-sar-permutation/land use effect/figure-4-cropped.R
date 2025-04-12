@@ -135,7 +135,9 @@ my_function_guild_gain=function(data){
 }
 
 
-
+coords_present%>%
+  data.frame()%>%
+  rename_all(~paste0(c("lon","lat")))->coords_present
 
 
 
@@ -184,7 +186,7 @@ data_both_effect_rcp245=list()
      bind_cols(coords_present)%>%mutate(coordinate=paste(lon,"_",lat))->land_change_effect_245
    data_both_effect_rcp245[[i]]=land_change_effect_245%>%
      left_join(climate_change_effect_crop_245%>%dplyr::select(coordinate,value),by="coordinate")%>%
-     rename(land_effect=value.x,climate_effect=value.y)
+     dplyr::rename(land_effect=value.x,climate_effect=value.y)
  }
 
 data_both_effect_rcp585=list()
@@ -195,8 +197,13 @@ for (i in 1:9)
     bind_cols(coords_present)%>%mutate(coordinate=paste(lon,"_",lat))->land_change_effect_585
   data_both_effect_rcp585[[i]]=land_change_effect_585%>%
     left_join(climate_change_effect_crop_585%>%dplyr::select(coordinate,value),by="coordinate")%>%
-    rename(land_effect=value.x,climate_effect=value.y)
+    dplyr::rename(land_effect=value.x,climate_effect=value.y)
 }
+save(data_both_effect_rcp585,file="data_both_effect_rcp585.rds")
+
+
+save(data_both_effect_rcp245,file="data_both_effect_rcp245.rds")
+
 
 common_theme=theme(legend.position = c(0.02611,0.4660),
                    legend.margin = margin(t = -5, r = -5, b = -5, l = 0),
