@@ -102,6 +102,7 @@ for (m in 1:9)
 
 saveRDS(data_mean_richness_guild_consider_nature_history_model,file="data_mean_richness_guild_consider_nature_history_model.rds")
 
+data_mean_richness_guild_consider_nature_history_model=readRDS(file="data_mean_richness_guild_consider_nature_history_model.rds")
 # test the significance of the results based on generalized linear mixed-effect models
 # testing if gamma diversity is affected both by land cover type and biome
 # all are significant except for the whole fungal community
