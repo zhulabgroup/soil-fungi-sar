@@ -86,15 +86,41 @@ canada_clipped=cropped_province
 
 setwd("/Volumes/seas-zhukai/proj-soil-fungi/land-use-climate-historical")
 
-land_induced_change_richness_rcp245=readRDS(file="land_induced_change_richness_rcp245.rds")
 
 climate_induced_change_richness_rcp245=readRDS(file="climate_induced_change_richness_rcp245.rds")
 climate_induced_change_richness_rcp585=readRDS(file="climate_induced_change_richness_rcp585.rds")
 summary_data_climate_rcp245=readRDS(file="summary_data_climate_rcp245.rds")
 summary_data=readRDS(file="summary_data.rds")
 
-species_change_land_rcp585_all=readRDS(file="species_change_land_rcp585_all.rds")
-species_change_land_rcp245_all=readRDS("species_change_land_rcp245_all.rds")
+species_change_land_rcp585=readRDS(file="species_change_land_rcp585.rds")
+
+species_change_land_rcp245=readRDS("species_change_land_rcp245.rds")
+
+species_change_land_rcp245%>%filter(variable=="all")->species_change_land_rcp245_all
+
+load(file="coords_present_new.RData")
+
+
+species_change_land_rcp245_all%>%bind_cols(coords_present)->temp
+
+species_change_land_rcp245_all=my_function_project(temp)
+
+##
+species_change_land_rcp585%>%filter(variable=="all")->species_change_land_rcp585_all
+
+load(file="coords_present_new.RData")
+
+
+species_change_land_rcp585_all%>%bind_cols(coords_present)->temp
+
+species_change_land_rcp585_all=my_function_project(temp)
+
+
+save(species_change_land_rcp585_all,file="species_change_land_rcp585_all.rds")
+
+save(species_change_land_rcp245_all,file="species_change_land_rcp245_all.rds")
+
+
 
 summary_data_climate_rcp585=readRDS(file="summary_data_climate_rcp585.rds")
 summary_data_climate_rcp245=readRDS("summary_data_climate_rcp245.rds")
