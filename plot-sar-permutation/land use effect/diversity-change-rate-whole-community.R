@@ -2,8 +2,6 @@
 
 ##read in the data 
 
-##
-
 #############these codes are for the north america sf object and were not used############
 library(sf)
 library(tidyverse)
@@ -39,6 +37,50 @@ ggplot(data = north_america_proj) +
     axis.ticks = element_blank(),  # Remove axis ticks
     axis.title = element_blank()   # Remove axis titles (longitude/latitude)
   )
+########################
+
+library(tigris)
+library(rnaturalearth)
+library(sf)
+us_states <- states(cb = TRUE)
+canadian_provinces <- ne_states(country = "Canada", returnclass = "sf")
+cuba_provinces <- ne_states(country = "Cuba", returnclass = "sf")
+mexico_states <- ne_states(country = "Mexico", returnclass = "sf")
+rico_provinces <- ne_countries(scale = "medium", returnclass = "sf") %>%
+  dplyr::filter(admin == "Puerto Rico")
+haiti_provinces <- ne_countries(scale = "medium", returnclass = "sf") %>%
+  dplyr::filter(admin == "Puerto Rico")
+
+haiti_sf <- ne_countries(scale = "medium", country = "Haiti", returnclass = "sf")
+dominican_republic <- ne_countries(scale = "medium", returnclass = "sf", country = "Dominican Republic")
+
+baha_sf <- ne_countries(scale = "medium", country = "The Bahamas", returnclass = "sf")
+jama_sf <- ne_countries(scale = "medium", country = "Jamaica", returnclass = "sf")
+
+
+# to make projection for the sf objects
+
+target_crs <- "EPSG:5070"
+us_projected <- st_transform(us_states, crs = target_crs)
+canadian_projected <- st_transform(canadian_provinces, crs = target_crs)
+mexico_projected <- st_transform(mexico_states, crs = target_crs)
+rico_projected <- st_transform(rico_provinces, crs = target_crs)
+cuba_projected <- st_transform(cuba_provinces, crs = target_crs)
+
+haiti_projected <- st_transform(haiti_sf, crs = target_crs)
+
+dominican_projected <- st_transform(dominican_republic, crs = target_crs)
+
+baha_projected <- st_transform(baha_sf, crs = target_crs)
+jama_projected <- st_transform(jama_sf, crs = target_crs)
+
+# to clip the canada map
+bbox <- st_bbox(c(xmin = -2665004, ymin = 2157670 , xmax = 3188701, ymax = 5400000 ), crs = st_crs(canadian_projected))
+bbox_sf <- st_as_sfc(bbox)
+cropped_province <- st_crop(canadian_projected, bbox_sf)
+canada_clipped=cropped_province
+
+
 
 ################ coded assocaied with figure 4 in the main text#########################
 
@@ -47,12 +89,15 @@ setwd("/Volumes/seas-zhukai/proj-soil-fungi/land-use-climate-historical")
 climate_induced_change_richness_rcp245=readRDS(file="climate_induced_change_richness_rcp245.rds")
 climate_induced_change_richness_rcp585=readRDS(file="climate_induced_change_richness_rcp585.rds")
 summary_data_climate_rcp245=readRDS(file="summary_data_climate_rcp245.rds")
+summary_data=readRDS(file="summary_data.rds")
 
 species_change_land_rcp585_all=readRDS(file="species_change_land_rcp585_all.rds")
 species_change_land_rcp245_all=readRDS("species_change_land_rcp245_all.rds")
 
 summary_data_climate_rcp585=readRDS(file="summary_data_climate_rcp585.rds")
 summary_data_climate_rcp245=readRDS("summary_data_climate_rcp245.rds")
+summary_data_land_rcp585=readRDS("summary_data_land_rcp585.rds")
+
 
 #set different them for the maps
 theme_map=theme(legend.spacing.y = unit(32, "pt"), 
@@ -111,6 +156,7 @@ add_sf_layers <- function() {
 }
 
 #add a new column to transforme the loss and gain value
+#need to update the package
 climate_induced_change_richness_rcp245%>%mutate(change=100*last)->climate_induced_change_richness_rcp245
 
 p_climate_245=ggplot(climate_induced_change_richness_rcp245) +
@@ -120,11 +166,11 @@ p_climate_245=ggplot(climate_induced_change_richness_rcp245) +
                        colors = brewer.pal(11, "RdBu"),
                        guide = guide_colorbar(order = 2,barwidth = unit(0.5, "cm"), barheight = unit(2, "cm")))+
   ggnewscale::new_scale_fill() +
-  geom_tile(data = filter(climate_induced_change_richness_rcp245, change > 70), mapping = aes(x=x,y=y,fill = last > 0.7)) +
+  geom_tile(data = filter(climate_induced_change_richness_rcp245, change < -70), mapping = aes(x=x,y=y,fill = last > 0.7)) +
   scale_fill_manual("Change (%)", values = "navy", labels = "> 70", 
                     guide = guide_legend(order = 1,keywidth = unit(0.5, "cm"), keyheight = unit(0.5, "cm"))
                    ) +
-  ggnewscale::new_scale_fill() +
+  new_scale_fill() +
   geom_tile(data = filter(climate_induced_change_richness_rcp245, change < -70), mapping = aes(x=x,y=y,fill = last< -0.7)) +
   scale_fill_manual(NULL, values = "gold", labels = "< -70", 
                     guide = guide_legend(order = 3,keywidth = unit(0.5, "cm"), keyheight = unit(0.5, "cm")))+
@@ -435,6 +481,7 @@ for (m in 1:9){
                                facet_wrap(~biome,ncol=1)+
                                xlab("")+
                                ylab("")+
+                              
                                #ylab(paste(full_name[m]))+
                                #ggtitle("")+
                                scale_fill_manual("",breaks=c("gain","no","loss"),
@@ -447,7 +494,7 @@ for (m in 1:9){
                                ## geom_col is geom_bar(stat = "identity")(bit shorter)
                                ## use color = black for the outline
                                geom_col(width=5,position="fill", color = "black",size=0.25)+
-                               coord_polar("y", start=0) +
+                               coord_polar("y", start=pi) +
                                #geom_text(aes(x = 5, label = paste0(round(percent*100), "%")), size=2.5, 
                                #position = position_stack(vjust = 0.1))+
                                #labs(x = NULL, y = NULL, fill = NULL, title = "Biomes")+
@@ -466,6 +513,7 @@ for (m in 1:9){
                                facet_wrap(~biome,ncol=1)+
                                xlab("")+
                                ylab("")+
+                             
                                #ylab(paste(full_name[m]))+
                                #ggtitle("")+
                                scale_fill_manual("",breaks=c("gain","no","loss"),
