@@ -716,7 +716,7 @@ for (i in 1:2){
           text = element_text(size = 18),
           plot.title = element_text(size = 15, hjust = 0.5), 
           axis.text.y = element_text(size = 12), 
-          axis.text.x = element_text(size = 14,angle=90,hjust=1,vjust=0.5,color="black"), 
+          axis.text.x = element_text(size = 14,angle=45,hjust=1,vjust=1,color="black"), 
           axis.title.y = element_text(size = 15), 
           axis.title.x = element_text(size = 15), 
           legend.key.size = unit(0.3, "cm"),
@@ -725,7 +725,7 @@ for (i in 1:2){
           panel.border = element_rect(color = "black", size = 0.6, fill = NA))+
   
     scale_x_discrete("",breaks=unique(data_set2$LABEL),
-                     labels=c("Grasslands", "Conifer forests","Temperate forests","Dry forests"))+
+                     labels=c("Grassland\n biome", "Conifer forest\n biome","Broadleaf-mixed\n forest biome","Dry forest\n biome"))+
     ylab("% of pixels")+
     
     ylim(0,70)+
