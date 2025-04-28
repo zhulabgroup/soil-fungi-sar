@@ -21,7 +21,7 @@ plot_diversity_env_land%>%select(plotID,type)%>%left_join(crop_select,by="plotID
 
 # get the biomes type for each grid
 
-setwd("/Users/luowenqi/soil-sar/plot-sar-permutation/land use effect")
+setwd("/Volumes/seas-zhukai/proj-soil-fungi/land-use-effect")
 biomes <- st_read("wwf_terr_ecos.shp")
 biomes <- group_by(biomes, BIOME) %>%
   summarise(geometry = st_union(geometry)) %>%
@@ -80,6 +80,5 @@ ggplot() +
   guides(fill = guide_legend(nrow = 5, byrow = TRUE))+
   xlab("")+
   ylab("")+
-  geom_point(data=crop_plots,size=4,alpha=0.8,aes(y=latitude,x= longitude),pch=15,fill="yellow",color="yellow")+
-  geom_point(data=k,aes(x=lon,y=lat),color="black")
+  geom_point(data=df4,size=1,alpha=0.8,aes(y=lat,x= lon),pch=15,fill="yellow",color="yellow")
 
