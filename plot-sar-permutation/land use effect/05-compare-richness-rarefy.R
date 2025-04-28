@@ -1,6 +1,19 @@
 # to compare the richness and composition of fungal communities among land use types
 # the natural communities are selected to represent the pre-modifed land use type for the current croplands
 
+data=c("rare_all_guild_biome","data_AM","data_EM","data_plapat","data_soilsap","data_littersap","data_woodsap","data_epiphy","data_para")
+data_EM <- subset_taxa(rare_all_guild_biome, primary_lifestyle == "ectomycorrhizal")
+data_AM <- subset_taxa(rare_all_guild_biome, primary_lifestyle == "arbuscular_mycorrhizal")
+data_soilsap <- subset_taxa(rare_all_guild_biome, primary_lifestyle == "soil_saprotroph")
+data_littersap <- subset_taxa(rare_all_guild_biome, primary_lifestyle == "litter_saprotroph")
+data_plapat <- subset_taxa(rare_all_guild_biome, primary_lifestyle == "plant_pathogen")
+data_woodsap <- subset_taxa(rare_all_guild_biome, primary_lifestyle == "wood_saprotroph")
+data_para <- subset_taxa(rare_all_guild_biome, primary_lifestyle%in%c("protistan_parasite","lichen_parasite","algal_parasite","mycoparasite","animal_parasite"))
+data_epiphy <- subset_taxa(rare_all_guild_biome, primary_lifestyle == "epiphyte")
+
+
+
+
  df4=readRDS("df4.rds")
 
   species_com=list()
@@ -79,13 +92,13 @@
   
   #
   species_com_guild=readRDS("species_com_guild.rds")
+  #species_com_guild and species_com_guild_adjust_natural should be identical
   
   
   
   # to compared the richness by rarefying the richness
   
-  
-  species_com_guild=readRDS("species_com_guild.rds")
+
   
   sample_data(rare_all_guild_biome)%>%data.frame()%>%
     dplyr::select(Site,LABEL)%>%distinct()%>%left_join(df4,by="Site")%>%filter(!is.na(plotIDM))%>%head(45)->temp_data
