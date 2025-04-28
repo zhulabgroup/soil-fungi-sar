@@ -1,9 +1,14 @@
 # for the updated species response ratio
 # considering the historical land use type for natural plots
-
 setwd("/Volumes/seas-zhukai/proj-soil-fungi/land-use-climate-historical")
 
+biome_select=c("Temperate Broadleaf & Mixed Forests","Temperate Conifer Forests",
+               "Temperate Grasslands, Savannas & Shrublands","Tropical & Subtropical Moist Broadleaf Forests")
+
 species_com_guild_adjust_natural=readRDS("species_com_guild_adjust_natural.rds")
+#same data species_com_guild
+#the data set for each guild and biome
+# the data was used for comparing species composition
 
 rare_all_guild_biome=readRDS("rare_all_guild_biome.rds")
 #load in the human-modified plots
@@ -29,7 +34,6 @@ for(i in 1:4)
 }
 
 
-
 # this is computed on great lakes
 
 
@@ -38,8 +42,6 @@ richness_compare_crop_nature_guild=readRDS("richness_compare_crop_nature_guild.r
 df4%>%mutate(plotid=1:45)%>%dplyr::select(Site,plotid,plotIDM)->temp
 
 
-biome_select=c("Temperate Broadleaf & Mixed Forests","Temperate Conifer Forests",
-               "Temperate Grasslands, Savannas & Shrublands","Tropical & Subtropical Moist Broadleaf Forests")
 
 
 # when all fungi were considered
