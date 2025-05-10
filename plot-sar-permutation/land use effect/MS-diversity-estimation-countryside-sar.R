@@ -1,5 +1,7 @@
 
-#estimate the richness
+#estimate fungal diversity for each 10-min grid cell
+# assign the biome type for each cell
+
 setwd("/Volumes/seas-zhukai/proj-soil-fungi/land-use-effect")
 
 biomes <- st_read("wwf_terr_ecos.shp")
@@ -45,35 +47,31 @@ r <- rast(ext(biomes),resolution = res(coarser_raster),   # the resolution of yo
 
 r <- rasterize(biomes, r, field = "LABEL")  # 'field' can be a column name or a constant value
 
+#coordinates for each grid cell
 
 load("coords_present_new.RData")
 coords_present%>%data.frame()%>%rename_all(~paste0(c("lon","lat")))->coords_present
 
 
-# based on the SAR parameters to determine the total fungal richness for each grid
-# if we do not consider the habitat affinity and focused on the total richness
-# the best way is not to differentiate the natural and modified habitats
+# based on the SAR parameters to determine the total fungal diversity for each grid
+#initial analysis included eight fungal guilds
 
 guild_type=c("AM","EM","soilsap","littersap","woodsap","plapat","para","epiphy","all")
 
 
+#land use data for different time points
 
-# for the scenario of rcp585 for land use change effect
-
-# the effect of land use change in the scenario of rcp585
-
-raster1 <- rast("GCAM_Demeter_LU_ssp2_rcp45_hadgem_2015.nc")# use the 2015 data as the baseline
-raster2 <- rast("GCAM_Demeter_LU_ssp2_rcp45_hadgem_2100.nc")# use the 2015 data as the baseline
-raster3 <- rast("GCAM_Demeter_LU_ssp5_rcp85_hadgem_2100.nc")# use the 2015 data as the baseline
+raster1 <- rast("GCAM_Demeter_LU_ssp2_rcp45_hadgem_2015.nc")#
+raster2 <- rast("GCAM_Demeter_LU_ssp2_rcp45_hadgem_2100.nc")#
+raster3 <- rast("GCAM_Demeter_LU_ssp5_rcp85_hadgem_2100.nc")# 
 
 
-load("coords_present_new.RData")
 
-#diversity within a grid cell was estimated based on the total area weigthted by species relative affinity
+#diversity within a grid cell was estimated based on the total area weighted by species relative affinity
 
 habitat_affinity_with_land_history_rarefy_consider_nature_history=readRDS("habitat_affinity_with_land_history_rarefy_consider_nature_history.rds")
 
-# the function to estimate fungal diversity for each grid-cell
+# the function to estimate grid-cell-level fungal diversity
 my_function_raster=function(data)
 {
   ext(data) <- c(-90, 90, -180, 180)
@@ -115,12 +113,13 @@ my_function_raster=function(data)
   names(No_crop)="No_crop"
   df_temp1%>%bind_cols(No_crop)%>%mutate(area=11637.87^2)->df_temp1
   
-  #the area is fixed 11637.87^2 with a resolution of 10 min
-  #get the richness within each grid
+  #the area is fixed 11637.87^2 with a resolution of 10-min of degree
+  #get the diversity within each grid
   #s=cA^z
   # get the biomes for each gird
   grid_level_biomes=terra::extract(r,df_temp1[,c("lon","lat")])
   df_temp1%>%bind_cols(biomes=grid_level_biomes%>%dplyr::select(LABEL))->df_temp1
+  
   # get the richness for each guild and each grid
   guild_type=c("AM","EM","soilsap","littersap","woodsap","plapat","para","epiphy","all")
   richness_derived=matrix(ncol=9,nrow=dim(df_temp1)[1])
@@ -130,8 +129,8 @@ my_function_raster=function(data)
       left_join(habitat_affinity_with_land_history_rarefy_consider_nature_history%>%
                   dplyr::select(guild, mean_zvalue, mean_cvalue,LABEL,affinity)%>%
                   filter(guild==guild_type[i]),by="LABEL")%>%
-      mutate(richness=mean_cvalue*(affinity*crop/100*area+No_crop/100*area)^mean_zvalue)%>%as.matrix()
-    richness_derived[,i]=richness_temp[,"richness"]
+      mutate(richness=mean_cvalue*(affinity*crop/100*area+1*No_crop/100*area)^mean_zvalue)%>%as.matrix()
+    richness_derived[,i]=richness_temp[,"richness"]#
   }
   richness_derived=richness_derived%>%data.frame%>%mutate(across(everything(), ~ as.numeric(as.character(.))))
   #colnames(richness_derived)=c("AM","EM","soilsap","littersap","woodsap","plapat","para","epiphy","all")
@@ -141,24 +140,20 @@ my_function_raster=function(data)
 
 
 
-# get the richness data for different scenarios
+# estimated grid-cell-level fungal diversity for different scenarios
 
 richness_2015=my_function_raster(raster1)
 
 richness_2100_rcp245=my_function_raster(raster2)
 richness_2100_rcp585=my_function_raster(raster3)
 
+colnames(richness_2100_rcp585)=guild_type
 
-# difference in the pixel-level richness over time
+colnames(richness_2100_rcp245)=guild_type
 
+colnames(richness_2015)=guild_type
 
-colnames(richness_2100_rcp585)=c("AM","EM","soilsap","littersap","woodsap","plapat","para","epiphy","all")
-
-colnames(richness_2100_rcp245)=c("AM","EM","soilsap","littersap","woodsap","plapat","para","epiphy","all")
-
-colnames(richness_2015)=c("AM","EM","soilsap","littersap","woodsap","plapat","para","epiphy","all")
-
-guild_type=c("AM","EM","soilsap","littersap","woodsap","plapat","para","epiphy","all")
+# fungal diversity losses and gains among different scenarios
 
 species_change_land_rcp245=(richness_2100_rcp245-richness_2015)/richness_2015
 colnames(species_change_land_rcp245)=guild_type
@@ -171,30 +166,6 @@ species_change_land_rcp585%>%melt()->species_change_land_rcp585
 
 
 saveRDS(species_change_land_rcp245,file="species_change_land_rcp245.rds")#save the data with the most updated affinity
-
 saveRDS(species_change_land_rcp585,file="species_change_land_rcp585.rds")
 
-species_change_land_rcp585=readRDS("species_change_land_rcp585.rds")
 
-# project the results
-# the function to project the data based on a data.frame
-
-my_function_project=function(data)
-{
-  if ("x"%in%colnames(data))
-  {
-    points <- vect(data, geom = c("x", "y"), crs = "EPSG:4326")  # Assuming WGS84 coordinates
-    raster_template <- rast(ext(points), resolution = 0.17, crs = "EPSG:4326")  # Resolution of 1 degree
-    raster <- rasterize(points, raster_template, field = "value")
-  }
-  else{
-    points <- vect(data, geom = c("lon", "lat"), crs = "EPSG:4326")  # Assuming WGS84 coordinates
-    raster_template <- rast(ext(points), resolution = 0.17, crs = "EPSG:4326")  # Resolution of 1 degree
-    
-    raster <- rasterize(points, raster_template, field = "group")
-  }
-  target_crs <- "EPSG:5070"
-  raster_equal_area <- project(raster, target_crs,method="near")# there are options for the method used
-  raster_df <- as.data.frame(raster_equal_area, xy = TRUE,)
-  return(raster_df )
-}
