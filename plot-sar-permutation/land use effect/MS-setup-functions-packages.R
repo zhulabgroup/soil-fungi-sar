@@ -42,3 +42,28 @@ bbox <- st_bbox(c(xmin = -2665004, ymin = 2157670 , xmax = 3188701, ymax = 54000
 bbox_sf <- st_as_sfc(bbox)
 cropped_province <- st_crop(canadian_projected, bbox_sf)
 canada_clipped=cropped_province
+
+
+
+# the function to project the data based on a data.frame
+
+my_function_project=function(data)
+{
+  if ("x"%in%colnames(data))
+  {
+    points <- vect(data, geom = c("x", "y"), crs = "EPSG:4326")  # Assuming WGS84 coordinates
+    raster_template <- rast(ext(points), resolution = 0.17, crs = "EPSG:4326")  # Resolution of 1 degree
+    raster <- rasterize(points, raster_template, field = "value")
+  }
+  else{
+    points <- vect(data, geom = c("lon", "lat"), crs = "EPSG:4326")  # Assuming WGS84 coordinates
+    raster_template <- rast(ext(points), resolution = 0.17, crs = "EPSG:4326")  # Resolution of 1 degree
+    
+    raster <- rasterize(points, raster_template, field = "group")
+  }
+  target_crs <- "EPSG:5070"
+  raster_equal_area <- project(raster, target_crs,method="near")# there are options for the method used
+  raster_df <- as.data.frame(raster_equal_area, xy = TRUE,)
+  return(raster_df )
+}
+
