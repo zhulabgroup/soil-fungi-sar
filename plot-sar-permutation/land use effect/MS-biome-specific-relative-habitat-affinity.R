@@ -46,7 +46,6 @@ r <- rast(ext(biomes),resolution = 0.15,   # the resolution of your targeted ras
 r <- rasterize(biomes, r, field = "LABEL")  # 'field' can be a column name or a constant value
 
 
-
 #(2) get the plot-level c and z values for each biome
 
 full_parameter_data <- readRDS("full_parameter_data.rds")
