@@ -1,10 +1,33 @@
 #
-###
+library(tigris)
+library(rnaturalearth)
+library(sf)
+library(rnaturalearth)
+library(plyr)
+library(dplyr)
+library(gstat)
+library(raster)
+library(ggplot2)
+library(car)
+library(classInt)
+library(caret)
+library(caretEnsemble)
+library(doParallel)
+library(gridExtra)
+library(terra)
+library(tidyr)
+library(geodata)
+library(reshape)
+library(SSDM)
+library(stars)
+library(patchwork)
+library(phyloseq)
+library(dplyr)
+
 #to get the sf object of the several states
 # to crop part of the canada map based on the ranges
 
-library(tigris)
-library(rnaturalearth)
+
 us_states <- states(cb = TRUE)
 canadian_provinces <- ne_states(country = "Canada", returnclass = "sf")
 cuba_provinces <- ne_states(country = "Cuba", returnclass = "sf")
