@@ -39,7 +39,6 @@ cbind(biomes$BIOME, biomes$LABEL)
 biomes <- st_crop(biomes, c(xmin=-170,xmax=-55,ymin=17,ymax=72))
 
 
-
 # just create an empty raster to save the values.
 r <- rast(ext(biomes),resolution = res(coarser_raster),   # the resolution of your targeted raster
           crs = "EPSG:4326")
@@ -57,14 +56,11 @@ coords_present%>%data.frame()%>%rename_all(~paste0(c("lon","lat")))->coords_pres
 #initial analysis included eight fungal guilds
 
 guild_type=c("AM","EM","soilsap","littersap","woodsap","plapat","para","epiphy","all")
-
-
 #land use data for different time points
 
 raster1 <- rast("GCAM_Demeter_LU_ssp2_rcp45_hadgem_2015.nc")#
 raster2 <- rast("GCAM_Demeter_LU_ssp2_rcp45_hadgem_2100.nc")#
 raster3 <- rast("GCAM_Demeter_LU_ssp5_rcp85_hadgem_2100.nc")# 
-
 
 
 #diversity within a grid cell was estimated based on the total area weighted by species relative affinity
