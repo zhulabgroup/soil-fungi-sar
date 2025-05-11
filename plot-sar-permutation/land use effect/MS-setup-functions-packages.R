@@ -108,3 +108,48 @@ add_sf_layers <- function() {
 
 
 
+#set different them for the maps
+theme_map=theme(legend.spacing.y = unit(32, "pt"), 
+                legend.position = c(0.15,0.35),
+                legend.margin = margin(t = -30, r = 0, b = -1, l = 0),
+                legend.text = element_text(size=8,angle=0),
+                legend.box = "vertical",
+                legend.justification = "center",
+                legend.title = element_text(margin = margin(b = 4),size=10),
+                text = element_text(size = 18),
+                plot.title = element_text(size = 15, hjust = 0.5), 
+                axis.text.y = element_blank(), 
+                axis.text.x = element_blank(), 
+                axis.title.y = element_text(size = 18), 
+                axis.title.x = element_text(size = 18), 
+                axis.ticks.x = element_blank(), 
+                axis.ticks.y = element_blank(),
+                plot.margin = unit(c(0.3, -5, -0.5, 0.5), "cm"),
+                panel.background = element_rect(fill = "NA"),
+                panel.border = element_blank())
+
+theme_latitude=theme(legend.position = c(0.75,0.28),
+                     legend.text = element_text(size=8),
+                     legend.title  = element_text(size=10),
+                     text = element_text(size = 18),
+                     plot.title = element_text(size = 15, hjust = 0.5), 
+                     axis.text.y = element_text(size=12), 
+                     axis.text.x = element_text(size = 12), 
+                     axis.title.y = element_text(size = 15), 
+                     axis.title.x = element_text(size = 15), 
+                     plot.margin = unit(c(0.3, 0.1, -.5, 0), "cm"),
+                     panel.background = element_rect(fill = "NA"),
+                     panel.border = element_rect(color = "black", size = 0.6, fill = NA))
+
+##save the sf object
+
+sf_layers <- list(
+  dominican_projected, us_projected, canada_clipped, rico_projected,
+  cuba_projected, mexico_projected, haiti_projected, baha_projected, jama_projected
+)
+
+# Create base plot
+
+
+
+

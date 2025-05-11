@@ -1,7 +1,6 @@
-##
-dob=dob_permutation
-# at the 10 by 10 scale
+##use the standardized approach to quantify the z values
 
+dob=dob_permutation
 ## get the sample at the 10 by 10 scale for the dob site
 
 set.seed=(2202)
@@ -66,17 +65,85 @@ for (i in 1:length(a4))
   }
 }
 
+richness_subplot10_dob%>%mutate(plotid=substr(richness_subplot10_dob$ncol,1,3))%>%dplyr::rename(richness=nrow)%>%
+  group_by(plotid)%>%summarise(mean_value=mean(richness,na.rm = TRUE),sd_value = sd(richness,na.rm = TRUE))->richness_subplot10_dob
 
-richness_subplot10_dob_standar=cbind(plotid=a4,richness=richness_subplot10_dob,rep(100,43))%>%data.frame()%>%rename_all(~paste0(c("plotid","richness","area")))
+richness_subplot10_dob_standar=richness_subplot10_dob%>%mutate(area=rep(100,43))
 
 setwd("/Users/luowenqi/soil-sar/plot-sar-permutation/standardize sar")
 
 save(richness_subplot10_dob_standar,file="richness_subplot10_dob_standar.RData")
 
-#at the 20 m scale
+#at the 20 m scale, we have already quantified this
+
+set.seed=(1203)
+times=30
+a4=sample_data(dob)
+
+a4=unique(a4$subplotID20)
+
+richness <- vector("list", length(a4))
+
+for (i in 1:length(a4))
+{
+  cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
+  data_sub <- subset_samples(dob, subplotID20==a4[i])
+  dim1=dim(sample_data(data_sub))[1]
+  
+  if(dim1>3)
+  {
+    cl <- makeCluster(3)
+    registerDoParallel(cl)
+    richness[[i]] <- foreach(i = 1:times, .combine = "cbind", .packages = c("phyloseq","dplyr")) %dopar%{
+      species <- vector(length = dim1[1]) # create a vector to save diversity
+      for (j in 1:4) 
+      { 
+        # randomly sample j samples in the plot
+        flag <- rep(FALSE, dim1[1])
+        flag[sample(1:dim1[1], 4)] <- TRUE# select 3 cores 
+        temp <- merge_samples(data_sub, flag, function(x) mean(x, na.rm = TRUE)) # the j samples aggregated by mean
+        species[j] <- sum(otu_table(temp)["TRUE"] > 0)
+        return(species[j])
+      }
+    }
+    stopCluster(cl)
+  }
+  else if (dim1<4)
+  {
+    richness[[i]]=NA
+  }
+  else{
+    
+    richness[[i]]=table(colSums(otu_table(data_sub))>0)["TRUE"]%>%as.numeric()
+  }
+}
+
+##  get the richness for each subplot at the 20 by 20 spatial scale
+
+richness_subplot20_dob=data.frame(nrow=length(a4),ncol=2)# the mean indicates the mean value for the cores within the same subplot
+for (i in 1:length(a4))
+{
+  
+  if(is.null(dim(richness[[i]])[1]))
+  {
+    richness_subplot20_dob[i,1]=richness[[i]] 
+    richness_subplot20_dob[i,2]=richness[[i]] 
+  }
+  
+  else
+  {
+    richness_subplot20_dob[i,1]=mean(richness[[i]])
+    richness_subplot20_dob[i,2]=sd(richness[[i]])
+  }
+}
 
 
-##
+richness_subplot20_dob_standar=richness_subplot20_dob%>%mutate(plotid=substr(a4,1,3))%>%group_by(plotid)%>%summarise(mean_value=mean(nrow,na.rm = TRUE),sd_value = sd(nrow,na.rm = TRUE))%>%mutate(area=rep(400,length.out=n))
+
+save(richness_subplot20_dob_standar,file="richness_subplot20_dob_standar.RData")
+
+
+##at the 30 by 30 scale
 
 richness_plot_permu=list()
 for (p in 1:30)
@@ -121,13 +188,11 @@ for(p in 1:30)
 
 richness_subplot30_dob_standar=mean_permu%>%data.frame()%>%t()%>%data.frame()%>%rowwise()%>% summarise(mean_value = mean(c_across(everything()), na.rm = TRUE))%>%mutate(plotID=plot_ID,area=rep(900,length.out=n))%>%select( plotID,mean_value,area)
 
-save(richness_subplot30_dob_standar,file="richness_subplot30_dob_standar")
-
-# for the estimation of the z and  c value
+save(richness_subplot30_dob_standar,file="richness_subplot30_dob_standar.RData")
 
 
 
-#
+#at the 40 by 40 scale
 set.seed=(5679)
 times=30
 a4=sample_data(dob)
@@ -159,7 +224,20 @@ for (i in 1:length(a4))
     stopCluster(cl)
   }
   else{
-    richness[[i]]=table(colSums(otu_table(data_sub))>0)["TRUE"]%>%as.numeric()
+    
+    if(dim1>=2)
+    {
+      data_sub =transform_sample_counts(kk, function(x) ifelse(x>0, 1, 0))
+      ot=t(otu_table(data_sub))%>%data.frame()
+      n=dim(ot)[2]# the number of "sites" for each plot
+      ot1=rowSums(ot)
+      out3 <- iNEXT(c(n,ot1), q=0, datatype="incidence_freq", size=round(seq(1, 16, length.out=16)), se=FALSE)
+      richness[[i]]=out3$iNextEst$size_based%>%slice_tail()%>%pull(qD)
+    }
+    
+    else{
+      richness[[i]]=NA
+    }
   }
 }
 
