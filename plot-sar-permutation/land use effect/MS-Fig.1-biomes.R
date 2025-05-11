@@ -2,6 +2,9 @@
 setwd("/Volumes/seas-zhukai/proj-soil-fungi/land-use-effect")
 
 biomes <- st_read("wwf_terr_ecos.shp")
+neon_dob_prevalent_v4.1=readRDS("neon_dob_prevalent_v4.1.rds")
+human_dominated_plots=readRDS("human_dominated_plots.rds")
+
 
 biomes <- group_by(biomes, BIOME) %>%
   summarise(geometry = st_union(geometry)) %>%
@@ -37,23 +40,15 @@ cbind(biomes$BIOME, biomes$LABEL)
 
 biomes <- st_crop(biomes, c(xmin=-170,xmax=-55,ymin=17,ymax=72))
 
-
-df4=readRDS("df4.rds")
-
 biomes <- st_set_crs(biomes, 4326) 
-
-
-neon_dob_prevalent_v4.1=readRDS("neon_dob_prevalent_v4.1.rds")
-
 
 sample_data(neon_dob_prevalent_v4.1)%>%data.frame()%>%dplyr::select(lon,lat)->study_site
 
 my_multipolygon_equal_area <- sf::st_transform(biomes,  5070)
-
 df_sf <- st_as_sf(study_site, coords = c("lon", "lat"), crs = 4326)
 df_equal_area <- sf::st_transform(df_sf, 5070)
 
-df_sf_crop=df_sf <- st_as_sf(df4, coords = c("lon", "lat"), crs = 4326)
+df_sf_crop=df_sf <- st_as_sf(human_dominated_plots, coords = c("lon", "lat"), crs = 4326)
 df_equal_area_crop <- sf::st_transform(df_sf_crop, 5070)
 
 
@@ -85,7 +80,6 @@ ggplot() +
   geom_sf(data = dominican_projected, fill = NA, size=0.01,color = "black")+
   geom_sf(data = baha_projected, fill = NA, size=0.01,color = "black")+
   geom_sf(data = jama_projected, fill = NA, size=0.01,color = "black")+
-  
   coord_sf(xlim = c(-5000000 , 3000000), ylim = c(-252303 , 5980000))
 
 
@@ -95,7 +89,7 @@ site=c("BLAN", "SCBI", "STER", "SERC", "DSNY", "JERC", "KONA", "ORNL", "LAJA")
 a=numeric()
 for (i in 1:9){
   
-  subset_samples(get(data[m]),plotIDM%in%df4$plotIDM&Site==site[i])%>%nsamples()->a[i]
+  subset_samples(get(data[m]),plotIDM%in%human_dominated_plots$plotIDM&Site==site[i])%>%nsamples()->a[i]
 }
 # add the polygons for different states
 
@@ -103,6 +97,7 @@ for (i in 1:9){
 subset_sf <- my_multipolygon_equal_area %>% 
   filter(LABEL%in%c("Temperate Broadleaf & Mixed Forests","Temperate Conifer Forests","Temperate Grasslands, Savannas & Shrublands","Tropical & Subtropical Dry Broadleaf Forests"  ))
 
+colors <- c("mediumpurple", "#E27B60", "#1ABC9C", "#1E61A5")
 
 p1=ggplot() +
   geom_sf(data=subset_sf, aes(fill=LABEL))+
@@ -111,8 +106,6 @@ p1=ggplot() +
         legend.key.height = unit(0.8, "cm"),
         legend.margin = margin(t = -30, r = -4, b = -1, l = 0),
         legend.text = element_text(size=25,angle=0),
-        
-        
         legend.title  = element_text(size=25),
         text = element_text(size = 18),
         plot.title = element_text(size = 15, hjust = 0.5), 
@@ -140,10 +133,4 @@ p1=ggplot() +
                     labels=c("Dry forests", 
                              "Temperate forests" ,        
                              "Conifer forests",
-                             "Grasslands" 
-                    ))
-# subset the data
-
-
-colors <- c("mediumpurple", "#E27B60", "#1ABC9C", "#1E61A5")
-
+                             "Grasslands" ))
