@@ -39,7 +39,6 @@ p1=ggplot(variable_importance_present_data, aes(x = variable, y = mean_value)) +
 
 
 
-
 present_richness_all%>%bind_cols(grid_level_biomes%>%select(LABEL))%>%
   data.frame()%>%
   dplyr::rename(richness=...3)%>%filter(LABEL%in%select_biome)->present_richness_all
