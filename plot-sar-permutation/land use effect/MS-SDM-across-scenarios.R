@@ -318,7 +318,6 @@ data <- data.frame(data)
 d <- rowSums(data) # the total richness for each grid cell for the current climate
 
 present_richness_all=bind_cols(coords_present, d)
-
 save(present_richness_all,file="present_richness_all.RData")
 
 
