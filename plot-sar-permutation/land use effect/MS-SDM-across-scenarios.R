@@ -1,7 +1,5 @@
 #climate effects on diversity losses and gains with SDM
-
 #extract the climate and soil variables for each grid cell
-
 #model fungal diversity based on current climate scenarios
 
 agg_data <- readRDS("neon_dob_prevalent_v4.1.Rds")
@@ -53,7 +51,7 @@ for(i in 1:8597){
   )
 }
 
-#(2)# future diversity patterns under the rcp2-4.5 scenarios
+#(2)# diversity projections under the rcp2-4.5 scenarios
 
 cl <- makeCluster(15)
 registerDoParallel(cl)
@@ -87,7 +85,8 @@ for(i in 2516:2524){
   )
 }
 
-#(3)# future species distributions for the rcp5-8.5 scenarios
+#(3)# diversity projections under the rcp5-8.5 scenarios
+
 cl <- makeCluster(10)
 registerDoParallel(cl)
 
@@ -122,7 +121,7 @@ for(i in 3055:4000){
 
 
 ### some species could not be modeled with all the three models
-#in that case, we used a single model for the projectio
+#in that case, we used a single model for the projection
 
 #(4)# check the code of the species that needs to be modeled with a single model
 
