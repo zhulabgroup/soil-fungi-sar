@@ -1,10 +1,8 @@
-# climate effects on diversity losses and gains with SDM
+#climate effects on diversity losses and gains with SDM
 
-library(phyloseq)
-library(dplyr)
-library(reshape2)
-library(SSDM)
-library(rJava)
+#extract the climate and soil variables for each grid cell
+
+#model fungal diversity based on current climate scenarios
 
 agg_data <- readRDS("neon_dob_prevalent_v4.1.Rds")
 
