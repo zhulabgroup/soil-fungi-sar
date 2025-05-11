@@ -67,3 +67,21 @@ my_function_project=function(data)
   return(raster_df )
 }
 
+##add sf layers on the map
+
+add_sf_layers <- function() {
+  list(
+    geom_sf(data = dominican_projected, fill = NA, size = 0.01, color = "gray80"),
+    geom_sf(data = us_projected, fill = NA, size = 0.01, color = "gray80"),
+    geom_sf(data = canada_clipped, fill = NA, size = 0.01, color = "gray80"),
+    geom_sf(data = rico_projected, fill = NA, size = 0.01, color = "gray80"),
+    geom_sf(data = cuba_projected, fill = NA, size = 0.01, color = "gray80"),
+    geom_sf(data = mexico_projected, fill = NA, size = 0.01, color = "gray80"),
+    geom_sf(data = haiti_projected, fill = NA, size = 0.01, color = "gray80"),
+    geom_sf(data = baha_projected, fill = NA, size = 0.01, color = "gray80"),
+    geom_sf(data = jama_projected, fill = NA, size = 0.01, color = "gray80")
+  )
+}
+
+
+
