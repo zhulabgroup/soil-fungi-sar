@@ -30,6 +30,9 @@ taxa_df$guild=guild
 new_tax_table <- as.matrix(taxa_df)
 tax_table(rare_all_assign) <- new_tax_table
 
+guild_select=c("ectomycorrhizal","arbuscular_mycorrhizal","soil_saprotroph","litter_saprotroph","plant_pathogen","wood_saprotroph",
+               "para","epiphyte")
+
 ## estimating fungal diversity at the 10 m by 10 m scale for the NEON plots
 
 set.seed=(1201)
@@ -65,7 +68,7 @@ for (i in 1:length(a4))
   }
 }
 
-# get the richness for each 10 x 10 m subplot for the NEON sites
+# get the diversity for each 10 x 10 m subplot for the NEON sites
 
 richness_subplot10_neon=data.frame(nrow=length(a4),ncol=2)# the mean indicates the mean value for the cores within the same subplot
 for (i in 1:length(a4))
@@ -242,7 +245,7 @@ save(data_neon_20m_scale,file="data_neon_20m_scale.RData")
 
 
 
-###when all the guilds were combined at the 30m by 30 m scale
+###whole-community fungal diversity at the 30m by 30 m scale
 
 plot_ID=sample_data(rare_all_assign)%>%data.frame()
 plot_ID=unique(plot_ID$plotIDM)
@@ -409,7 +412,7 @@ save(data_neon_30m_scale,file="data_neon_30m_scale.RData")
 
 
 
-## for the whole-community diversity at the 40m by 40m scale
+##  whole-community fungal diversity at the 40m by 40m scale
 
 set.seed=(5679)
 times=30
@@ -608,7 +611,7 @@ for (i in 1:length(a4))
   }
 }
 
-# get the richness at the 10 by 10m
+# get the richness at the 10 by 10 m
 
 richness_subplot10_dob=data.frame(nrow=length(a4),ncol=2)# the mean indiactes the mean value for the cores within the same subplot
 for (i in 1:length(a4))
@@ -704,6 +707,85 @@ for (i in 1:length(a4))
 richness_mean_subplot20_dob%>%data.frame()%>%bind_cols(a4)%>%mutate(plotid=substr(a4,1,8))%>%
   group_by(plotid)%>%summarise(mean_value=mean(X1,na.rm=TRUE),sd_value=sd(X1,na.rm=TRUE))%>%
   mutate(area=rep(400,n()),guild=rep("all",n()))->data_dob_20_all
+
+# for individual guilds
+
+data=list()
+for (m in 1:8)
+{
+data_select=subset_taxa(dob_permutation,guild==guild_select[m])
+  
+set.seed=(1203)
+times=30
+a4=sample_data(data_select)
+a4=unique(a4$subplotID20)
+richness <- vector("list", length(a4))
+
+for (i in 1:length(a4))# note that the i here is large
+{
+  cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
+  data_sub <- subset_samples(data_select, subplotID20==a4[i])
+  dim1=dim(sample_data(data_sub))[1]
+  
+  tryCatch({if(dim1>=4)
+  {
+    cl <- makeCluster(3)
+    registerDoParallel(cl)
+    richness[[i]] <- foreach(i = 1:times, .combine = "cbind", .packages = c("phyloseq","dplyr")) %dopar%{
+      species <- vector(length = dim1[1]) # create a vector to save diversity
+      for (j in 1:4) 
+      { 
+        # randomly sample j samples in the plot
+        flag <- rep(FALSE, dim1[1])
+        flag[sample(1:dim1[1], 4)] <- TRUE# select 3 cores 
+        temp <- merge_samples(data_sub, flag, function(x) mean(x, na.rm = TRUE)) # the j samples aggregated by mean
+        species[j] <- sum(otu_table(temp)["TRUE"] > 0)
+        return(species[j])
+      }
+    }
+    stopCluster(cl)
+  }
+    else if (dim1>=2&dim1<4)
+    {
+      sub_samp=rownames(sample_data(data_sub))
+      kk=subset_samples(data_select,sample_names(data_select)%in%sub_samp)
+      data_sub =transform_sample_counts(kk, function(x) ifelse(x>0, 1, 0))
+      ot=t(otu_table(data_sub))%>%data.frame()
+      n=dim(ot)[2]# the number of "sites" for each plot
+      ot1=rowSums(ot)
+      out3 <- iNEXT(c(n,ot1), q=0, datatype="incidence_freq", size=round(seq(1, 4, length.out=4)), se=FALSE)
+      richness[[i]]=out3$iNextEst$size_based%>%slice_tail()%>%pull(qD)
+    }
+    else{
+      
+      richness[[i]]=NA
+    }
+  },
+  error = function(e) 
+  {
+    # Handle the error and continue
+    print(paste("Error on element", i, ":", e))
+  },
+  finally ={
+    print(paste("Processed element", i))}
+  )
+}
+
+richness_mean_subplot20_dob=matrix(ncol=2,nrow=length(a4))
+for (i in 1:length(a4))
+{
+  richness_mean_subplot20_dob[i,1]=mean(richness[[i]])
+  richness_mean_subplot20_dob[i,2]=sd(richness[[i]])
+}
+
+richness_mean_subplot20_dob%>%data.frame()%>%bind_cols(a4)%>%mutate(plotid=substr(a4,1,8))%>%
+  group_by(plotid)%>%summarise(mean_value=mean(X1,na.rm=TRUE),sd_value=sd(X1,na.rm=TRUE))%>%
+  mutate(area=rep(400,n()),guild=rep("all",n()))->data[[m]]
+
+}
+
+
+
 
 
 
@@ -904,6 +986,7 @@ for (m in 1:8)
   
   
 }
+
 richness_plot_dob%>%data.frame()%>%mutate(area=rep(900,n()),guild=rep("all",n()))%>%
   rename_all(~paste0(c("plotid","mean_value","sd_value","area","guild")))->temp
 
