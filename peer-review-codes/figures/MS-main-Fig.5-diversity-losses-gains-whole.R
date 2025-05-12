@@ -1,6 +1,4 @@
 
-################ coded assocaied with figure 5 in the main text#########################
-
 setwd("/Volumes/seas-zhukai/proj-soil-fungi/land-use-climate-historical")
 
 
