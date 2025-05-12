@@ -212,6 +212,7 @@ p_land_latitude_585=ggplotGrob(ggplot()+
 
 
 pie_data_guild=readRDS("pie_data_guild.rds")
+
 com_data_climate_guild=readRDS("com_data_climate_guild.rds")
 
 # for different guilds
