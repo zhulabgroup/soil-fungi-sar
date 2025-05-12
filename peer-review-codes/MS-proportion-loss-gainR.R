@@ -18,7 +18,7 @@ biomes_four=c( "Temperate Broadleaf & Mixed Forests","Temperate Conifer Forests"
                "Temperate Grasslands, Savannas & Shrublands" ,"Tropical & Subtropical Dry Broadleaf Forests")
 
 
-#(1) get the proportions of pixels that show either species gain or loss
+#(1) get the proportions of pixels that show either species gains or losses
 
 change_rate_guild_scenarios=list()# the j corresponds to four scenarios for both land cover and climate effect
 for (j in 1:4)
@@ -64,7 +64,7 @@ change_rate_guild_scenarios[[1]]#means land cover effect in the low-emission sce
 
 saveRDS(change_rate_guild_scenarios,file="change_rate_guild_scenarios.rds")
 
-#for each guild, to get the data to create the pie plot
+#(2)# for each guild, to get the data to create the pie plot
 pie_data_guild=list()
 for (m in 1:9){
   pie_data=list()
@@ -85,7 +85,7 @@ for (m in 1:9){
 
 saveRDS(pie_data_guild,file="pie_data_guild.rds")
 
-#to get the overall effect of both factors
+#(3)# to get the overall effect of both factors
 # it is based on the species change rate
 
 
@@ -136,7 +136,7 @@ for (j in 1:4)
 
 change_rate_mean_guild_scenario[[1]]#means for land cover effects in the low-emission scenarios
 
-#to combine the list into a dataframe to create the plots
+#to combine the list into a data frame to create the plots
 #for the two scenarios to get the replicates for the mean change
 # we only select the 9 th guild when all the guilds were combined
 data_biome_change_rate_guild=list()
