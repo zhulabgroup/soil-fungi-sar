@@ -329,3 +329,6 @@ for(m in 1:9)
     mutate(type=rep(c("nature","crop"),each=45))->data_mean_richness_biome_model_guild[[m]] 
 }
 
+saveRDS(data_mean_richness_biome_model_guild,file="data_mean_richness_biome_model_guild.rds")
+
+
