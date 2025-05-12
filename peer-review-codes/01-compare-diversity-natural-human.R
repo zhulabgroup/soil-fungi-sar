@@ -223,8 +223,6 @@ saveRDS(species_com_guild_adjust_natural,file="species_com_guild_adjust_natural.
 species_com_guild_adjust_natural=readRDS("species_com_guild_adjust_natural.rds")
 
 
-#
-
 ##
 sample_data(rare_all_guild_biome)%>%data.frame()%>%
   dplyr::select(Site,LABEL)%>%distinct()%>%left_join(human_dominated_plots,by="Site")%>%filter(!is.na(plotIDM))%>%head(45)->temp_data
@@ -315,24 +313,19 @@ for(m in 1:9)
 
 
 
-
 saveRDS(richness_compare_crop_nature_guild,file="richness_compare_crop_nature_guild.rds")
 
 
-human_dominated_plots%>%mutate(plotid=1:45)%>%dplyr::select(Site,plotid,plotIDM)->temp
-
-biome_select=c("Temperate Broadleaf & Mixed Forests","Temperate Conifer Forests",
-               "Temperate Grasslands, Savannas & Shrublands","Tropical & Subtropical Moist Broadleaf Forests")
-
-do.call(rbind,richness_ratio_with_rarefaction  )%>%data.frame()%>%
-  mutate(plotid=unlist(biome_group))%>%mutate(biomes=rep(biome_select,times=plot_number))%>%
-  left_join(temp,by="plotid")%>%rename_all(~paste0(c("low","mean_nature","up","mean_crop","plotid","biome","site","plotIDM")))->data_mean_richness_biome
-
-data_mean_richness_biome%>%dplyr::select(mean_nature,biome, site,plotIDM)%>%
-  rename(mean_rich=mean_nature)%>%
-  rbind(data_mean_richness_biome%>%dplyr::select(mean_crop,biome, site,plotIDM)%>%rename(mean_rich=mean_crop))%>%
-  mutate(type=rep(c("nature","crop"),each=45))->data_mean_richness_biome_model
-
-
-###
+data_mean_richness_biome_model_guild=list()
+for(m in 1:9)
+{
+  do.call(rbind,richness_compare_crop_nature_guild[[m]])%>%data.frame()%>%
+    mutate(plotid=unlist(biome_group))%>%mutate(biomes=rep(biome_select,times=plot_number))%>%
+    left_join(temp,by="plotid")%>%rename_all(~paste0(c("low","mean_nature","up","mean_crop","plotid","biome","site","plotIDM")))->df1
+  
+  df1%>%dplyr::select(mean_nature,biome, site,plotIDM)%>%
+    rename(mean_rich=mean_nature)%>%
+    rbind(df1%>%dplyr::select(mean_crop,biome, site,plotIDM)%>%rename(mean_rich=mean_crop))%>%
+    mutate(type=rep(c("nature","crop"),each=45))->data_mean_richness_biome_model_guild[[m]] 
+}
 
