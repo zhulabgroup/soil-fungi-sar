@@ -2,9 +2,16 @@
 setwd("/Volumes/seas-zhukai/proj-soil-fungi/land-use-effect")
 rm(list = ls())
 
-compare_richness_guild=readRDS("compare_richness_guild.rds")
-
 data_mean_richness_biome_model_guild=readRDS("data_mean_richness_biome_model_guild.rds")
+# the diversity ratio for different fungal guilds
+biome_site_level_richness_ratio_consider_nature_history=readRDS("biome_site_level_richness_ratio_consider_nature_history.rds")
+df_significance=readRDS("df_significance.rds")
+data=c("rare_all_guild_biome","data_AM","data_EM","data_plapat","data_soilsap","data_littersap","data_woodsap","data_epiphy","data_para")
+
+#if we focus on the four main fungal guilds
+
+guild=c( "all", "AM" ,"EM","plapat","soilsap" )
+
 
 biome_select=c("Temperate Broadleaf & Mixed Forests","Temperate Conifer Forests",
                "Temperate Grasslands, Savannas & Shrublands","Tropical & Subtropical Moist Broadleaf Forests")
@@ -48,18 +55,6 @@ for(i in 1:4)
 }
 
 
-# the diversity ratio for different fungal guilds
-
-biome_site_level_richness_ratio_consider_nature_history=readRDS("biome_site_level_richness_ratio_consider_nature_history.rds")
-
-
-df_significance=readRDS("df_significance.rds")
-
-data=c("rare_all_guild_biome","data_AM","data_EM","data_plapat","data_soilsap","data_littersap","data_woodsap","data_epiphy","data_para")
-
-#if we focused on the four main fungal guilds
-
-guild=c( "all", "AM" ,"EM","plapat","soilsap" )
 
 pp_response=list()
 for (i in 1:4)
