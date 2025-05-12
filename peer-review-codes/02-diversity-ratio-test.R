@@ -1,30 +1,24 @@
-# for the updated species response ratio
+
 # considering the historical land use type for natural plots
 setwd("/Volumes/seas-zhukai/proj-soil-fungi/land-use-climate-historical")
+
+rare_all_guild_biome=readRDS("rare_all_guild_biome.rds")
+human_dominated_plots=readRDS("human_dominated_plots.rds")
+
+richness_compare_crop_nature_guild=readRDS("richness_compare_crop_nature_guild.rds")
 
 biome_select=c("Temperate Broadleaf & Mixed Forests","Temperate Conifer Forests",
                "Temperate Grasslands, Savannas & Shrublands","Tropical & Subtropical Moist Broadleaf Forests")
 
-species_com_guild_adjust_natural=readRDS("species_com_guild_adjust_natural.rds")#each element represent a phyloseq
-
-#same data species_com_guild
-#the data set for each guild and biome
-# the data was used for comparing species composition
-
-rare_all_guild_biome=readRDS("rare_all_guild_biome.rds")
-#load in the human-modified plots
-human_dominated_plots=readRDS("human_dominated_plots.rds")
-
 sample_data(rare_all_guild_biome)%>%data.frame()%>%
   dplyr::select(Site,LABEL)%>%distinct()%>%left_join(human_dominated_plots,by="Site")%>%filter(!is.na(plotIDM))%>%head(45)->temp_data
 
-biomes=c("Temperate Broadleaf & Mixed Forests","Temperate Conifer Forests","Temperate Grasslands, Savannas & Shrublands","Tropical & Subtropical Moist Broadleaf Forests")
 
 biome_group=list()
 for (i in 1:4){
   human_dominated_plots%>%left_join(temp_data%>%dplyr::select(plotIDM,LABEL),by="plotIDM")%>%mutate(code=1:45)%>%
     group_by(LABEL)%>%
-    filter(LABEL==biomes[i])%>%pull(code)->biome_group[[i]]
+    filter(LABEL==biome_select[i])%>%pull(code)->biome_group[[i]]
 }
 
 # the plots belonging to the same biome
@@ -35,18 +29,13 @@ for(i in 1:4)
 }
 
 
-# this is computed on great lakes
-
-
-richness_compare_crop_nature_guild=readRDS("richness_compare_crop_nature_guild.rds")
-
 human_dominated_plots%>%mutate(plotid=1:45)%>%dplyr::select(Site,plotid,plotIDM)->temp
 
 
 # for the whole-community data
 
 do.call(rbind,richness_compare_crop_nature_guild[[1]] )%>%data.frame()%>%
-  mutate(plotid=unlist(biome_group))%>%mutate(biomes=rep(biome_select,times=plot_number))%>%
+  mutate(plotid=unlist(biome_group))%>%mutate(biome_select=rep(biome_select,times=plot_number))%>%
   left_join(temp,by="plotid")%>%rename_all(~paste0(c("low","mean_nature","up","mean_crop","plotid","biome","site","plotIDM")))->data_mean_richness_biome
 
 
@@ -56,7 +45,7 @@ data_mean_richness_guild_consider_nature_history=list()
 for(m in 1:9){
   
   data_mean_richness_guild_consider_nature_history[[m]]=do.call(rbind,richness_compare_crop_nature_guild[[m]] )%>%data.frame()%>%
-    mutate(plotid=unlist(biome_group))%>%mutate(biomes=rep(biome_select,times=plot_number))%>%
+    mutate(plotid=unlist(biome_group))%>%mutate(biome_select=rep(biome_select,times=plot_number))%>%
     left_join(temp,by="plotid")%>%rename_all(~paste0(c("low","mean_nature","up","mean_crop","plotid","biome","site","plotIDM")))
 }
 
@@ -76,7 +65,6 @@ convert_to_integer <- function(df) {
   })
   return(df)
 }
-
 
 
 my_list_integer <- lapply(data_mean_richness_guild_consider_nature_history, convert_to_integer)
@@ -183,7 +171,6 @@ df_significance_temp %>%
 
 
 # if we get the site-level response ratio
-
 # if we get the individual ratio and then get the mean
 
 
@@ -214,20 +201,4 @@ do.call(cbind,richness_ratio_rarefy_guild_site_consider_nature_history)%>%data.f
   dplyr::rename(guild=variable)->biome_site_level_richness_ratio_consider_nature_history
 
 saveRDS(biome_site_level_richness_ratio_consider_nature_history,file="biome_site_level_richness_ratio_consider_nature_history.rds")
-
-# the quantified response ratio will be used to determine species relative habitat affinity
-
-## create figures for the updated data
-#
-
-biome_site_level_richness_ratio_consider_nature_history=readRDS(file="biome_site_level_richness_ratio_consider_nature_history.rds")
-# for the updated, we exclude some of the guilds
-
-guild=c("all","AM","EM","plapat","soilsap")
-
-df_significance_plot=df_significance_plot%>%filter(guild%in%c("all","AM" ,"EM","plapat","soilsap"))
-
-
-biome_site_level_richness_ratio_consider_nature_history_sub=biome_site_level_richness_ratio_consider_nature_history%>%
-  filter(guild%in%c("all","AM" ,"EM","plapat","soilsap"))
 
