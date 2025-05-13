@@ -16,7 +16,7 @@ occurrence_data <- cbind(occurrence_data, replicated_df)
 d <- colSums(occ[, 1:8597])
 sp <- colnames(occ[, 1:8597]) # model each species and save the output
 
-#(1)# diversity projections based on current climate scenarios
+#(1)# SDM based on current climate scenarios
 
 
 cl <- makeCluster(10)
@@ -51,7 +51,7 @@ for(i in 1:8597){
   )
 }
 
-#(2)# diversity projections under the rcp2-4.5 scenarios
+#(2)# SDM based on the rcp2-4.5 scenarios
 
 cl <- makeCluster(15)
 registerDoParallel(cl)
@@ -85,15 +85,15 @@ for(i in 2516:2524){
   )
 }
 
-#(3)# diversity projections under the rcp5-8.5 scenarios
+#(3)# SDM based on the rcp5-8.5 scenarios
 
 cl <- makeCluster(10)
 registerDoParallel(cl)
 
-sdm_future_rcp858_ensemble=list()
-for(i in 3055:4000){
+sdm_future_rcp585_ensemble=list()
+for(i in 1:8597){
   cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
-  tryCatch({sdm_future_rcp858_ensemble[[i]] <- ensemble_modelling(algorithms = c('MAXENT', 'RF',"GLM"), 
+  tryCatch({sdm_future_rcp585_ensemble[[i]] <- ensemble_modelling(algorithms = c('MAXENT', 'RF',"GLM"), 
                                                                   subset(occurrence_data,variable==sp[i]),
                                                                   r_future_northam_rcp585, Xcol = 'lon', Ycol = 'lat',Pcol="value", 
                                                                   Spcol="variable",
@@ -106,7 +106,7 @@ for(i in 3055:4000){
                                                                   weight = TRUE,  # Whether to weight models by their performance
                                                                   
                                                                   verbose = FALSE)
-  saveRDS(sdm_future_rcp858_ensemble[[i]],file=paste0("result_future_rcp858_ensemble", i, ".rds"))},
+  saveRDS(sdm_future_rcp585_ensemble[[i]],file=paste0("result_future_rcp585_ensemble", i, ".rds"))},
   
   error = function(e) 
   {
@@ -122,119 +122,6 @@ for(i in 3055:4000){
 
 ### some species could not be modeled with all the three models
 #in that case, we used a single model for the projection
-
-#(4)# check the code of the species that needs to be modeled with a single model
-
-directory_path <- "/nfs/turbo/seas-zhukai/proj-soil-fungi/SDM-RCP245"
-
-## get the lacking number
-
-files <- list.files(path = directory_path , pattern = "\\.rds$", full.names = TRUE)
-
-dd=files %>%str_extract_all("\\d+") 
-
-finished_number =numeric()
-for (i in 1:length(files))
-{
-  cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
-  finished_number[i]=dd[[i]][3]%>%as.numeric()
-}
-# Generate the complete sequence of numbers
-complete_sequence <- seq(1:8597)
-# Identify the missing numbers
-missing_numbers <- setdiff(complete_sequence, finished_number)
-
-# Get file information
-file_info <- file.info(files)
-
-# Filter files smaller than 40 bytes
-small_files <- rownames(file_info[file_info$size < 100, ])
-
-ddk=small_files %>%str_extract_all("\\d+") 
-
-small_number =numeric()
-for (i in 1:length(small_files))
-{
-  cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
-  small_number[i]=ddk[[i]][3]%>%as.numeric()
-}
-all_numbers=unique(c(missing_numbers, small_number))%>%sort()
-
-all_numbers_rcp245=all_numbers#
-
-#(5)# for guild-level species projections
-
-tax_table(rare_all_guild)%>%data.frame()%>%dplyr::select(primary_lifestyle)->df
-df%>%mutate(sp=rownames(df))->species_guild
-sp%>%data.frame()%>%rename_all(~paste0("sp"))%>%left_join(species_guild,by="sp")->op
-op%>%mutate(ta2 = ifelse(str_detect(primary_lifestyle, "parasite"), "para", primary_lifestyle))->op
-guild_model=c("soil_saprotroph","plant_pathogen","ectomycorrhizal","litter_saprotroph","wood_saprotroph","arbuscular_mycorrhizal","epiphyte","para")
-
-model_guild=matrix(ncol=8,nrow=275760)
-for (j in 1:8)
-{
-  cat("\r", paste(paste0(rep("*", round(j / 1, 0)), collapse = ""), j, collapse = "")) # informs the processing
-  ## future richness for the scenario of RCP 585 for total richness
-  #cat("\r", paste(paste0(rep("*", round(j / 1, 0)), collapse = ""), j, collapse = "")) # informs the processing
-  species_otu=op%>%mutate(number=1:8597)%>%filter(ta2==guild_model[j])%>%pull(number)%>%as.character()
-  species_number=op%>%mutate(number=1:8597)%>%filter(ta2==guild_model[j])%>%pull(number)%>%as.character()%>%length()
-  data <- matrix(ncol = species_number, nrow = 275760)
-  
-  for (i in seq_along(species_otu)) {
-    
-    if(i%in%all_numbers_rcp245)
-    {
-      setwd("/home/wenqil/results")
-      #cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
-      
-      df <- readRDS(paste0("result_future", i, ".rds"))
-      
-      data[, i] <- raster::extract(df@binary, coords_present)
-    }
-    
-    else {
-      setwd("/nfs/turbo/seas-zhukai/proj-soil-fungi/SDM-RCP245")
-      
-      #cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
-      df <- readRDS(paste0("result_future_rcp245—ensemble", i, ".rds"))
-      data[, i] <- raster::extract(df@binary, coords_present)
-    }
-    
-  }
-  
-  data <- data.frame(data)
-  d <- rowSums(data) # the total richness for each grid cell
-  model_guild[,j] <- d
-}
-
-future_richness_rcp245_guild=model_guild
-
-save(future_richness_rcp245_guild,file="future_richness_rcp245_guild.RData")
-
-#(6)# when all the guilds were combined
-
-data <- matrix(ncol = 8597, nrow = 275760)
-for (i in 1:8597) {
-  if(i%in%all_numbers_rcp245)
-  {
-    setwd("/home/wenqil/results")
-    cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
-    
-    df <- readRDS(paste0("result_future", i, ".rds"))
-    
-    data[, i] <- raster::extract(df@binary, coords_present)
-  }
-  
-  else {
-    setwd("/nfs/turbo/seas-zhukai/proj-soil-fungi/SDM-RCP245")
-    
-    cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
-    df <- readRDS(paste0("result_future_rcp245—ensemble", i, ".rds"))
-    data[, i] <- raster::extract(df@binary, coords_present)
-  }
-  
-}
-
 
 #(7)# to check the completeness of the molded species for diversity projections based on current climate scenarios
 
@@ -317,8 +204,301 @@ d <- rowSums(data) # the total richness for each grid cell for the current clima
 present_richness_all=bind_cols(coords_present, d)
 save(present_richness_all,file="present_richness_all.RData")
 
+# for individual guilds based on the current climate projections
+
+tax_table(rare_all_guild)%>%data.frame()%>%dplyr::select(primary_lifestyle)->df
+df%>%mutate(sp=rownames(df))->species_guild
+sp%>%data.frame()%>%rename_all(~paste0("sp"))%>%left_join(species_guild,by="sp")->op
+op%>%mutate(ta2 = ifelse(str_detect(primary_lifestyle, "parasite"), "para", primary_lifestyle))->op
+guild_model=c("soil_saprotroph","plant_pathogen","ectomycorrhizal","litter_saprotroph","wood_saprotroph","arbuscular_mycorrhizal","epiphyte","para")
+
+
+model_guild=matrix(ncol=8,nrow=275760)
+for (j in 1:8)
+{
+  cat("\r", paste(paste0(rep("*", round(j / 1, 0)), collapse = ""), j, collapse = "")) # informs the processing
+  ## future richness for the scenario of RCP 585 for total richness
+  #cat("\r", paste(paste0(rep("*", round(j / 1, 0)), collapse = ""), j, collapse = "")) # informs the processing
+  species_otu=op%>%mutate(number=1:8597)%>%filter(ta2==guild_model[j])%>%pull(number)%>%as.character()
+  species_number=op%>%mutate(number=1:8597)%>%filter(ta2==guild_model[j])%>%pull(number)%>%as.character()%>%length()
+  data <- matrix(ncol = species_number, nrow = 275760)
+  
+  for (i in seq_along(species_otu)) {
+    
+    if(i%in%all_numbers_present)
+    {
+      setwd("/home/wenqil/results")
+      #cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
+      
+      df <- readRDS(paste0("result_", i, ".rds"))
+      
+      data[, i] <- raster::extract(df@binary, coords_present)
+    }
+    
+    else {
+      setwd("/nfs/turbo/seas-zhukai/proj-soil-fungi/SDM-present")
+      
+      #cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
+      df <- readRDS(paste0("result_present_glm_ensemble", i, ".rds"))
+      data[, i] <- raster::extract(df@binary, coords_present)
+    }
+    
+  }
+  
+  data <- data.frame(data)
+  
+  d <- rowSums(data) # the total richness for each grid cell
+  model_guild[,j] <- d
+}
+
+current_richness_guild=model_guild
+
+
+
+
+#(4)# check the code of the species that needs to be modeled with a single model
+
+directory_path <- "/nfs/turbo/seas-zhukai/proj-soil-fungi/SDM-RCP245"
+
+## get the lacking number
+
+files <- list.files(path = directory_path , pattern = "\\.rds$", full.names = TRUE)
+
+dd=files %>%str_extract_all("\\d+") 
+
+finished_number =numeric()
+for (i in 1:length(files))
+{
+  cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
+  finished_number[i]=dd[[i]][3]%>%as.numeric()
+}
+# Generate the complete sequence of numbers
+complete_sequence <- seq(1:8597)
+# Identify the missing numbers
+missing_numbers <- setdiff(complete_sequence, finished_number)
+
+# Get file information
+file_info <- file.info(files)
+
+# Filter files smaller than 40 bytes
+small_files <- rownames(file_info[file_info$size < 100, ])
+
+ddk=small_files %>%str_extract_all("\\d+") 
+
+small_number =numeric()
+for (i in 1:length(small_files))
+{
+  cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
+  small_number[i]=ddk[[i]][3]%>%as.numeric()
+}
+all_numbers=unique(c(missing_numbers, small_number))%>%sort()
+
+all_numbers_rcp245=all_numbers#
+
+#(5)# get the total richness for the scenario of rcp245
+
+data <- matrix(ncol = 8597, nrow = 275760)
+for (i in 1:8597) {
+  if(i%in%all_numbers_rcp245)
+  {
+    setwd("/home/wenqil/results")
+    cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
+    
+    df <- readRDS(paste0("result_future", i, ".rds"))
+    
+    data[, i] <- raster::extract(df@binary, coords_present)
+  }
+  
+  else {
+    setwd("/nfs/turbo/seas-zhukai/proj-soil-fungi/SDM-RCP245")
+    
+    cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
+    df <- readRDS(paste0("result_future_rcp245—ensemble", i, ".rds"))
+    data[, i] <- raster::extract(df@binary, coords_present)
+  }
+  
+}
+
+# for individual guilds under the rcp2-4.5 scenario
+
+tax_table(rare_all_guild)%>%data.frame()%>%dplyr::select(primary_lifestyle)->df
+df%>%mutate(sp=rownames(df))->species_guild
+sp%>%data.frame()%>%rename_all(~paste0("sp"))%>%left_join(species_guild,by="sp")->op
+op%>%mutate(ta2 = ifelse(str_detect(primary_lifestyle, "parasite"), "para", primary_lifestyle))->op
+guild_model=c("soil_saprotroph","plant_pathogen","ectomycorrhizal","litter_saprotroph","wood_saprotroph","arbuscular_mycorrhizal","epiphyte","para")
+
+model_guild=matrix(ncol=8,nrow=275760)
+for (j in 1:8)
+{
+  cat("\r", paste(paste0(rep("*", round(j / 1, 0)), collapse = ""), j, collapse = "")) # informs the processing
+  ## future richness for the scenario of RCP 585 for total richness
+  #cat("\r", paste(paste0(rep("*", round(j / 1, 0)), collapse = ""), j, collapse = "")) # informs the processing
+  species_otu=op%>%mutate(number=1:8597)%>%filter(ta2==guild_model[j])%>%pull(number)%>%as.character()
+  species_number=op%>%mutate(number=1:8597)%>%filter(ta2==guild_model[j])%>%pull(number)%>%as.character()%>%length()
+  data <- matrix(ncol = species_number, nrow = 275760)
+  
+  for (i in seq_along(species_otu)) {
+    
+    if(i%in%all_numbers_rcp245)
+    {
+      setwd("/home/wenqil/results")
+      #cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
+      
+      df <- readRDS(paste0("result_future", i, ".rds"))
+      
+      data[, i] <- raster::extract(df@binary, coords_present)
+    }
+    
+    else {
+      setwd("/nfs/turbo/seas-zhukai/proj-soil-fungi/SDM-RCP245")
+      
+      #cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
+      df <- readRDS(paste0("result_future_rcp245—ensemble", i, ".rds"))
+      data[, i] <- raster::extract(df@binary, coords_present)
+    }
+    
+  }
+  
+  data <- data.frame(data)
+  d <- rowSums(data) # the total richness for each grid cell
+  model_guild[,j] <- d
+}
+
+future_richness_rcp245_guild=model_guild
+
+save(future_richness_rcp245_guild,file="future_richness_rcp245_guild.RData")
+
+
+
+
+
+#for individual guilds under the scenarios of rcp585
+
+data <- matrix(ncol = 8597, nrow = 275760)
+for (i in 1:8597) {
+  if(i%in%all_numbers_rcp245)
+  {
+    setwd("/home/wenqil/results")
+    cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
+    
+    df <- readRDS(paste0("result_future", i, ".rds"))
+    
+    data[, i] <- raster::extract(df@binary, coords_present)
+  }
+  
+  else {
+    setwd("/nfs/turbo/seas-zhukai/proj-soil-fungi/SDM-RCP585")
+    
+    cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
+    df <- readRDS(paste0("result_future_rcp585_ensemble", i, ".rds"))
+    data[, i] <- raster::extract(df@binary, coords_present)
+  }
+  
+}
+
+
+
+
+model_guild=matrix(ncol=8,nrow=275760)
+for (j in 1:8)
+{
+  cat("\r", paste(paste0(rep("*", round(j / 1, 0)), collapse = ""), j, collapse = "")) # informs the processing
+  ## future richness for the scenario of RCP 585 for total richness
+  #cat("\r", paste(paste0(rep("*", round(j / 1, 0)), collapse = ""), j, collapse = "")) # informs the processing
+  species_otu=op%>%mutate(number=1:8597)%>%filter(ta2==guild_model[j])%>%pull(number)%>%as.character()
+  species_number=op%>%mutate(number=1:8597)%>%filter(ta2==guild_model[j])%>%pull(number)%>%as.character()%>%length()
+  data <- matrix(ncol = species_number, nrow = 275760)
+  
+  for (i in seq_along(species_otu)) {
+    
+    if(i%in%all_numbers_rcp245)
+    {
+      setwd("/home/wenqil/results")
+      #cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
+      
+      df <- readRDS(paste0("result_future", i, ".rds"))
+      
+      data[, i] <- raster::extract(df@binary, coords_present)
+    }
+    
+    else {
+      setwd("/nfs/turbo/seas-zhukai/proj-soil-fungi/SDM-RCP")
+      
+      #cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
+      df <- readRDS(paste0("result_future_rcp585_ensemble", i, ".rds"))
+      data[, i] <- raster::extract(df@binary, coords_present)
+    }
+    
+  }
+  
+  data <- data.frame(data)
+  d <- rowSums(data) # the total richness for each grid cell
+  model_guild[,j] <- d
+}
+
+future_richness_rcp585_guild=model_guild
+
+save(future_richness_rcp585_guild,file="future_richness_rcp585_guild.RData")
+
+
+##############33
+current_richness_guild=current_richness_guild%>%data.frame()%>%rename_all(~paste0(guild_model))
+
+future_richness_rcp245=future_richness_rcp245%>%data.frame()%>%rename_all(~paste0(guild_model))
+
+future_richness_rcp585=future_richness_rcp585%>%data.frame()%>%rename_all(~paste0(guild_model))
+
+df_rcp245=(future_richness_rcp245-current_richness_guild)/current_richness_guild
+
+df_rcp585=(future_richness_rcp585-current_richness_guild)/current_richness_guild
+
+
+
+
+
+
 
 #(9)# get the variable importance for individual guilds
+
+model_guild=list()
+for (j in 1:8)
+{
+  cat("\r", paste(paste0(rep("*", round(j / 1, 0)), collapse = ""), j, collapse = "")) # informs the processing
+  #cat("\r", paste(paste0(rep("*", round(j / 1, 0)), collapse = ""), j, collapse = "")) # informs the processing
+  species_otu=op%>%mutate(number=1:8597)%>%filter(ta2==guild_model[j])%>%pull(number)%>%as.character()
+  species_number=op%>%mutate(number=1:8597)%>%filter(ta2==guild_model[j])%>%pull(number)%>%as.character()%>%length()
+  
+  data <- matrix(ncol =7,nrow=species_number)
+  
+  for (i in seq_along(species_otu)) {
+    #cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
+    
+    if(i%in%all_numbers_present)
+    {
+      setwd("/home/wenqil/results")
+      #cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
+      
+      df <- readRDS(paste0("result_", i, ".rds"))
+      
+      data[i, ] <- df@variable.importance%>%as.numeric()
+    }
+    
+    else {
+      setwd("/nfs/turbo/seas-zhukai/proj-soil-fungi/SDM-present")
+      
+      #cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
+      df <- readRDS(paste0("result_present_glm_ensemble", i, ".rds"))
+      data[i, ] <- df@variable.importance%>%as.numeric()
+    }
+    
+  }
+  
+  data <- data.frame(data,guild_model[j])
+  
+  # the total richness for each grid cell
+  model_guild[[j]] <- data
+}
+
 
 model_guild=list()
 for (j in 1:8)
