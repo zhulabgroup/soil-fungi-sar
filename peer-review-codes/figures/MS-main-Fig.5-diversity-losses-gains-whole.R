@@ -7,9 +7,8 @@ climate_induced_change_richness_rcp585=readRDS(file="climate_induced_change_rich
 summary_data_climate_rcp245=readRDS(file="summary_data_climate_rcp245.rds")
 summary_data=readRDS(file="summary_data.rds")
 
+species_change_land_rcp245=readRDS(file="species_change_land_rcp245.rds")
 species_change_land_rcp585=readRDS(file="species_change_land_rcp585.rds")
-
-species_change_land_rcp245=readRDS("species_change_land_rcp245.rds")
 
 species_change_land_rcp245%>%filter(variable=="all")->species_change_land_rcp245_all
 
