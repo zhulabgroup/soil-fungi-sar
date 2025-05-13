@@ -148,8 +148,3 @@ sf_layers <- list(
   cuba_projected, mexico_projected, haiti_projected, baha_projected, jama_projected
 )
 
-# Create base plot
-
-
-
-
