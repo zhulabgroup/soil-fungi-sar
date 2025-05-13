@@ -1,15 +1,31 @@
-
 #estimate fungal diversity for each 10-min grid cell
-# assign the biome type for each cell
+#assign the biome type for each cell
 
 setwd("/Volumes/seas-zhukai/proj-soil-fungi/land-use-effect")
+#coordinates for each grid cell
+
+load("coords_present_new.RData")
+coords_present%>%data.frame()%>%rename_all(~paste0(c("lon","lat")))->coords_present
+
+
+# determining the total fungal diversity for each grid based on the biome-specific countryside SAR parameters
+#initial analyses included eight fungal guilds
+
+guild_type=c("AM","EM","soilsap","littersap","woodsap","plapat","para","epiphy","all")
+#land use data for different time points
+
+raster1 <- rast("GCAM_Demeter_LU_ssp2_rcp45_hadgem_2015.nc")#
+raster2 <- rast("GCAM_Demeter_LU_ssp2_rcp45_hadgem_2100.nc")#
+raster3 <- rast("GCAM_Demeter_LU_ssp5_rcp85_hadgem_2100.nc")# 
+
+habitat_affinity_with_land_history_rarefy_consider_nature_history=readRDS("habitat_affinity_with_land_history_rarefy_consider_nature_history.rds")
+
 
 biomes <- st_read("wwf_terr_ecos.shp")
 biomes <- group_by(biomes, BIOME) %>%
   summarise(geometry = st_union(geometry)) %>%
   ungroup() %>%
   mutate(BIOME = as.character(BIOME))
-
 biome_labels <- data.frame(
   BIOME = as.character(c(seq(1, 14), 98, 99)),
   label = c(
@@ -38,36 +54,14 @@ cbind(biomes$BIOME, biomes$LABEL)
 
 biomes <- st_crop(biomes, c(xmin=-170,xmax=-55,ymin=17,ymax=72))
 
-
 # just create an empty raster to save the values.
 r <- rast(ext(biomes),resolution = res(coarser_raster),   # the resolution of your targeted raster
           crs = "EPSG:4326")
-#r <- rasterize(biomes, r, field = "BIOME")  # 'field' can be a column name or a constant value
-
 r <- rasterize(biomes, r, field = "LABEL")  # 'field' can be a column name or a constant value
 
-#coordinates for each grid cell
 
-load("coords_present_new.RData")
-coords_present%>%data.frame()%>%rename_all(~paste0(c("lon","lat")))->coords_present
-
-
-# based on the SAR parameters to determine the total fungal diversity for each grid
-#initial analysis included eight fungal guilds
-
-guild_type=c("AM","EM","soilsap","littersap","woodsap","plapat","para","epiphy","all")
-#land use data for different time points
-
-raster1 <- rast("GCAM_Demeter_LU_ssp2_rcp45_hadgem_2015.nc")#
-raster2 <- rast("GCAM_Demeter_LU_ssp2_rcp45_hadgem_2100.nc")#
-raster3 <- rast("GCAM_Demeter_LU_ssp5_rcp85_hadgem_2100.nc")# 
-
-
-#diversity within a grid cell was estimated based on the total area weighted by species relative affinity
-
-habitat_affinity_with_land_history_rarefy_consider_nature_history=readRDS("habitat_affinity_with_land_history_rarefy_consider_nature_history.rds")
-
-# the function to estimate grid-cell-level fungal diversity
+#diversity within a grid cell was estimated based on the total area, which was weighted by species relative affinity
+# the function to estimate the grid-level fungal diversity
 my_function_raster=function(data)
 {
   ext(data) <- c(-90, 90, -180, 180)
@@ -85,7 +79,6 @@ my_function_raster=function(data)
     values(temp) <- values(cropped_raster[[i]]) 
     new_raster[[i]]=temp#each returns a transformed raster
   }
-  
   # make equal area projection for each raster and extract the values
   df_temp=matrix(ncol=33,nrow=dim(coords_present)[1])
   for (i in 1:33)
@@ -107,15 +100,13 @@ my_function_raster=function(data)
   temp=df_temp1[,c("PFT1","PFT2","PFT3","PFT4","PFT5","PFT6","PFT7","PFT8","PFT9","PFT10","PFT11","PFT12","PFT13","PFT14")]
   No_crop=apply(temp, 1, sum)%>%data.frame()
   names(No_crop)="No_crop"
-  df_temp1%>%bind_cols(No_crop)%>%mutate(area=11637.87^2)->df_temp1
-  
+  df_temp1%>%bind_cols(No_crop)%>%mutate(area=11637.87^2)->df_temp1#total area
   #the area is fixed 11637.87^2 with a resolution of 10-min of degree
   #get the diversity within each grid
   #s=cA^z
-  # get the biomes for each gird
+  # get the biome type for each gird
   grid_level_biomes=terra::extract(r,df_temp1[,c("lon","lat")])
   df_temp1%>%bind_cols(biomes=grid_level_biomes%>%dplyr::select(LABEL))->df_temp1
-  
   # get the richness for each guild and each grid
   guild_type=c("AM","EM","soilsap","littersap","woodsap","plapat","para","epiphy","all")
   richness_derived=matrix(ncol=9,nrow=dim(df_temp1)[1])
@@ -135,22 +126,16 @@ my_function_raster=function(data)
 }
 
 
-
-# estimated grid-cell-level fungal diversity for different scenarios
-
+#estimating the grid-level fungal diversity based on current and future land-use scenarios
 richness_2015=my_function_raster(raster1)
-
 richness_2100_rcp245=my_function_raster(raster2)
 richness_2100_rcp585=my_function_raster(raster3)
-
+colnames(richness_2015)=guild_type
+colnames(richness_2100_rcp245)=guild_type
 colnames(richness_2100_rcp585)=guild_type
 
-colnames(richness_2100_rcp245)=guild_type
 
-colnames(richness_2015)=guild_type
-
-# fungal diversity losses and gains among different scenarios
-
+#quantify fungal diversity losses and gains among different scenarios
 species_change_land_rcp245=(richness_2100_rcp245-richness_2015)/richness_2015
 colnames(species_change_land_rcp245)=guild_type
 species_change_land_rcp245=melt(species_change_land_rcp245)
@@ -158,7 +143,6 @@ species_change_land_rcp245=melt(species_change_land_rcp245)
 
 species_change_land_rcp585=(richness_2100_rcp585-richness_2015)/richness_2015
 species_change_land_rcp585%>%melt()->species_change_land_rcp585
-
 
 
 saveRDS(species_change_land_rcp245,file="species_change_land_rcp245.rds")#save the data with the most updated affinity
