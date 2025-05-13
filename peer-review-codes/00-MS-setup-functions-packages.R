@@ -2,7 +2,6 @@
 library(tigris)
 library(rnaturalearth)
 library(sf)
-library(rnaturalearth)
 library(plyr)
 library(dplyr)
 library(gstat)
@@ -23,6 +22,7 @@ library(stars)
 library(patchwork)
 library(phyloseq)
 library(dplyr)
+library(iNEXT)
 
 #to get the sf object of the several states
 # to crop part of the canada map based on the ranges
