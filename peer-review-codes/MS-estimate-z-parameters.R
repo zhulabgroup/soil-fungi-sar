@@ -51,7 +51,7 @@ for (i in 1:9)#each list stores one fungal guild
 }
 
 #initial check suggests that the number of points included in the regression affects the estimated z parameters
-#test if the number of points and the z values are correlated for different guilds and
+
 p_value=numeric()
 for (i in 1:9)
 {
