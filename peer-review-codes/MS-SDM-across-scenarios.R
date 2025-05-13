@@ -399,9 +399,7 @@ file_info <- file.info(files)
 # Filter files smaller than 40 bytes
 small_files <- rownames(file_info[file_info$size < 100, ])
 # none exists
-
 all_numbers_rcp585=missing_numbers%>%sort()#154 species
-
 
 
 #(11)for whole-community fungal diversity under the scenarios of rcp585
@@ -482,7 +480,6 @@ save(future_richness_rcp585_guild,file="future_richness_rcp585_guild.RData")
 current_richness_climate=present_richness_all%>%dplyr::select(-x,-y)%>%
   bind_cols(present_richness_guild)%>%data.frame()%>%
   rename_all(~paste0(c("all",guild_model)))
-
 
 richness_climate_rcp245=future_richness_rcp245_all%>%
   bind_cols(future_richness_rcp245_guild)%>%
