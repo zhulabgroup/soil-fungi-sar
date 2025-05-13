@@ -14,8 +14,7 @@ data <- c("species_change_land_rcp245", "species_change_land_rcp585", "species_c
 
 scenario <- c("SSP2-4.5", "SSP5-8.5", "SSP2-4.5", "SSP5-8.5")
 
-biomes_four <- c(
-  "Temperate Broadleaf & Mixed Forests", "Temperate Conifer Forests",
+biomes_four <- c("Temperate Broadleaf & Mixed Forests", "Temperate Conifer Forests",
   "Temperate Grasslands, Savannas & Shrublands", "Tropical & Subtropical Dry Broadleaf Forests"
 )
 
