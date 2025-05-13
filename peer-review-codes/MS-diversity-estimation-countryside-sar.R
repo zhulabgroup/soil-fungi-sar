@@ -2,23 +2,17 @@
 #assign the biome type for each cell
 
 setwd("/Volumes/seas-zhukai/proj-soil-fungi/land-use-effect")
-#coordinates for each grid cell
 
 load("coords_present_new.RData")
 coords_present%>%data.frame()%>%rename_all(~paste0(c("lon","lat")))->coords_present
-
-
-# determining the total fungal diversity for each grid based on the biome-specific countryside SAR parameters
 #initial analyses included eight fungal guilds
-
 guild_type=c("AM","EM","soilsap","littersap","woodsap","plapat","para","epiphy","all")
-#land use data for different time points
-
-raster1 <- rast("GCAM_Demeter_LU_ssp2_rcp45_hadgem_2015.nc")#
-raster2 <- rast("GCAM_Demeter_LU_ssp2_rcp45_hadgem_2100.nc")#
-raster3 <- rast("GCAM_Demeter_LU_ssp5_rcp85_hadgem_2100.nc")# 
-
 habitat_affinity_with_land_history_rarefy_consider_nature_history=readRDS("habitat_affinity_with_land_history_rarefy_consider_nature_history.rds")
+
+# load in current and future land-use data
+raster1 <- rast("GCAM_Demeter_LU_ssp2_rcp45_hadgem_2015.nc")
+raster2 <- rast("GCAM_Demeter_LU_ssp2_rcp45_hadgem_2100.nc")
+raster3 <- rast("GCAM_Demeter_LU_ssp5_rcp85_hadgem_2100.nc")
 
 
 biomes <- st_read("wwf_terr_ecos.shp")
@@ -59,9 +53,9 @@ r <- rast(ext(biomes),resolution = res(coarser_raster),   # the resolution of yo
           crs = "EPSG:4326")
 r <- rasterize(biomes, r, field = "LABEL")  # 'field' can be a column name or a constant value
 
-
-#diversity within a grid cell was estimated based on the total area, which was weighted by species relative affinity
-# the function to estimate the grid-level fungal diversity
+# determining the total fungal diversity for each grid based on the biome-specific countryside SAR parameters
+#grid-level diversity was estimated based on the total area, which was weighted by species relative affinity
+#the function to estimate the grid-level fungal diversity
 my_function_raster=function(data)
 {
   ext(data) <- c(-90, 90, -180, 180)
