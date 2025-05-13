@@ -24,7 +24,7 @@ library(phyloseq)
 library(dplyr)
 library(iNEXT)
 
-#to get the sf object of the several states
+# to get the sf object of the several states
 # to crop part of the Canada map based on the ranges
 
 
@@ -61,36 +61,33 @@ baha_projected <- st_transform(baha_sf, crs = target_crs)
 jama_projected <- st_transform(jama_sf, crs = target_crs)
 
 # to clip the canada map
-bbox <- st_bbox(c(xmin = -2665004, ymin = 2157670 , xmax = 3188701, ymax = 5400000 ), crs = st_crs(canadian_projected))
+bbox <- st_bbox(c(xmin = -2665004, ymin = 2157670, xmax = 3188701, ymax = 5400000), crs = st_crs(canadian_projected))
 bbox_sf <- st_as_sfc(bbox)
 cropped_province <- st_crop(canadian_projected, bbox_sf)
-canada_clipped=cropped_province
+canada_clipped <- cropped_province
 
 
 
 # the function to project the data based on a data.frame
 
-my_function_project=function(data)
-{
-  if ("x"%in%colnames(data))
-  {
-    points <- vect(data, geom = c("x", "y"), crs = "EPSG:4326")  # Assuming WGS84 coordinates
-    raster_template <- rast(ext(points), resolution = 0.17, crs = "EPSG:4326")  # Resolution of 1 degree
+my_function_project <- function(data) {
+  if ("x" %in% colnames(data)) {
+    points <- vect(data, geom = c("x", "y"), crs = "EPSG:4326") # Assuming WGS84 coordinates
+    raster_template <- rast(ext(points), resolution = 0.17, crs = "EPSG:4326") # Resolution of 1 degree
     raster <- rasterize(points, raster_template, field = "value")
-  }
-  else{
-    points <- vect(data, geom = c("lon", "lat"), crs = "EPSG:4326")  # Assuming WGS84 coordinates
-    raster_template <- rast(ext(points), resolution = 0.17, crs = "EPSG:4326")  # Resolution of 1 degree
-    
+  } else {
+    points <- vect(data, geom = c("lon", "lat"), crs = "EPSG:4326") # Assuming WGS84 coordinates
+    raster_template <- rast(ext(points), resolution = 0.17, crs = "EPSG:4326") # Resolution of 1 degree
+
     raster <- rasterize(points, raster_template, field = "group")
   }
   target_crs <- "EPSG:5070"
-  raster_equal_area <- project(raster, target_crs,method="near")# there are options for the method used
-  raster_df <- as.data.frame(raster_equal_area, xy = TRUE,)
-  return(raster_df )
+  raster_equal_area <- project(raster, target_crs, method = "near") # there are options for the method used
+  raster_df <- as.data.frame(raster_equal_area, xy = TRUE, )
+  return(raster_df)
 }
 
-##add sf layers on the map
+## add sf layers on the map
 
 add_sf_layers <- function() {
   list(
@@ -108,43 +105,46 @@ add_sf_layers <- function() {
 
 
 
-#set different them for the maps
-theme_map=theme(legend.spacing.y = unit(32, "pt"), 
-                legend.position = c(0.15,0.35),
-                legend.margin = margin(t = -30, r = 0, b = -1, l = 0),
-                legend.text = element_text(size=8,angle=0),
-                legend.box = "vertical",
-                legend.justification = "center",
-                legend.title = element_text(margin = margin(b = 4),size=10),
-                text = element_text(size = 18),
-                plot.title = element_text(size = 15, hjust = 0.5), 
-                axis.text.y = element_blank(), 
-                axis.text.x = element_blank(), 
-                axis.title.y = element_text(size = 18), 
-                axis.title.x = element_text(size = 18), 
-                axis.ticks.x = element_blank(), 
-                axis.ticks.y = element_blank(),
-                plot.margin = unit(c(0.3, -5, -0.5, 0.5), "cm"),
-                panel.background = element_rect(fill = "NA"),
-                panel.border = element_blank())
+# set different them for the maps
+theme_map <- theme(
+  legend.spacing.y = unit(32, "pt"),
+  legend.position = c(0.15, 0.35),
+  legend.margin = margin(t = -30, r = 0, b = -1, l = 0),
+  legend.text = element_text(size = 8, angle = 0),
+  legend.box = "vertical",
+  legend.justification = "center",
+  legend.title = element_text(margin = margin(b = 4), size = 10),
+  text = element_text(size = 18),
+  plot.title = element_text(size = 15, hjust = 0.5),
+  axis.text.y = element_blank(),
+  axis.text.x = element_blank(),
+  axis.title.y = element_text(size = 18),
+  axis.title.x = element_text(size = 18),
+  axis.ticks.x = element_blank(),
+  axis.ticks.y = element_blank(),
+  plot.margin = unit(c(0.3, -5, -0.5, 0.5), "cm"),
+  panel.background = element_rect(fill = "NA"),
+  panel.border = element_blank()
+)
 
-theme_latitude=theme(legend.position = c(0.75,0.28),
-                     legend.text = element_text(size=8),
-                     legend.title  = element_text(size=10),
-                     text = element_text(size = 18),
-                     plot.title = element_text(size = 15, hjust = 0.5), 
-                     axis.text.y = element_text(size=12), 
-                     axis.text.x = element_text(size = 12), 
-                     axis.title.y = element_text(size = 15), 
-                     axis.title.x = element_text(size = 15), 
-                     plot.margin = unit(c(0.3, 0.1, -.5, 0), "cm"),
-                     panel.background = element_rect(fill = "NA"),
-                     panel.border = element_rect(color = "black", size = 0.6, fill = NA))
+theme_latitude <- theme(
+  legend.position = c(0.75, 0.28),
+  legend.text = element_text(size = 8),
+  legend.title = element_text(size = 10),
+  text = element_text(size = 18),
+  plot.title = element_text(size = 15, hjust = 0.5),
+  axis.text.y = element_text(size = 12),
+  axis.text.x = element_text(size = 12),
+  axis.title.y = element_text(size = 15),
+  axis.title.x = element_text(size = 15),
+  plot.margin = unit(c(0.3, 0.1, -.5, 0), "cm"),
+  panel.background = element_rect(fill = "NA"),
+  panel.border = element_rect(color = "black", size = 0.6, fill = NA)
+)
 
-##save the sf object
+## save the sf object
 
 sf_layers <- list(
   dominican_projected, us_projected, canada_clipped, rico_projected,
   cuba_projected, mexico_projected, haiti_projected, baha_projected, jama_projected
 )
-
