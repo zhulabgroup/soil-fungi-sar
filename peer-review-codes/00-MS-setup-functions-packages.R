@@ -25,7 +25,7 @@ library(dplyr)
 library(iNEXT)
 
 #to get the sf object of the several states
-# to crop part of the canada map based on the ranges
+# to crop part of the Canada map based on the ranges
 
 
 us_states <- states(cb = TRUE)
