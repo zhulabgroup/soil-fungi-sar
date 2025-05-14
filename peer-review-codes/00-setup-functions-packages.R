@@ -23,6 +23,12 @@ library(patchwork)
 library(phyloseq)
 library(dplyr)
 library(iNEXT)
+library(lmerTest)
+library(lme4)
+library(smplot2)
+library(glmm.hp)
+library(tidyr)
+
 
 # to get the sf object of the several states
 # to crop part of the Canada map based on the ranges
