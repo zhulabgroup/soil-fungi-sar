@@ -1,10 +1,3 @@
-library(lmerTest)
-library(lme4)
-library(smplot2)
-library(glmm.hp)
-library(reshape2)
-library(tidyr)
-
 # create figure 4
 # show the SAR for 10 randomly selected plots
 
@@ -123,12 +116,6 @@ p_z_guild=ggplot(guild_mean,aes(x=guild,y=zvalue,fill=guild),alpha=0.5)+
   ylim(0,1.3)
 
 
-#scale_fill_manual("", breaks = od$guild, values = c("chocolate1", "gray", "royalblue", "#f0a73a", "seagreen", "#7c1a97","#c94e65", "tan"), 
-labels = c("EM (N=415)", "AM (N=326)", "Wood saprotroph (N=401)", 
-           "Epiphyte (N=337)" , 
-           "Litter saprotroph (N=414)", 
-           "Plant pathogen (N=403)", 
-           "Parasite (N=391)","Soil saprotroph (N=416)"))
 
 # display the distribution of the estimated z values with a histgram
 
