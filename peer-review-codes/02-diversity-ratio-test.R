@@ -1,4 +1,3 @@
-
 # considering the historical land use type for natural plots
 setwd("/Volumes/seas-zhukai/proj-soil-fungi/land-use-climate-historical")
 
