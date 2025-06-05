@@ -1,5 +1,3 @@
-
-
 #(1) get the biomes type for each grid cell where we model species richness
 setwd("/Volumes/seas-zhukai/proj-soil-fungi/land-use-effect")
 biomes <- st_read("wwf_terr_ecos.shp")
