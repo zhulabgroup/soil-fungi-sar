@@ -146,8 +146,6 @@ for (m in 1:9) {
         "Tropical & Subtropical Dry Broadleaf Forests"
       ) %>% rev()
     )
-
-
     com_data_climate[[j]] <- com_data
   }
   com_data_climate_guild[[m]] <- com_data_climate
