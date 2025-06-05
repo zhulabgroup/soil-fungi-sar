@@ -1,4 +1,3 @@
-
 r_present <- raster::getData("worldclim", var = "bio", res = 10)
 r_present  <- worldclim_global(var = "bio", res = 10,path = getwd())
 r_present <- r_present[[c(1)]]
