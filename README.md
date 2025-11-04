@@ -1,1 +1,1 @@
-This repository is about the calculation of plot-level species area relationship. We have included multiple variables such as plant richness, root traits, root mass, and climate variables. Within a 40 x 40 m plot, plant richness data is available only at the 20 x 20 m core plot. Root trait measurement is based on varied number of sampling cores within the 40 x 40 m plot. When core coordinates are available, the plot-level measurements are estimated with the mean of all these core-level measurements within the 40 x 40 m plot.
+
