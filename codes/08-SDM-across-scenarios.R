@@ -62,7 +62,7 @@ cl <- makeCluster(15)
 registerDoParallel(cl)
 
 sdm_future_rcp245_ensemble <- list()
-for (i in 2516:2524) {
+for (i in 1:8597) {
   cat("\r", paste(paste0(rep("*", round(i / 1, 0)), collapse = ""), i, collapse = "")) # informs the processing
   tryCatch(
     {
