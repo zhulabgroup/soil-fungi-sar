@@ -1,1 +1,1 @@
-Climate and land-use changes predicted to jointly drive soil fungal diversity losses in one-third of North American coniferous forests.
+Luo, W., K. G. Peay, T. Gonçalves-Souza, P. B. Reich, D. R. Zak, and K. Zhu. 2025. “ Climate and Land-Use Changes Predicted to Jointly Drive Soil Fungal Diversity Losses in One-Third of North American Coniferous Forests.” Global Change Biology 31, no. 11: e70598. https://doi.org/10.1111/gcb.70598.
